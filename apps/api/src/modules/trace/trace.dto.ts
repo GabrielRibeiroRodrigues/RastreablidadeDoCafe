@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { LotStatus, ProductionStage, Unit } from '../../generated/prisma/client.js';
+import { LotStatus, ProductionStage, SupplierType, Unit } from '../../generated/prisma/client.js';
 import { ProductSummary } from '../inventory/inventory.dto.js';
 
 export class TraceSupplier {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty({ example: 'José Aparecido da Silva' }) name!: string;
+  @ApiProperty({ enum: SupplierType, enumName: 'SupplierType' }) type!: SupplierType;
   @ApiProperty({ type: String, nullable: true, example: 'Sítio Santa Inês' }) farmName!:
     string | null;
   @ApiProperty({ type: String, nullable: true, example: 'Mantiqueira de Minas' }) region!:

@@ -12,6 +12,7 @@
 | [anexos.md](anexos.md)                                     | Anexos de lotes: upload pré-assinado no S3/MinIO, segurança  |
 | [producao-rastreabilidade.md](producao-rastreabilidade.md) | Ordens de produção, genealogia e rastreio para trás/frente   |
 | [expedicao.md](expedicao.md)                               | Expedição para clientes: regras, rotas, correção por estorno |
+| [etiqueta-pagina-publica.md](etiqueta-pagina-publica.md)   | Etiqueta PDF com QR code, token público e página de rastreio |
 | [desenvolvimento.md](desenvolvimento.md)                   | Como rodar, scripts, convenções, solução de problemas        |
 | [web.md](web.md)                                           | Front-end: estrutura, autenticação, variáveis de ambiente    |
 | [adr/](adr/README.md)                                      | Registro das decisões de arquitetura                         |
