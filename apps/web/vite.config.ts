@@ -13,6 +13,22 @@ export default defineConfig({
   server: {
     port: 5173,
   },
+  build: {
+    rolldownOptions: {
+      output: {
+        // Separa as dependências (mudam pouco) do código do app, para melhor cache no CloudFront.
+        codeSplitting: {
+          groups: [
+            {
+              name: 'react',
+              test: /node_modules[\\/](react|react-dom|react-router|scheduler)[\\/]/,
+            },
+            { name: 'vendor', test: /node_modules[\\/]/ },
+          ],
+        },
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
