@@ -48,7 +48,7 @@ export function movementColumns({
       cell: (m) => (
         <span className="tabular-nums">
           {m.type === 'REVERSAL' ? '↺ ' : ''}
-          {formatQuantity(m.quantity, unit)}
+          {formatQuantity(m.quantity, unit ?? m.unit)}
         </span>
       ),
     },

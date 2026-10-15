@@ -3670,6 +3670,14 @@
             "type": "string",
             "example": "10.000"
           },
+          "unit": {
+            "description": "Unidade do lote",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
           "user": {
             "$ref": "#/components/schemas/UserSummary"
           },
@@ -3709,6 +3717,7 @@
           "fromLocation",
           "toLocation",
           "quantity",
+          "unit",
           "user",
           "occurredAt",
           "documentRef",

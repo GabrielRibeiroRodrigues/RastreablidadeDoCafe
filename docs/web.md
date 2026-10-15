@@ -251,10 +251,9 @@ O diálogo de movimentação valida no cliente (quantidade ≤ disponível na or
 
 ### Lacunas da API percebidas pelo front
 
-- `MovementResponse` não traz a unidade do produto: na tela de Movimentações a quantidade aparece sem unidade (no detalhe do lote, a unidade vem do lote).
 - `GET /v1/lots` só busca pelo código (não por produto/fornecedor em texto); `GET /v1/movements` não tem ordenação nem filtro por usuário.
-- No problema `lot-not-movable`, a extensão `status` (status do lote) é sobrescrita pelo `status` HTTP do RFC 9457; o front lê o status do lote do `detail` (renomear para `lotStatus` resolveria).
 - `GET /v1/stock` não ordena nem devolve um `id` de linha (o front usa `lote:local`).
+- Resolvidas na integração: `MovementResponse` passou a trazer `unit`; o problema `lot-not-movable` traz o status do lote em `lotStatus` (antes era `status`, sobrescrito pelo código HTTP).
 
 ## Testes
 

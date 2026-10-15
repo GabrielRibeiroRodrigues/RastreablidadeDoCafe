@@ -30,7 +30,8 @@ export const StockProblems = {
       '/problems/lot-not-movable',
       `Lot ${code} is ${status} and cannot leave its location.`,
       HttpStatus.CONFLICT,
-      { lot: code, status },
+      // `lotStatus` (não `status`): `status` é o código HTTP no problem+json.
+      { lot: code, lotStatus: status },
     ),
 
   idempotencyMismatch: () =>

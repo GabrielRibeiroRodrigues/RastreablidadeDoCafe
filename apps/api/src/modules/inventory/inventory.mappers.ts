@@ -14,7 +14,7 @@ const LOCATION_SELECT = { select: { id: true, code: true, name: true, type: true
 
 /** `include` padrão para montar um `MovementResponse`. */
 export const MOVEMENT_INCLUDE = {
-  lot: { select: { id: true, code: true, status: true } },
+  lot: { select: { id: true, code: true, status: true, unit: true } },
   fromLocation: LOCATION_SELECT,
   toLocation: LOCATION_SELECT,
   user: { select: { id: true, name: true } },
@@ -64,10 +64,11 @@ export function toMovementResponse(movement: MovementWithRelations): MovementRes
   return {
     id: movement.id,
     type: movement.type,
-    lot: movement.lot,
+    lot: { id: movement.lot.id, code: movement.lot.code, status: movement.lot.status },
     fromLocation: movement.fromLocation,
     toLocation: movement.toLocation,
     quantity: formatQuantity(movement.quantity),
+    unit: movement.lot.unit,
     user: movement.user,
     occurredAt: movement.occurredAt,
     documentRef: movement.documentRef,

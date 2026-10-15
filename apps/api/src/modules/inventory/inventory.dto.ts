@@ -87,6 +87,7 @@ export class MovementResponse {
   @ApiProperty({ type: LocationSummary, nullable: true }) fromLocation!: LocationSummary | null;
   @ApiProperty({ type: LocationSummary, nullable: true }) toLocation!: LocationSummary | null;
   @ApiProperty({ example: '10.000' }) quantity!: string;
+  @ApiProperty({ enum: Unit, enumName: 'Unit', description: 'Unidade do lote' }) unit!: Unit;
   @ApiProperty({ type: UserSummary }) user!: UserSummary;
   @ApiProperty() occurredAt!: Date;
   @ApiProperty({ type: String, nullable: true, example: 'NF 12345' }) documentRef!: string | null;

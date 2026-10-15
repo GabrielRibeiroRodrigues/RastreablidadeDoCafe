@@ -1199,6 +1199,8 @@ export interface components {
       toLocation: components['schemas']['LocationSummary'] | null;
       /** @example 10.000 */
       quantity: string;
+      /** @description Unidade do lote */
+      unit: components['schemas']['Unit'];
       user: components['schemas']['UserSummary'];
       /** Format: date-time */
       occurredAt: string;
