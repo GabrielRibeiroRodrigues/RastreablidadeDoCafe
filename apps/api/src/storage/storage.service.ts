@@ -1,6 +1,7 @@
 import {
   GetObjectCommand,
   HeadObjectCommand,
+  PutObjectCommand,
   S3Client,
   S3ServiceException,
   type S3ClientConfig,
@@ -124,13 +125,31 @@ export class StorageService {
     }
   }
 
-  /** URL de download de curta duração; força "baixar como" com o nome original. */
-  async createDownloadUrl(key: string, fileName: string): Promise<SignedUrl> {
+  /** Grava (ou sobrescreve) um objeto gerado pela própria API, ex.: o PDF da etiqueta. */
+  async putObject(key: string, body: Uint8Array, contentType: string): Promise<void> {
+    const { bucket, client } = this.require();
+    await client.send(
+      new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType }),
+    );
+  }
+
+  /**
+   * URL de download de curta duração. Por padrão força "baixar como" com o nome original;
+   * `inline: true` deixa o navegador exibir o arquivo (ex.: PDF da etiqueta numa nova aba).
+   */
+  async createDownloadUrl(
+    key: string,
+    fileName: string,
+    options: { inline?: boolean } = {},
+  ): Promise<SignedUrl> {
     const { bucket, ttlSeconds, signer } = this.require();
     const command = new GetObjectCommand({
       Bucket: bucket,
       Key: key,
-      ResponseContentDisposition: contentDisposition(fileName),
+      ResponseContentDisposition: contentDisposition(
+        fileName,
+        options.inline ? 'inline' : 'attachment',
+      ),
     });
     const url = await getSignedUrl(signer, command, { expiresIn: ttlSeconds });
     return { url, expiresAt: expiresAt(ttlSeconds) };
@@ -148,8 +167,11 @@ function expiresAt(ttlSeconds: number): Date {
   return new Date(Date.now() + ttlSeconds * 1000);
 }
 
-/** `attachment` com nome ASCII de fallback + `filename*` (RFC 6266/5987) para acentos. */
-export function contentDisposition(fileName: string): string {
+/** `attachment`/`inline` com nome ASCII de fallback + `filename*` (RFC 6266/5987) para acentos. */
+export function contentDisposition(
+  fileName: string,
+  type: 'attachment' | 'inline' = 'attachment',
+): string {
   const ascii = fileName
     .normalize('NFKD')
     .replace(/[^\x20-\x7e]/g, '')
@@ -159,5 +181,5 @@ export function contentDisposition(fileName: string): string {
     /['()*]/g,
     (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
   );
-  return `attachment; filename="${ascii || 'download'}"; filename*=UTF-8''${encoded}`;
+  return `${type}; filename="${ascii || 'download'}"; filename*=UTF-8''${encoded}`;
 }

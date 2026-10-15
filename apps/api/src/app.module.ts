@@ -8,12 +8,14 @@ import { HealthModule } from './health/health.module.js';
 import { CompaniesModule } from './modules/companies/companies.module.js';
 import { CustomersModule } from './modules/customers/customers.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
+import { LabelsModule } from './modules/labels/labels.module.js';
 import { LocationsModule } from './modules/locations/locations.module.js';
 import { ProductionModule } from './modules/production/production.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
 import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
 import { TraceModule } from './modules/trace/trace.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
+import { PublicModule } from './public/public.module.js';
 import { TenancyModule } from './tenancy/tenancy.module.js';
 
 @Module({
@@ -32,6 +34,8 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     AttachmentsModule,
     ProductionModule,
     TraceModule,
+    LabelsModule,
+    PublicModule,
     HealthModule,
   ],
 })

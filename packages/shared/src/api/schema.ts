@@ -583,6 +583,38 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/lots/{id}/label': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['LabelsController_generate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/public/trace/{token}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['PublicTraceController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/health': {
     parameters: {
       query?: never;
@@ -1489,6 +1521,7 @@ export interface components {
       id: string;
       /** @example José Aparecido da Silva */
       name: string;
+      type: components['schemas']['SupplierType'];
       /** @example Sítio Santa Inês */
       farmName: string | null;
       /** @example Mantiqueira de Minas */
@@ -1586,6 +1619,93 @@ export interface components {
       shipments: components['schemas']['TraceShipment'][];
       /** @description Clientes afetados (distintos) */
       customers: components['schemas']['TraceCustomer'][];
+    };
+    LabelResponse: {
+      /** @description URL pré-assinada (GET) do PDF da etiqueta, de curta duração */
+      url: string;
+      /** Format: date-time */
+      expiresAt: string;
+      /**
+       * @description Página pública de rastreio (conteúdo do QR code)
+       * @example https://traceflow.example.com/rastreio/3q2-7wH1y0mXl4bJp9cS8g
+       */
+      publicUrl: string;
+    };
+    PublicLotResponse: {
+      /** @example CAF-2026-000013 */
+      code: string;
+      /** @example Blend da Casa */
+      productName: string;
+      productType: components['schemas']['ProductType'];
+      /** @example 2025/26 */
+      harvest: string | null;
+      /** @example Bourbon Amarelo */
+      variety: string | null;
+      roastLevel: components['schemas']['RoastLevel'] | null;
+      /**
+       * Format: date-time
+       * @description Data de recebimento (café verde) ou de produção/torra
+       */
+      producedAt: string;
+      /**
+       * Format: date
+       * @example 2027-06-30
+       */
+      expiresAt: string | null;
+      /** @example 86.5 */
+      cuppingScore: number | null;
+      /** @description true = disponível. Motivos de indisponibilidade (ex.: recall) não são expostos */
+      available: boolean;
+    };
+    PublicOriginResponse: {
+      /**
+       * @description Fazenda/cooperativa. Nulo quando a origem é um produtor sem fazenda cadastrada
+       * @example Sítio Santa Inês
+       */
+      name: string | null;
+      /** @example Mantiqueira de Minas */
+      region: string | null;
+      /** @example Carmo de Minas */
+      city: string | null;
+      /** @example MG */
+      state: string | null;
+      /** @example 1250 */
+      altitudeMeters: number | null;
+    };
+    PublicTraceStep: {
+      /** @example CAF-2026-000003 */
+      code: string;
+      /** @example Café verde Bourbon Amarelo */
+      productName: string;
+      productType: components['schemas']['ProductType'];
+      /** @description Etapa que gerou o lote; nulo para lotes recebidos (colheita/recebimento) */
+      stage: components['schemas']['ProductionStage'] | null;
+      /**
+       * Format: date-time
+       * @description Recebimento ou produção
+       */
+      date: string;
+      harvest: string | null;
+      variety: string | null;
+      /**
+       * @description Distância até o lote consultado (0 = ele mesmo)
+       * @example 2
+       */
+      depth: number;
+      /** @description Códigos dos lotes usados para produzir este */
+      inputs: string[];
+      origin: components['schemas']['PublicOriginResponse'] | null;
+    };
+    PublicTraceResponse: {
+      /** @example Torrefação Serra Azul */
+      companyName: string;
+      lot: components['schemas']['PublicLotResponse'];
+      /** @description Fazendas/regiões de origem */
+      origins: components['schemas']['PublicOriginResponse'][];
+      /** @description Cadeia da origem até o lote (mais antigos primeiro) */
+      chain: components['schemas']['PublicTraceStep'][];
+      /** @description true se a cadeia foi cortada pelo limite de profundidade */
+      truncated: boolean;
     };
     HealthResponse: {
       /** @example ok */
@@ -3030,6 +3150,76 @@ export interface operations {
         };
       };
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LabelsController_generate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LabelResponse'];
+        };
+      };
+      /** @description Lote não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PublicTraceController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublicTraceResponse'];
+        };
+      };
+      /** @description Código de rastreio não encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Limite de requisições por IP excedido */
+      429: {
         headers: {
           [name: string]: unknown;
         };
