@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { DomainProblemException } from '../../common/http/domain-problem.exception.js';
-import { pageArgs, toPage, type Page } from '../../common/http/pagination.js';
+import { orderBy, pageArgs, toPage, type Page } from '../../common/http/pagination.js';
 import { MovementType, type Prisma } from '../../generated/prisma/client.js';
 import { TenantContext } from '../../tenancy/tenant-context.js';
 import {
@@ -95,6 +95,7 @@ export class ShipmentsService {
   async list(query: ListShipmentsQueryDto): Promise<Page<ShipmentResponse>> {
     const where: Prisma.ShipmentWhereInput = {
       ...(query.customerId && { customerId: query.customerId }),
+      ...(query.userId && { userId: query.userId }),
       ...(query.lotId && { items: { some: { lotId: query.lotId } } }),
       ...((query.from || query.to) && {
         shippedAt: {
@@ -114,7 +115,7 @@ export class ShipmentsService {
       this.db.client.shipment.findMany({
         where,
         include: LIST_INCLUDE,
-        orderBy: [{ shippedAt: 'desc' }, { id: 'desc' }],
+        orderBy: orderBy(query.sort),
         ...pageArgs(query),
       }),
       this.db.client.shipment.count({ where }),

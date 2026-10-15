@@ -6,6 +6,7 @@ import {
   IsArray,
   IsDateString,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -82,6 +83,9 @@ export class CreateProductionOrderDto {
   notes?: string | null;
 }
 
+export const PRODUCTION_SORTS = ['-performedAt', 'performedAt', '-number', 'number'] as const;
+export type ProductionSort = (typeof PRODUCTION_SORTS)[number];
+
 export class ListProductionOrdersQueryDto extends PagingDto {
   @ApiPropertyOptional({ enum: ProductionStage, enumName: 'ProductionStage' })
   @IsOptional()
@@ -104,6 +108,21 @@ export class ListProductionOrdersQueryDto extends PagingDto {
   @IsOptional()
   @IsDateString()
   to?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Ordens que consumiram ou geraram o lote' })
+  @IsOptional()
+  @IsUUID()
+  lotId?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Quem registrou a ordem' })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @ApiPropertyOptional({ enum: PRODUCTION_SORTS, default: '-performedAt' })
+  @IsOptional()
+  @IsIn(PRODUCTION_SORTS)
+  sort: ProductionSort = '-performedAt';
 }
 
 export class ProductionLot extends LotSummary {
