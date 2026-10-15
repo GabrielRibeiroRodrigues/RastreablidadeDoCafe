@@ -3,7 +3,11 @@ import type { AuthUser } from '../../auth/auth-user.js';
 import { DomainProblemException } from '../../common/http/domain-problem.exception.js';
 import { orderBy, pageArgs, toPage, type Page } from '../../common/http/pagination.js';
 import { LotStatus, Prisma } from '../../generated/prisma/client.js';
-import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
+import {
+  TenantPrismaService,
+  type TenantTransaction,
+} from '../../tenancy/tenant-prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import type { LotDetailResponse, LotResponse } from './inventory.dto.js';
 import { fromDateOnly, LOT_INCLUDE, toLotResponse } from './inventory.mappers.js';
 import type {
@@ -24,6 +28,7 @@ export class LotsService {
   constructor(
     private readonly db: TenantPrismaService,
     private readonly ledger: StockLedgerService,
+    private readonly audit: AuditService,
   ) {}
 
   async list(query: ListLotsQueryDto): Promise<Page<LotResponse>> {
@@ -82,7 +87,26 @@ export class LotsService {
   }
 
   async update(id: string, dto: UpdateLotDto): Promise<LotDetailResponse> {
-    await this.db.client.lot.update({ where: { id }, data: qualityData(dto) });
+    await this.db.transaction(async (tx) => {
+      const data = qualityData(dto);
+      const fields = Object.keys(data);
+      const select = Object.fromEntries(fields.map((field) => [field, true]));
+      const before = await tx.lot.findUniqueOrThrow({
+        where: { id },
+        select: { code: true, ...select },
+      });
+      const after = await tx.lot.update({ where: { id }, data, select });
+      await this.audit.record(
+        {
+          action: 'lot.updated',
+          entityType: 'lot',
+          entityId: id,
+          before: pick(before, fields),
+          after: pick(after, fields),
+        },
+        tx,
+      );
+    });
     return this.get(id);
   }
 
@@ -110,9 +134,21 @@ export class LotsService {
         );
       }
       if (lot.status === dto.status) return;
+      if (dto.status === LotStatus.AVAILABLE) {
+        await assertNotUnderOpenRecall(tx, lot);
+      }
 
       await tx.lot.update({ where: { id }, data: { status: dto.status } });
-      // Auditoria estruturada chega na Semana 4; por ora, o motivo fica no log da requisição.
+      await this.audit.record(
+        {
+          action: 'lot.status_changed',
+          entityType: 'lot',
+          entityId: id,
+          before: { code: lot.code, status: lot.status },
+          after: { code: lot.code, status: dto.status, reason: dto.reason },
+        },
+        tx,
+      );
       this.logger.log(
         { lot: lot.code, from: lot.status, to: dto.status, reason: dto.reason, by: user.id },
         'Lot status changed',
@@ -150,4 +186,30 @@ export function qualityData(dto: LotQualityDto): Prisma.LotUncheckedUpdateInput 
       expiresAt: expiresAt === null ? null : fromDateOnly(expiresAt),
     }),
   };
+}
+
+/**
+ * Lote num recall não encerrado não volta a ficar disponível (nem por troca manual de status, nem
+ * por liberação de não conformidade): a liberação exige encerrar o recall antes.
+ */
+export async function assertNotUnderOpenRecall(
+  tx: TenantTransaction,
+  lot: { id: string; code: string },
+): Promise<void> {
+  const open = await tx.recallLot.findFirst({
+    where: { lotId: lot.id, recall: { status: { not: 'CLOSED' } } },
+    select: { recall: { select: { id: true, number: true } } },
+  });
+  if (open) {
+    throw new DomainProblemException(
+      '/problems/lot-under-recall',
+      `Lot ${lot.code} is under recall ${open.recall.number} and cannot be released.`,
+      HttpStatus.CONFLICT,
+      { lot: lot.code, recall: open.recall.number, recallId: open.recall.id },
+    );
+  }
+}
+
+function pick(source: Record<string, unknown>, fields: string[]): Record<string, unknown> {
+  return Object.fromEntries(fields.map((field) => [field, source[field] ?? null]));
 }

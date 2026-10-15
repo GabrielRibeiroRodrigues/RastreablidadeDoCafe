@@ -12,6 +12,7 @@ import { LabelsModule } from './modules/labels/labels.module.js';
 import { LocationsModule } from './modules/locations/locations.module.js';
 import { ProductionModule } from './modules/production/production.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
+import { QualityModule } from './modules/quality/quality.module.js';
 import { ShipmentsModule } from './modules/shipments/shipments.module.js';
 import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
 import { TraceModule } from './modules/trace/trace.module.js';
@@ -37,6 +38,7 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     ProductionModule,
     TraceModule,
     LabelsModule,
+    QualityModule,
     PublicModule,
     HealthModule,
   ],

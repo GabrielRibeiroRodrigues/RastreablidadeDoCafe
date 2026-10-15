@@ -2,7 +2,8 @@ import { ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@
 import type { AuthUser } from '../../auth/auth-user.js';
 import { DomainProblemException } from '../../common/http/domain-problem.exception.js';
 import { orderBy, pageArgs, toPage, type Page } from '../../common/http/pagination.js';
-import { MovementType, type Prisma } from '../../generated/prisma/client.js';
+import { MovementType, type Prisma, type StockMovement } from '../../generated/prisma/client.js';
+import { AuditService } from '../audit/audit.service.js';
 import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
 import type { MovementResponse } from './inventory.dto.js';
 import { MOVEMENT_INCLUDE, toMovementResponse } from './inventory.mappers.js';
@@ -12,7 +13,7 @@ import type {
   ListMovementsQueryDto,
   ReverseMovementDto,
 } from './movements.dto.js';
-import { Quantity } from './quantity.js';
+import { formatQuantity, Quantity } from './quantity.js';
 import { StockLedgerService } from './stock-ledger.service.js';
 
 export interface MovementResult {
@@ -25,6 +26,7 @@ export class MovementsService {
   constructor(
     private readonly db: TenantPrismaService,
     private readonly ledger: StockLedgerService,
+    private readonly audit: AuditService,
   ) {}
 
   async create(
@@ -47,8 +49,8 @@ export class MovementsService {
     }
 
     return this.idempotent(idempotency, () =>
-      this.db.transaction((tx) =>
-        this.ledger.record(tx, {
+      this.db.transaction(async (tx) => {
+        const movement = await this.ledger.record(tx, {
           type: dto.type,
           lotId: dto.lotId,
           fromLocationId: dto.fromLocationId ?? null,
@@ -58,8 +60,18 @@ export class MovementsService {
           documentRef: dto.documentRef ?? null,
           reason: dto.reason ?? null,
           ...(idempotency && { idempotency }),
-        }),
-      ),
+        });
+        await this.audit.record(
+          {
+            action: 'movement.created',
+            entityType: 'movement',
+            entityId: movement.id,
+            after: movementSnapshot(movement),
+          },
+          tx,
+        );
+        return movement;
+      }),
     );
   }
 
@@ -90,7 +102,7 @@ export class MovementsService {
         );
       }
 
-      return this.ledger.record(tx, {
+      const created = await this.ledger.record(tx, {
         type: MovementType.REVERSAL,
         lotId: original.lotId,
         fromLocationId: original.toLocationId,
@@ -100,6 +112,17 @@ export class MovementsService {
         reason: dto.reason,
         reversalOfId: original.id,
       });
+      await this.audit.record(
+        {
+          action: 'movement.reversed',
+          entityType: 'movement',
+          entityId: original.id,
+          before: movementSnapshot(original),
+          after: { reversalId: created.id, reason: dto.reason },
+        },
+        tx,
+      );
+      return created;
     });
     return this.get(reversal.id);
   }
@@ -171,4 +194,17 @@ export class MovementsService {
     assertSameRequest(previous.requestHash, idempotency);
     return { movement: await this.get(previous.id), replayed: true };
   }
+}
+
+/** Campos relevantes de uma movimentação para a trilha de auditoria. */
+function movementSnapshot(movement: StockMovement) {
+  return {
+    type: movement.type,
+    lotId: movement.lotId,
+    fromLocationId: movement.fromLocationId,
+    toLocationId: movement.toLocationId,
+    quantity: formatQuantity(movement.quantity),
+    documentRef: movement.documentRef,
+    reason: movement.reason,
+  };
 }

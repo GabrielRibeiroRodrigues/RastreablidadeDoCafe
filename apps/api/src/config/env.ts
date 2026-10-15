@@ -57,6 +57,13 @@ export const envSchema = z
       .url()
       .default('http://localhost:5173')
       .transform((value) => value.replace(/\/+$/, '')),
+
+    /** Tópico SNS dos avisos (recall, validade). Sem ele, os avisos vão só para o log. */
+    SNS_TOPIC_ARN: z.string().startsWith('arn:').optional(),
+    /** State machine do recall (Step Functions). Sem ela, o workflow roda no próprio processo. */
+    RECALL_STATE_MACHINE_ARN: z.string().startsWith('arn:').optional(),
+    /** Janela padrão do alerta de validade, em dias. */
+    ALERT_EXPIRY_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   })
   .superRefine((env, ctx) => {
     if (env.AUTH_MODE === 'mock' && env.NODE_ENV === 'production') {
