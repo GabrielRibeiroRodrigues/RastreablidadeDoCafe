@@ -6,6 +6,8 @@ import type { TenantTransaction } from '../../tenancy/tenant-prisma.service.js';
 export const DOCUMENT_KINDS = {
   productionOrder: { kind: 'production_order', prefix: 'OP' },
   shipment: { kind: 'shipment', prefix: 'EXP' },
+  nonConformity: { kind: 'non_conformity', prefix: 'NC' },
+  recall: { kind: 'recall', prefix: 'RC' },
 } as const;
 
 export type DocumentKind = (typeof DOCUMENT_KINDS)[keyof typeof DOCUMENT_KINDS];

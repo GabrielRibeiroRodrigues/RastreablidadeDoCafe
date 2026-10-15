@@ -14,6 +14,7 @@ import {
   TenantPrismaService,
   type TenantTransaction,
 } from '../../tenancy/tenant-prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { DOCUMENT_KINDS, DocumentNumberService } from '../inventory/document-number.service.js';
 import {
   assertSameRequest,
@@ -83,6 +84,7 @@ export class ProductionService {
     private readonly ledger: StockLedgerService,
     private readonly lotCodes: LotCodeService,
     private readonly numbers: DocumentNumberService,
+    private readonly audit: AuditService,
   ) {}
 
   async create(
@@ -235,6 +237,22 @@ export class ProductionService {
       })) as Prisma.LotOriginCreateManyInput[],
     });
 
+    await this.audit.record(
+      {
+        action: 'production_order.created',
+        entityType: 'production_order',
+        entityId: order.id,
+        after: {
+          number,
+          stage: dto.stage,
+          outputLot: { id: lot.id, code, quantity: formatQuantity(outputQuantity) },
+          inputs: dto.inputs,
+          yieldPercent: mass.yieldPercent,
+          lossKg: mass.lossKg,
+        },
+      },
+      tx,
+    );
     return order.id;
   }
 

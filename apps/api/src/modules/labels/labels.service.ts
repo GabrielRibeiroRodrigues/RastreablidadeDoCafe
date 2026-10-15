@@ -5,6 +5,7 @@ import type { ProductType, RoastLevel } from '../../generated/prisma/client.js';
 import { StorageService } from '../../storage/storage.service.js';
 import { TenantContext } from '../../tenancy/tenant-context.js';
 import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { toPublicOrigin, uniqueOrigins } from '../trace/public-origin.js';
 import { TraceService } from '../trace/trace.service.js';
 import { buildLabelPdf } from './label-pdf.js';
@@ -46,6 +47,7 @@ export class LabelsService {
     private readonly tenant: TenantContext,
     private readonly storage: StorageService,
     private readonly trace: TraceService,
+    private readonly audit: AuditService,
     config: ConfigService<Env, true>,
   ) {
     this.publicWebUrl = config.get('PUBLIC_WEB_URL', { infer: true });
@@ -89,6 +91,12 @@ export class LabelsService {
 
     const key = `${companyId}/labels/${lot.id}.pdf`;
     await this.storage.putObject(key, pdf, PDF);
+    await this.audit.record({
+      action: 'label.generated',
+      entityType: 'lot',
+      entityId: lot.id,
+      after: { code: lot.code, storageKey: key, publicUrl },
+    });
     const download = await this.storage.createDownloadUrl(key, `etiqueta-${lot.code}.pdf`, {
       inline: true,
     });

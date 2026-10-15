@@ -1,45 +1,15 @@
 import type { ApiSchema } from '@traceflow/shared';
-import { inventoryApi, type Movement } from '@/features/inventory/api';
+import { inventoryApi } from '@/features/inventory/api';
 import { productionApi } from '@/features/production/api';
 import { shipmentsApi } from '@/features/shipments/api';
 import { ApiError } from '@/lib/api';
 import { getApiClient, unwrap } from '@/lib/api-client';
 import { fromMilli, startOfLocalDayIso, toKgMilli, toMilli } from '@/lib/quantity';
 
-type Unit = ApiSchema<'Unit'>;
-type ProductType = ApiSchema<'ProductType'>;
-
-// TODO(openapi): trocar pelos tipos gerados quando `GET /v1/dashboard` entrar no contrato
-// (`packages/shared/src/api/schema.ts`). Formato combinado com a API em construção.
-export interface DashboardExpiringLot {
-  id: string;
-  code: string;
-  product: { id: string; sku: string; name: string };
-  /** `AAAA-MM-DD` */
-  expiresAt: string;
-  /** Saldo total do lote (string decimal). */
-  balance: string;
-  unit: Unit;
-}
-
-export interface DashboardStockByProduct {
-  productId: string;
-  sku: string;
-  name: string;
-  type: ProductType;
-  unit: Unit;
-  quantity: string;
-}
-
-export interface DashboardResponse {
-  lots: { available: number; quarantine: number; blocked: number; consumed: number };
-  expiringSoon: { days: number; count: number; items: DashboardExpiringLot[] };
-  movementsToday: number;
-  stockByProduct: DashboardStockByProduct[];
-  production30d: { orders: number; avgYieldPercent: number | null; lossKg: string };
-  shipments30d: { count: number; customers: number };
-  recentMovements: Movement[];
-}
+/** Resposta de `GET /v1/dashboard` (tipos gerados do contrato OpenAPI). */
+export type DashboardResponse = ApiSchema<'DashboardResponse'>;
+export type DashboardExpiringLot = DashboardResponse['expiringSoon']['items'][number];
+export type DashboardStockByProduct = DashboardResponse['stockByProduct'][number];
 
 export interface DashboardData extends DashboardResponse {
   /** `fallback`: API sem o endpoint agregado; números montados com as listagens existentes. */
@@ -50,15 +20,8 @@ export const EXPIRING_DAYS = 30;
 const RECENT_MOVEMENTS = 8;
 const EXPIRING_ITEMS = 6;
 
-/** Cliente sem o tipo do endpoint (ainda fora do contrato OpenAPI); o middleware continua valendo. */
-type UntypedGet = (
-  path: string,
-  init?: { signal?: AbortSignal },
-) => Promise<{ data?: unknown; error?: unknown; response: Response }>;
-
 function fetchAggregated(signal?: AbortSignal): Promise<DashboardResponse> {
-  const get = getApiClient().GET as unknown as UntypedGet;
-  return unwrap(get('/v1/dashboard', signal ? { signal } : {})) as Promise<DashboardResponse>;
+  return unwrap(getApiClient().GET('/v1/dashboard', signal ? { signal } : {}));
 }
 
 function todayLocal(): string {

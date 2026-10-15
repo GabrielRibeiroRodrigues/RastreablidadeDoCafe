@@ -11,6 +11,7 @@ import {
   TenantPrismaService,
   type TenantTransaction,
 } from '../../tenancy/tenant-prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import type { LotDetailResponse } from './inventory.dto.js';
 import { assertSameRequest, isIdempotencyRace, type IdempotencyToken } from './idempotency.js';
 import { LotCodeService } from './lot-code.service.js';
@@ -33,6 +34,7 @@ export class ReceiptsService {
     private readonly ledger: StockLedgerService,
     private readonly lotCodes: LotCodeService,
     private readonly lots: LotsService,
+    private readonly audit: AuditService,
   ) {}
 
   async receive(dto: CreateReceiptDto, idempotency?: IdempotencyToken): Promise<ReceiptResult> {
@@ -116,6 +118,25 @@ export class ReceiptsService {
       documentRef: documentRef ?? null,
       ...(idempotency && { idempotency }),
     });
+
+    await this.audit.record(
+      {
+        action: 'lot.received',
+        entityType: 'lot',
+        entityId: lot.id,
+        after: {
+          code,
+          productId,
+          supplierId: supplierId ?? null,
+          quantity,
+          unit: product.unit,
+          location: { id: location.id, code: location.code },
+          documentRef: documentRef ?? null,
+          status: lot.status,
+        },
+      },
+      tx,
+    );
     return lot.id;
   }
 

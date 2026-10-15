@@ -7,6 +7,7 @@ import {
   TenantPrismaService,
   type TenantTransaction,
 } from '../../tenancy/tenant-prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { DOCUMENT_KINDS, DocumentNumberService } from '../inventory/document-number.service.js';
 import {
   assertSameRequest,
@@ -71,6 +72,7 @@ export class ShipmentsService {
     private readonly tenant: TenantContext,
     private readonly ledger: StockLedgerService,
     private readonly numbers: DocumentNumberService,
+    private readonly audit: AuditService,
   ) {}
 
   async create(dto: CreateShipmentDto, idempotency?: IdempotencyToken): Promise<ShipmentResult> {
@@ -184,6 +186,21 @@ export class ShipmentsService {
         } as Prisma.ShipmentItemUncheckedCreateInput,
       });
     }
+
+    await this.audit.record(
+      {
+        action: 'shipment.created',
+        entityType: 'shipment',
+        entityId: shipment.id,
+        after: {
+          number,
+          customer: { id: customer.id, name: customer.name },
+          orderRef: dto.orderRef ?? null,
+          items: dto.items,
+        },
+      },
+      tx,
+    );
     return shipment.id;
   }
 

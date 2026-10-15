@@ -727,6 +727,198 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/audit-logs': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AuditLogsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/non-conformities': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['NonConformitiesController_list'];
+    put?: never;
+    post: operations['NonConformitiesController_open'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/non-conformities/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['NonConformitiesController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/non-conformities/{id}/release': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['NonConformitiesController_release'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/non-conformities/{id}/discard': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['NonConformitiesController_discard'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/recalls/simulate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['RecallsController_simulate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/recalls': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['RecallsController_list'];
+    put?: never;
+    post: operations['RecallsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/recalls/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['RecallsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/recalls/{id}/retry': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['RecallsController_retry'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/recalls/{id}/close': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['RecallsController_close'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/recalls/{id}/report': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['RecallsController_report'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/alerts/expiring': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AlertsController_expiring'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/public/trace/{token}': {
     parameters: {
       query?: never;
@@ -1995,6 +2187,314 @@ export interface components {
        */
       created: number;
       errors: components['schemas']['ImportRowError'][];
+    };
+    AuditUser: {
+      /** Format: uuid */
+      id: string;
+      /** @example Ana Souza */
+      name: string;
+    };
+    AuditLogResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example lot.status_changed */
+      action: string;
+      /** @example lot */
+      entityType: string;
+      entityId: string | null;
+      /** @description Null para jobs agendados */
+      user: components['schemas']['AuditUser'] | null;
+      /** @description Estado antes da operação */
+      before: {
+        [key: string]: unknown;
+      } | null;
+      /** @description Estado depois da operação */
+      after: {
+        [key: string]: unknown;
+      } | null;
+      requestId: string | null;
+      ip: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    NcLotSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000009 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      unit: components['schemas']['Unit'];
+    };
+    /** @enum {string} */
+    NonConformityType: 'MOISTURE' | 'DEFECTS' | 'CONTAMINATION' | 'PEST' | 'PACKAGING' | 'OTHER';
+    /** @enum {string} */
+    NonConformityStatus: 'OPEN' | 'RELEASED' | 'DISCARDED';
+    NcUser: {
+      /** Format: uuid */
+      id: string;
+      /** @example Ana Souza */
+      name: string;
+    };
+    NonConformityResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example NC-2026-000001 */
+      number: string;
+      lot: components['schemas']['NcLotSummary'];
+      type: components['schemas']['NonConformityType'];
+      description: string;
+      status: components['schemas']['NonConformityStatus'];
+      openedBy: components['schemas']['NcUser'];
+      /** Format: date-time */
+      openedAt: string;
+      /** @description Justificativa da liberação/descarte */
+      resolution: string | null;
+      resolvedBy: components['schemas']['NcUser'] | null;
+      /** Format: date-time */
+      resolvedAt: string | null;
+    };
+    OpenNonConformityDto: {
+      /** Format: uuid */
+      lotId: string;
+      type: components['schemas']['NonConformityType'];
+      /** @example Umidade de 13,8% na reanálise (limite 12,5%) */
+      description: string;
+    };
+    ResolveNonConformityDto: {
+      /** @example Reanálise com umidade de 11,9%: lote dentro do padrão */
+      justification: string;
+    };
+    SimulateRecallDto: {
+      /**
+       * Format: uuid
+       * @description Lote de origem do problema
+       */
+      lotId: string;
+    };
+    AffectedLot: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000013 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      unit: components['schemas']['Unit'];
+      /**
+       * @description Saldo atual
+       * @example 12.000
+       */
+      balance: string;
+      /**
+       * @description Distância até o lote de origem (0 = ele mesmo)
+       * @example 2
+       */
+      depth: number;
+    };
+    UnitQuantity: {
+      unit: components['schemas']['Unit'];
+      /** @example 120.000 */
+      quantity: string;
+    };
+    AffectedCustomer: {
+      customer: components['schemas']['TraceCustomer'];
+      /** @example 2 */
+      shipmentsCount: number;
+      /**
+       * @example [
+       *       "EXP-2026-000003"
+       *     ]
+       */
+      shipmentNumbers: string[];
+      /** @description Quantidade recebida, por unidade */
+      quantities: components['schemas']['UnitQuantity'][];
+    };
+    RecallTotals: {
+      /** @example 4 */
+      lots: number;
+      /** @example 2 */
+      lotsWithStock: number;
+      /** @example 3 */
+      shipments: number;
+      /** @example 1 */
+      customers: number;
+      /** @description Saldo em estoque dos lotes afetados */
+      stock: components['schemas']['UnitQuantity'][];
+      /** @description Quantidade já expedida a clientes */
+      shipped: components['schemas']['UnitQuantity'][];
+    };
+    RecallSimulationResponse: {
+      originLot: components['schemas']['AffectedLot'];
+      /** @description Fazendas/fornecedores de origem */
+      origins: components['schemas']['TraceSupplier'][];
+      /** @description Lote de origem e todos os derivados */
+      lots: components['schemas']['AffectedLot'][];
+      shipments: components['schemas']['TraceShipment'][];
+      customers: components['schemas']['AffectedCustomer'][];
+      totals: components['schemas']['RecallTotals'];
+      /** @description true se o limite de profundidade cortou o grafo */
+      truncated: boolean;
+    };
+    RecallLotRef: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000009 */
+      code: string;
+    };
+    /** @enum {string} */
+    RecallSeverity: 'LOW' | 'MEDIUM' | 'HIGH';
+    /** @enum {string} */
+    RecallStatus: 'OPEN' | 'EXECUTING' | 'COMPLETED' | 'FAILED' | 'CLOSED';
+    RecallUser: {
+      /** Format: uuid */
+      id: string;
+      /** @example Ana Souza */
+      name: string;
+    };
+    RecallResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example RC-2026-000001 */
+      number: string;
+      originLot: components['schemas']['RecallLotRef'];
+      reason: string;
+      severity: components['schemas']['RecallSeverity'];
+      status: components['schemas']['RecallStatus'];
+      /** @example 4 */
+      lotsCount: number;
+      /** @example 1 */
+      customersCount: number;
+      createdBy: components['schemas']['RecallUser'];
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      startedAt: string | null;
+      /** Format: date-time */
+      completedAt: string | null;
+      /** Format: date-time */
+      closedAt: string | null;
+    };
+    /** @enum {string} */
+    RecallStepName: 'BLOCK_LOTS' | 'REPORT' | 'NOTIFY';
+    /** @enum {string} */
+    RecallStepStatus: 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'SKIPPED';
+    RecallStepResponse: {
+      name: components['schemas']['RecallStepName'];
+      /** @example 1 */
+      position: number;
+      status: components['schemas']['RecallStepStatus'];
+      /** @example 1 */
+      attempts: number;
+      /** Format: date-time */
+      startedAt: string | null;
+      /** Format: date-time */
+      finishedAt: string | null;
+      error: string | null;
+      output: {
+        [key: string]: unknown;
+      } | null;
+    };
+    RecallLotResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000013 */
+      code: string;
+      /** @description Status atual */
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      unit: components['schemas']['Unit'];
+      /** @example 1 */
+      depth: number;
+      /**
+       * @description Saldo na criação do recall
+       * @example 12.000
+       */
+      balance: string;
+      previousStatus: components['schemas']['LotStatus'] | null;
+      /** Format: date-time */
+      blockedAt: string | null;
+    };
+    RecallCustomerContact: {
+      /** Format: uuid */
+      id: string;
+      /** @example Cafeteria Grão Fino */
+      name: string;
+      city: string | null;
+      state: string | null;
+      email: string | null;
+      phone: string | null;
+    };
+    RecallCustomerResponse: {
+      customer: components['schemas']['RecallCustomerContact'];
+      /** @example 2 */
+      shipmentsCount: number;
+      shipmentNumbers: string[];
+      quantities: components['schemas']['UnitQuantity'][];
+    };
+    RecallDetailResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example RC-2026-000001 */
+      number: string;
+      originLot: components['schemas']['RecallLotRef'];
+      reason: string;
+      severity: components['schemas']['RecallSeverity'];
+      status: components['schemas']['RecallStatus'];
+      /** @example 4 */
+      lotsCount: number;
+      /** @example 1 */
+      customersCount: number;
+      createdBy: components['schemas']['RecallUser'];
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      startedAt: string | null;
+      /** Format: date-time */
+      completedAt: string | null;
+      /** Format: date-time */
+      closedAt: string | null;
+      /** @enum {string} */
+      orchestration: 'LOCAL' | 'STEP_FUNCTIONS';
+      lastError: string | null;
+      /** @description Relatório PDF disponível em /recalls/{id}/report */
+      hasReport: boolean;
+      closingNotes: string | null;
+      closedBy: components['schemas']['RecallUser'] | null;
+      steps: components['schemas']['RecallStepResponse'][];
+      lots: components['schemas']['RecallLotResponse'][];
+      customers: components['schemas']['RecallCustomerResponse'][];
+    };
+    CreateRecallDto: {
+      /**
+       * Format: uuid
+       * @description Lote de origem do problema
+       */
+      lotId: string;
+      /** @example Ocratoxina acima do limite no laudo do lote verde */
+      reason: string;
+      severity: components['schemas']['RecallSeverity'];
+    };
+    CloseRecallDto: {
+      /** @example Clientes contatados; estoque recolhido e destinado à destruição */
+      notes: string;
+    };
+    RecallReportResponse: {
+      /** @description URL pré-assinada do PDF (curta duração) */
+      url: string;
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    ExpiringLotsResponse: {
+      /** @example 30 */
+      days: number;
+      /**
+       * Format: date
+       * @example 2026-10-15
+       */
+      referenceDate: string;
+      /** @example 3 */
+      expiredCount: number;
+      /** @description Lotes com saldo que vencem na janela (inclui vencidos), por data */
+      data: components['schemas']['ExpiringLot'][];
     };
     PublicLotResponse: {
       /** @example CAF-2026-000013 */
@@ -3845,6 +4345,416 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  AuditLogsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Tipo da entidade (lot, recall, ...) */
+        entityType?: string;
+        /** @description Id da entidade */
+        entityId?: string;
+        userId?: string;
+        /** @description Ação exata, ou prefixo terminado em ponto (ex.: `recall.`) */
+        action?: string;
+        /** @description A partir de (inclusive) */
+        from?: string;
+        /** @description Até (exclusive) */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['AuditLogResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  NonConformitiesController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components['schemas']['NonConformityStatus'];
+        type?: components['schemas']['NonConformityType'];
+        lotId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['NonConformityResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  NonConformitiesController_open: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['OpenNonConformityDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NonConformityResponse'];
+        };
+      };
+      /** @description Lote não encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  NonConformitiesController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NonConformityResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  NonConformitiesController_release: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResolveNonConformityDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NonConformityResponse'];
+        };
+      };
+      /** @description NC já resolvida ou lote sob recall */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  NonConformitiesController_discard: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ResolveNonConformityDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NonConformityResponse'];
+        };
+      };
+      /** @description NC já resolvida */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  RecallsController_simulate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['SimulateRecallDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecallSimulationResponse'];
+        };
+      };
+      /** @description Lote não encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  RecallsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components['schemas']['RecallStatus'];
+        /** @description Lote de origem */
+        lotId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['RecallResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  RecallsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateRecallDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecallDetailResponse'];
+        };
+      };
+      /** @description Já existe recall aberto para o lote */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  RecallsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecallDetailResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  RecallsController_retry: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecallDetailResponse'];
+        };
+      };
+      /** @description Recall não está OPEN nem FAILED */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  RecallsController_close: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CloseRecallDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecallDetailResponse'];
+        };
+      };
+      /** @description Recall não está COMPLETED nem FAILED */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  RecallsController_report: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['RecallReportResponse'];
+        };
+      };
+      /** @description Recall não encontrado ou relatório ainda não gerado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AlertsController_expiring: {
+    parameters: {
+      query?: {
+        /** @description Janela em dias (padrão: ALERT_EXPIRY_DAYS, 30) */
+        days?: number;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ExpiringLotsResponse'];
+        };
       };
     };
   };
