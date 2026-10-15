@@ -64,4 +64,17 @@ export const customersResource = defineCatalogResource<Customer, CustomerInput>(
   api: customersApi,
   Form: CustomerForm,
   describe: (customer) => customer.name,
+  details: (customer) => [
+    { label: 'Nome', value: customer.name, wide: true },
+    {
+      label: 'CPF/CNPJ',
+      value: customer.document && (
+        <span className="font-mono">{formatDocument(customer.document)}</span>
+      ),
+    },
+    { label: 'Telefone', value: formatPhone(customer.phone) },
+    { label: 'E-mail', value: customer.email, wide: true },
+    { label: 'Cidade', value: customer.city },
+    { label: 'UF', value: customer.state },
+  ],
 });

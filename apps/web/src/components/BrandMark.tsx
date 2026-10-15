@@ -4,9 +4,13 @@ import { cn } from 'cn';
 export function BrandMark({
   className,
   inverted = false,
+  compact = false,
 }: {
   className?: string;
+  /** Sobre fundo escuro (barra lateral). */
   inverted?: boolean;
+  /** Só o símbolo (barra lateral recolhida). */
+  compact?: boolean;
 }) {
   return (
     <div className={cn('flex items-center gap-2.5', className)}>
@@ -32,6 +36,7 @@ export function BrandMark({
         className={cn(
           'text-lg font-semibold tracking-tight',
           inverted ? 'text-sidebar-accent-foreground' : 'text-foreground',
+          compact && 'sr-only',
         )}
       >
         TraceFlow

@@ -1,10 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeftIcon, InfoIcon, RefreshCwIcon, UserIcon } from 'lucide-react';
+import { InfoIcon, UserIcon } from 'lucide-react';
 import { Link, useParams } from 'react-router';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -13,12 +11,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { EmptyState, LotStatusBadge, Quantity } from '@/features/inventory/components';
+import { LotStatusBadge, Quantity } from '@/features/inventory/components';
 import { ProductTypeBadge } from '@/features/production/components';
-import { ApiError, getErrorMessage } from '@/lib/api';
 import { formatDocument } from '@/lib/br';
 import { formatDateTime } from '@/lib/quantity';
 import { shipmentsApi } from './api';
+import { DetailPageError, DetailPageSkeleton } from '@/components/layout/DetailStates';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 export function ShipmentDetailPage() {
   const { id = '' } = useParams();
@@ -27,46 +26,23 @@ export function ShipmentDetailPage() {
     queryFn: ({ signal }) => shipmentsApi.get(id, signal),
   });
 
-  const back = (
-    <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-      <Link to="/expedicao">
-        <ArrowLeftIcon />
-        Expedição
-      </Link>
-    </Button>
-  );
+  const crumbs = [
+    { label: 'Expedição', to: '/expedicao' },
+    { label: query.data?.number ?? 'Expedição' },
+  ];
 
-  if (query.isPending) {
-    return (
-      <div className="space-y-6">
-        {back}
-        <Skeleton className="h-9 w-72" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-36" />
-          <Skeleton className="h-36 md:col-span-2" />
-        </div>
-      </div>
-    );
-  }
+  if (query.isPending) return <DetailPageSkeleton breadcrumbs={crumbs} cards={2} />;
 
   if (query.isError) {
-    const notFound = query.error instanceof ApiError && query.error.status === 404;
     return (
-      <div className="space-y-6">
-        {back}
-        <EmptyState>
-          <p className="font-medium text-foreground">
-            {notFound ? 'Expedição não encontrada' : 'Não foi possível carregar a expedição'}
-          </p>
-          {!notFound && <p>{getErrorMessage(query.error)}</p>}
-          {!notFound && (
-            <Button variant="outline" size="sm" onClick={() => void query.refetch()}>
-              <RefreshCwIcon />
-              Tentar novamente
-            </Button>
-          )}
-        </EmptyState>
-      </div>
+      <DetailPageError
+        breadcrumbs={crumbs}
+        error={query.error}
+        onRetry={() => void query.refetch()}
+        entity="Expedição"
+        backTo="/expedicao"
+        backLabel="Ver expedições"
+      />
     );
   }
 
@@ -76,16 +52,19 @@ export function ShipmentDetailPage() {
 
   return (
     <div className="space-y-6">
-      {back}
-
-      <div className="space-y-1.5">
-        <h1 className="font-mono text-2xl font-semibold tracking-tight">{shipment.number}</h1>
-        <p className="text-sm text-muted-foreground">
-          {formatDateTime(shipment.shippedAt)} · por{' '}
-          <span className="font-medium text-foreground">{shipment.user.name}</span>
-          {shipment.orderRef && <> · {shipment.orderRef}</>}
-        </p>
-      </div>
+      <PageHeader
+        mono
+        title={shipment.number}
+        documentTitle={`Expedição ${shipment.number}`}
+        breadcrumbs={crumbs}
+        description={
+          <>
+            {formatDateTime(shipment.shippedAt)} · por{' '}
+            <span className="font-medium text-foreground">{shipment.user.name}</span>
+            {shipment.orderRef && <> · {shipment.orderRef}</>}
+          </>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

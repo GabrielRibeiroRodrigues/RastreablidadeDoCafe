@@ -17,6 +17,7 @@ import {
 import { FieldGroup } from '@/components/ui/field';
 import { formatDocument, formatPhone, UFS } from '@/lib/br';
 import type { Customer, CustomerInput } from './api';
+import { maskDocument, maskPhone } from '@/lib/masks';
 
 const schema = z
   .object({
@@ -88,13 +89,16 @@ export function CustomerForm({
           name="document"
           label="CPF ou CNPJ"
           inputMode="numeric"
-          placeholder="Com ou sem pontuação"
+          mask={maskDocument}
+          placeholder="000.000.000-00"
         />
         <TextField
           control={form.control}
           name="phone"
           label="Telefone"
           type="tel"
+          inputMode="tel"
+          mask={maskPhone}
           placeholder="(11) 98888-7777"
         />
         <TextField

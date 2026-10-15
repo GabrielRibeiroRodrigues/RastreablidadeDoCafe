@@ -1,7 +1,7 @@
+import { EmptyState } from '@/components/EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import {
   AlertTriangleIcon,
-  ArrowLeftIcon,
   BoxesIcon,
   FactoryIcon,
   RefreshCwIcon,
@@ -25,13 +25,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { inventoryApi } from '@/features/inventory/api';
-import { EmptyState, LotStatusBadge } from '@/features/inventory/components';
+import { LotStatusBadge } from '@/features/inventory/components';
 import { ProductTypeBadge } from '@/features/production/components';
-import { ApiError, getErrorMessage } from '@/lib/api';
+import { getErrorMessage } from '@/lib/api';
 import { formatDateTime, formatQuantity } from '@/lib/quantity';
 import { traceApi, type BackwardTrace, type ForwardTrace, type TraceDirection } from './api';
 import { backwardModel, forwardModel } from './layout';
 import { TraceTree } from './TraceTree';
+import { DetailPageError } from '@/components/layout/DetailStates';
+import { PageHeader, PageHeaderSkeleton } from '@/components/layout/PageHeader';
 
 const TABS: Array<{ value: TraceDirection; param: string; label: string; hint: string }> = [
   {
@@ -302,61 +304,50 @@ export function LotTracePage() {
   });
   const active = direction === 'backward' ? backward : forward;
 
-  const back = (
-    <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-      <Link to={`/lotes/${id}`}>
-        <ArrowLeftIcon />
-        {lot.data ? `Lote ${lot.data.code}` : 'Lote'}
-      </Link>
-    </Button>
-  );
+  const crumbs = [
+    { label: 'Rastreabilidade', to: '/rastreabilidade' },
+    ...(lot.data ? [{ label: lot.data.code, to: `/lotes/${id}` }] : []),
+    { label: 'Árvore' },
+  ];
 
   if (lot.isError) {
-    const notFound = lot.error instanceof ApiError && lot.error.status === 404;
     return (
-      <div className="space-y-6">
-        <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-          <Link to="/rastreabilidade">
-            <ArrowLeftIcon />
-            Rastreabilidade
-          </Link>
-        </Button>
-        {notFound ? (
-          <EmptyState>
-            <p className="font-medium text-foreground">Lote não encontrado</p>
-          </EmptyState>
-        ) : (
-          <ErrorState error={lot.error} onRetry={() => void lot.refetch()} />
-        )}
-      </div>
+      <DetailPageError
+        breadcrumbs={crumbs}
+        error={lot.error}
+        onRetry={() => void lot.refetch()}
+        entity="Lote"
+        backTo="/rastreabilidade"
+        backLabel="Buscar outro lote"
+      />
     );
   }
 
   return (
     <div className="space-y-6">
-      {back}
-
-      <div className="space-y-1.5">
-        <p className="text-xs font-medium tracking-wider text-muted-foreground uppercase">
-          Rastreabilidade
-        </p>
-        {lot.data ? (
-          <>
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="font-mono text-2xl font-semibold tracking-tight">{lot.data.code}</h1>
+      {lot.data ? (
+        <PageHeader
+          mono
+          title={lot.data.code}
+          documentTitle={`Rastreabilidade ${lot.data.code}`}
+          breadcrumbs={crumbs}
+          badges={
+            <>
               <ProductTypeBadge type={lot.data.product.type} className="h-6 px-2.5 text-sm" />
               <LotStatusBadge status={lot.data.status} className="h-6 px-2.5 text-sm" />
-            </div>
-            <p className="text-sm text-muted-foreground">
+            </>
+          }
+          description={
+            <>
               <span className="font-medium text-foreground">{lot.data.product.name}</span>
               {lot.data.harvest && <> · Safra {lot.data.harvest}</>}
               {lot.data.variety && <> · {lot.data.variety}</>}
-            </p>
-          </>
-        ) : (
-          <Skeleton className="h-9 w-72" />
-        )}
-      </div>
+            </>
+          }
+        />
+      ) : (
+        <PageHeaderSkeleton breadcrumbs={crumbs} />
+      )}
 
       <div className="space-y-2">
         <div

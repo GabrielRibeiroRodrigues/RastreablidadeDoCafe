@@ -1,10 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { ArrowLeftIcon, ArrowRightIcon, GitForkIcon, RefreshCwIcon } from 'lucide-react';
+import { ArrowRightIcon, GitForkIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -13,11 +12,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { EmptyState, LotStatusBadge, Quantity } from '@/features/inventory/components';
-import { ApiError, getErrorMessage } from '@/lib/api';
+import { LotStatusBadge, Quantity } from '@/features/inventory/components';
 import { formatDateTime } from '@/lib/quantity';
 import { productionApi } from './api';
 import { KgText, ProductTypeBadge, StageBadge, YieldText } from './components';
+import { DetailPageError, DetailPageSkeleton } from '@/components/layout/DetailStates';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 function Metric({ label, children }: { label: string; children: ReactNode }) {
   return (
@@ -35,46 +35,20 @@ export function ProductionOrderDetailPage() {
     queryFn: ({ signal }) => productionApi.get(id, signal),
   });
 
-  const back = (
-    <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-      <Link to="/producao">
-        <ArrowLeftIcon />
-        Produção
-      </Link>
-    </Button>
-  );
+  const crumbs = [{ label: 'Produção', to: '/producao' }, { label: query.data?.number ?? 'Ordem' }];
 
-  if (query.isPending) {
-    return (
-      <div className="space-y-6">
-        {back}
-        <Skeleton className="h-9 w-72" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-40 md:col-span-2" />
-          <Skeleton className="h-40" />
-        </div>
-      </div>
-    );
-  }
+  if (query.isPending) return <DetailPageSkeleton breadcrumbs={crumbs} cards={2} />;
 
   if (query.isError) {
-    const notFound = query.error instanceof ApiError && query.error.status === 404;
     return (
-      <div className="space-y-6">
-        {back}
-        <EmptyState>
-          <p className="font-medium text-foreground">
-            {notFound ? 'Ordem não encontrada' : 'Não foi possível carregar a ordem'}
-          </p>
-          {!notFound && <p>{getErrorMessage(query.error)}</p>}
-          {!notFound && (
-            <Button variant="outline" size="sm" onClick={() => void query.refetch()}>
-              <RefreshCwIcon />
-              Tentar novamente
-            </Button>
-          )}
-        </EmptyState>
-      </div>
+      <DetailPageError
+        breadcrumbs={crumbs}
+        error={query.error}
+        onRetry={() => void query.refetch()}
+        entity="Ordem de produção"
+        backTo="/producao"
+        backLabel="Ver ordens"
+      />
     );
   }
 
@@ -83,26 +57,27 @@ export function ProductionOrderDetailPage() {
 
   return (
     <div className="space-y-6">
-      {back}
-
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-mono text-2xl font-semibold tracking-tight">{order.number}</h1>
-            <StageBadge stage={order.stage} className="h-6 px-2.5 text-sm" />
-          </div>
-          <p className="text-sm text-muted-foreground">
+      <PageHeader
+        mono
+        title={order.number}
+        documentTitle={`Ordem ${order.number}`}
+        breadcrumbs={crumbs}
+        badges={<StageBadge stage={order.stage} className="h-6 px-2.5 text-sm" />}
+        description={
+          <>
             {formatDateTime(order.performedAt)} · por{' '}
             <span className="font-medium text-foreground">{order.user.name}</span>
-          </p>
-        </div>
-        <Button variant="outline" asChild>
-          <Link to={`/lotes/${output.id}/rastreabilidade`}>
-            <GitForkIcon />
-            Rastreabilidade do lote gerado
-          </Link>
-        </Button>
-      </div>
+          </>
+        }
+        actions={
+          <Button variant="outline" asChild>
+            <Link to={`/lotes/${output.id}/rastreabilidade`}>
+              <GitForkIcon />
+              Rastreabilidade do lote gerado
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">

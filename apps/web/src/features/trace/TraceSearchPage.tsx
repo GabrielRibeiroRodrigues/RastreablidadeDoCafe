@@ -1,14 +1,16 @@
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState, ErrorState } from '@/components/EmptyState';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRightIcon, GitForkIcon, Loader2Icon, SearchIcon } from 'lucide-react';
+import { ArrowRightIcon, GitForkIcon, SearchIcon, SearchXIcon } from 'lucide-react';
 import { useId, useState, type FormEvent } from 'react';
 import { Link, Navigate } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { inventoryApi } from '@/features/inventory/api';
-import { EmptyState, LotStatusBadge, PageHeader } from '@/features/inventory/components';
+import { LotStatusBadge } from '@/features/inventory/components';
 import { ProductTypeBadge } from '@/features/production/components';
-import { getErrorMessage } from '@/lib/api';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /** Busca de lote pelo código; leva à árvore de rastreabilidade. */
 export function TraceSearchPage() {
@@ -38,6 +40,7 @@ export function TraceSearchPage() {
     <div className="space-y-6">
       <PageHeader
         title="Rastreabilidade"
+        breadcrumbs={[{ label: 'Estoque' }, { label: 'Rastreabilidade' }]}
         description="Do café na xícara até a fazenda, e da fazenda até o cliente. Informe o código do lote (ex.: CAF-2026-000013) ou parte dele."
       />
 
@@ -72,13 +75,19 @@ export function TraceSearchPage() {
       {q !== '' && (
         <section className="space-y-3" aria-live="polite">
           {results.isPending ? (
-            <p className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2Icon className="size-4 animate-spin" aria-hidden /> Buscando…
-            </p>
+            <div className="grid gap-2 sm:grid-cols-2" role="status" aria-label="Buscando lotes">
+              <Skeleton className="h-16" />
+              <Skeleton className="h-16" />
+            </div>
           ) : results.isError ? (
-            <EmptyState>{getErrorMessage(results.error)}</EmptyState>
+            <ErrorState error={results.error} onRetry={() => void results.refetch()} />
           ) : results.data.data.length === 0 ? (
-            <EmptyState>Nenhum lote com o código “{q}”.</EmptyState>
+            <EmptyState
+              bordered
+              icon={SearchXIcon}
+              title="Nenhum lote encontrado"
+              description={`Nenhum lote com o código “${q}”. Confira o código impresso na etiqueta.`}
+            />
           ) : (
             <>
               <p className="text-sm text-muted-foreground">

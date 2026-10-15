@@ -1,6 +1,6 @@
 import { navItem } from '@/app/navigation';
 import { defineCatalogResource } from '@/components/catalog/types';
-import { formatDocument, UFS } from '@/lib/br';
+import { formatDocument, formatPhone, UFS } from '@/lib/br';
 import { toOptions } from '@/lib/options';
 import { SUPPLIER_TYPE_LABELS, suppliersApi, type Supplier, type SupplierInput } from './api';
 import { SupplierForm } from './SupplierForm';
@@ -101,5 +101,43 @@ export const suppliersResource = defineCatalogResource<Supplier, SupplierInput>(
   api: suppliersApi,
   Form: SupplierForm,
   describe: (supplier) => supplier.name,
+  details: (supplier) => [
+    { label: 'Nome', value: supplier.name, wide: true },
+    { label: 'Tipo', value: SUPPLIER_TYPE_LABELS[supplier.type] },
+    {
+      label: 'CPF/CNPJ',
+      value: supplier.document && (
+        <span className="font-mono">{formatDocument(supplier.document)}</span>
+      ),
+    },
+    { label: 'Fazenda', value: supplier.farmName },
+    { label: 'Região', value: supplier.region },
+    { label: 'Cidade/UF', value: [supplier.city, supplier.state].filter(Boolean).join('/') },
+    {
+      label: 'Altitude',
+      value:
+        supplier.altitudeMeters !== null
+          ? `${supplier.altitudeMeters.toLocaleString('pt-BR')} m`
+          : null,
+    },
+    {
+      label: 'Variedades',
+      wide: true,
+      value: supplier.varieties.length > 0 && (
+        <span className="flex flex-wrap gap-1">
+          {supplier.varieties.map((variety) => (
+            <span
+              key={variety}
+              className="rounded-md bg-secondary px-1.5 py-0.5 text-xs font-normal text-secondary-foreground"
+            >
+              {variety}
+            </span>
+          ))}
+        </span>
+      ),
+    },
+    { label: 'E-mail', value: supplier.email },
+    { label: 'Telefone', value: formatPhone(supplier.phone) },
+  ],
   dialogClassName: 'sm:max-w-2xl',
 });

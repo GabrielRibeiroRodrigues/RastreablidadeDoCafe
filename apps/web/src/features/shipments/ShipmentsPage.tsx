@@ -1,3 +1,5 @@
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { Loader2Icon, TruckIcon } from 'lucide-react';
 import { Link } from 'react-router';
@@ -11,11 +13,11 @@ import { useListParams, type ListParamsConfig } from '@/components/catalog/use-l
 import { EntityCombobox } from '@/components/form/EntityCombobox';
 import { Button } from '@/components/ui/button';
 import { inventoryApi, type Lot } from '@/features/inventory/api';
-import { EmptyState, PageHeader } from '@/features/inventory/components';
 import { isDateParam, isUuid } from '@/features/inventory/url-filters';
 import { getApiClient, unwrap } from '@/lib/api-client';
 import { formatDateTime, startOfLocalDayIso } from '@/lib/quantity';
 import { shipmentsApi, type Shipment, type ShipmentsQuery } from './api';
+import { SearchXIcon } from 'lucide-react';
 
 const LIST_CONFIG: ListParamsConfig = {
   sorts: [''],
@@ -119,6 +121,7 @@ export function ShipmentsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Expedição"
+        breadcrumbs={[{ label: 'Operação' }, { label: 'Expedição' }]}
         description="Saídas de café para clientes. Cada item baixa o estoque de um lote num local; correções são feitas por estorno da saída."
         actions={
           canOperate && (
@@ -186,27 +189,34 @@ export function ShipmentsPage() {
           sort=""
           onSortChange={() => undefined}
           empty={
-            <EmptyState>
-              <p>
-                {hasFilters
-                  ? 'Nenhuma expedição para os filtros aplicados.'
-                  : 'Nenhuma expedição ainda.'}
-              </p>
-              {hasFilters ? (
-                <Button variant="outline" size="sm" onClick={list.clearFilters}>
-                  Limpar filtros
-                </Button>
-              ) : (
-                canOperate && (
-                  <Link
-                    to="/expedicao/nova"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    Registrar a primeira expedição
-                  </Link>
-                )
-              )}
-            </EmptyState>
+            hasFilters ? (
+              <EmptyState
+                icon={SearchXIcon}
+                title="Nenhuma expedição encontrada"
+                description="Nenhuma expedição corresponde aos filtros aplicados."
+                action={
+                  <Button variant="outline" size="sm" onClick={list.clearFilters}>
+                    Limpar filtros
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={TruckIcon}
+                title="Nenhuma expedição ainda"
+                description="Cada expedição baixa o estoque dos lotes enviados e registra o cliente de destino."
+                action={
+                  canOperate && (
+                    <Button size="sm" asChild>
+                      <Link to="/expedicao/nova">
+                        <TruckIcon />
+                        Registrar a primeira expedição
+                      </Link>
+                    </Button>
+                  )
+                }
+              />
+            )
           }
         />
 

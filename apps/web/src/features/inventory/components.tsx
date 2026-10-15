@@ -1,5 +1,4 @@
 import { AlertTriangleIcon, Undo2Icon } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { cn } from 'cn';
 import { Badge } from '@/components/ui/badge';
 import { LOCATION_TYPE_LABELS } from '@/features/locations/api';
@@ -99,34 +98,5 @@ export function MovementRoute({ movement }: { movement: Movement }) {
       </span>
       <LocationCode location={movement.toLocation} />
     </span>
-  );
-}
-
-/** Cabeçalho das telas de estoque. */
-export function PageHeader({
-  title,
-  description,
-  actions,
-}: {
-  title: ReactNode;
-  description?: ReactNode;
-  actions?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
-        {description && <p className="max-w-2xl text-sm text-muted-foreground">{description}</p>}
-      </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
-    </div>
-  );
-}
-
-export function EmptyState({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center gap-3 text-center text-sm text-muted-foreground">
-      {children}
-    </div>
   );
 }

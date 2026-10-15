@@ -17,6 +17,7 @@ interface ConfirmDialogProps {
   title: string;
   description: ReactNode;
   confirmLabel: string;
+  cancelLabel?: string;
   onConfirm: () => void;
   pending?: boolean;
   destructive?: boolean;
@@ -29,6 +30,7 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  cancelLabel = 'Cancelar',
   onConfirm,
   pending = false,
   destructive = false,
@@ -41,7 +43,7 @@ export function ConfirmDialog({
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel disabled={pending}>{cancelLabel}</AlertDialogCancel>
           {/* Botão comum (não o Action do Radix) para o diálogo não fechar antes da resposta. */}
           <Button
             variant={destructive ? 'destructive' : 'default'}

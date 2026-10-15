@@ -1,13 +1,7 @@
-import {
-  ArrowDownIcon,
-  ArrowUpDownIcon,
-  ArrowUpIcon,
-  RefreshCwIcon,
-  ServerCrashIcon,
-} from 'lucide-react';
+import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { cn } from 'cn';
-import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -17,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { getErrorMessage } from '@/lib/api';
+import { useIsMobile } from '@/lib/use-media-query';
 
 export interface Column<T> {
   id: string;
@@ -26,6 +20,11 @@ export interface Column<T> {
   /** Campo de ordenação na API (`name` → asc, `-name` → desc). Sem ele, a coluna não ordena. */
   sortKey?: string;
   className?: string;
+  /**
+   * No celular a tabela vira cartões: a coluna `title` (padrão: a primeira) é o título do
+   * cartão; `hidden` some do cartão; as demais aparecem como "rótulo: valor".
+   */
+  mobile?: 'title' | 'hidden';
 }
 
 interface DataTableProps<T extends { id: string }> {
@@ -72,7 +71,50 @@ function SortHeader({
   );
 }
 
-/** Tabela de cadastros: cabeçalhos ordenáveis, esqueleto ao carregar, estados vazio e de erro. */
+/** Lista em cartões (celular): mesmo conteúdo das colunas, sem rolagem horizontal. */
+function CardList<T extends { id: string }>({
+  columns,
+  rows,
+  rowActions,
+  isMuted,
+  caption,
+}: {
+  columns: Column<T>[];
+  rows: T[];
+  rowActions?: ((row: T) => ReactNode) | undefined;
+  isMuted?: ((row: T) => boolean) | undefined;
+  caption: string;
+}) {
+  const title = columns.find((column) => column.mobile === 'title') ?? columns[0];
+  const fields = columns.filter((column) => column !== title && column.mobile !== 'hidden');
+  return (
+    <ul aria-label={caption} className="divide-y">
+      {rows.map((row) => (
+        <li key={row.id} className={cn('space-y-2 p-4', isMuted?.(row) && 'opacity-70')}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1 text-sm">{title?.cell(row)}</div>
+            {rowActions && <div className="-my-1 flex shrink-0 gap-1">{rowActions(row)}</div>}
+          </div>
+          {fields.length > 0 && (
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
+              {fields.map((column) => (
+                <div key={column.id} className="contents">
+                  <dt className="text-xs leading-5 text-muted-foreground">{column.header}</dt>
+                  <dd className="min-w-0 text-right break-words">{column.cell(row)}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * Tabela de listagens: cabeçalho fixo ao rolar, ordenação, esqueleto ao carregar, estados vazio
+ * e de erro. No celular vira uma lista de cartões.
+ */
 export function DataTable<T extends { id: string }>({
   columns,
   rows,
@@ -86,12 +128,27 @@ export function DataTable<T extends { id: string }>({
   isMuted,
   caption,
 }: DataTableProps<T>) {
+  const isMobile = useIsMobile();
   const colSpan = columns.length + (rowActions ? 1 : 0);
+
+  if (isMobile && !isLoading && !error && rows?.length) {
+    return (
+      <div className="overflow-hidden rounded-xl border bg-card">
+        <CardList
+          columns={columns}
+          rows={rows}
+          rowActions={rowActions}
+          isMuted={isMuted}
+          caption={caption}
+        />
+      </div>
+    );
+  }
 
   let body: ReactNode;
   if (isLoading) {
     body = Array.from({ length: SKELETON_ROWS }, (_, index) => (
-      <TableRow key={index} aria-hidden>
+      <TableRow key={index} aria-hidden className="hover:bg-transparent">
         {Array.from({ length: colSpan }, (__, cell) => (
           <TableCell key={cell}>
             <Skeleton className="h-5 w-full max-w-40" />
@@ -102,20 +159,13 @@ export function DataTable<T extends { id: string }>({
   } else if (error) {
     body = (
       <TableRow className="hover:bg-transparent">
-        <TableCell colSpan={colSpan} className="py-12">
-          <div role="alert" className="flex flex-col items-center gap-3 text-center">
-            <ServerCrashIcon className="size-8 text-destructive" aria-hidden />
-            <div className="space-y-1">
-              <p className="font-medium">Não foi possível carregar a lista</p>
-              <p className="text-sm whitespace-normal text-muted-foreground">
-                {getErrorMessage(error)}
-              </p>
-            </div>
-            <Button variant="outline" size="sm" onClick={onRetry}>
-              <RefreshCwIcon />
-              Tentar novamente
-            </Button>
-          </div>
+        <TableCell colSpan={colSpan} className="py-10 whitespace-normal">
+          <ErrorState
+            error={error}
+            onRetry={onRetry}
+            title="Não foi possível carregar a lista"
+            bordered={false}
+          />
         </TableCell>
       </TableRow>
     );
@@ -131,12 +181,12 @@ export function DataTable<T extends { id: string }>({
     body = rows.map((row) => (
       <TableRow key={row.id} className={cn(isMuted?.(row) && 'text-muted-foreground')}>
         {columns.map((column) => (
-          <TableCell key={column.id} className={column.className}>
+          <TableCell key={column.id} className={cn('px-3 py-2.5', column.className)}>
             {column.cell(row)}
           </TableCell>
         ))}
         {rowActions && (
-          <TableCell className="w-px text-right">
+          <TableCell className="w-px px-3 text-right">
             <div className="flex justify-end gap-1">{rowActions(row)}</div>
           </TableCell>
         )}
@@ -146,9 +196,10 @@ export function DataTable<T extends { id: string }>({
 
   return (
     <div className="overflow-hidden rounded-xl border bg-card">
-      <Table aria-busy={isLoading}>
+      {/* Altura máxima: o cabeçalho fica fixo enquanto as linhas rolam. */}
+      <Table aria-busy={isLoading} containerClassName="max-h-[calc(100svh-15rem)] min-h-40">
         <caption className="sr-only">{caption}</caption>
-        <TableHeader className="bg-muted/40">
+        <TableHeader className="sticky top-0 z-10 bg-muted/95 backdrop-blur supports-backdrop-filter:bg-muted/80">
           <TableRow className="hover:bg-transparent">
             {columns.map((column) => {
               const direction =
@@ -158,7 +209,11 @@ export function DataTable<T extends { id: string }>({
                     ? 'descending'
                     : undefined;
               return (
-                <TableHead key={column.id} aria-sort={direction} className={column.className}>
+                <TableHead
+                  key={column.id}
+                  aria-sort={direction}
+                  className={cn('px-3 text-xs font-medium text-muted-foreground', column.className)}
+                >
                   {column.sortKey ? (
                     <SortHeader
                       column={column as Column<unknown>}
@@ -172,7 +227,7 @@ export function DataTable<T extends { id: string }>({
               );
             })}
             {rowActions && (
-              <TableHead className="w-px text-right">
+              <TableHead className="w-px px-3 text-right">
                 <span className="sr-only">Ações</span>
               </TableHead>
             )}

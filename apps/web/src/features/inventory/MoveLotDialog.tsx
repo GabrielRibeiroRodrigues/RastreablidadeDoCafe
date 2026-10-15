@@ -32,6 +32,7 @@ import {
 import { inventoryApi, type LotDetail, type ManualMovementType, type MovementInput } from './api';
 import { useIdempotencyKey, useInvalidateInventory, useLocations } from './hooks';
 import { LOT_STATUS_LABELS, MOVEMENT_TYPE_LABELS } from './labels';
+import { maskDecimal } from '@/lib/masks';
 
 const TYPES: Array<{ value: ManualMovementType; hint: string; adminOnly?: boolean }> = [
   { value: 'ISSUE', hint: 'Venda ou expedição: o café sai do estoque.' },
@@ -334,6 +335,8 @@ export function MoveLotDialog({
               name="quantity"
               label={`Quantidade (${unit})`}
               required
+              mask={maskDecimal}
+              suffix={unit}
               inputMode="decimal"
               placeholder="10"
               description={

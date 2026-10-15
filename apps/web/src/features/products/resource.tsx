@@ -58,4 +58,15 @@ export const productsResource = defineCatalogResource<Product, ProductInput>({
   api: productsApi,
   Form: ProductForm,
   describe: (product) => product.name,
+  details: (product) => [
+    { label: 'SKU', value: <span className="font-mono">{product.sku}</span> },
+    { label: 'Nome', value: product.name },
+    { label: 'Tipo', value: PRODUCT_TYPE_LABELS[product.type] },
+    { label: 'Unidade', value: UNIT_LABELS[product.unit] },
+    {
+      label: 'Grau de torra padrão',
+      value: product.defaultRoastLevel ? ROAST_LEVEL_LABELS[product.defaultRoastLevel] : null,
+    },
+    { label: 'Descrição', value: product.description, wide: true },
+  ],
 });

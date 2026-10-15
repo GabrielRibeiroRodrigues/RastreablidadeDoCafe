@@ -1,5 +1,7 @@
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { BoxesIcon, Loader2Icon, PackagePlusIcon } from 'lucide-react';
+import { BoxesIcon, Loader2Icon, PackagePlusIcon, SearchXIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { useInventoryPermissions } from '@/auth/permissions';
 import { DataTable, type Column } from '@/components/catalog/DataTable';
@@ -10,10 +12,11 @@ import { useListParams, type ListParamsConfig } from '@/components/catalog/use-l
 import { Button } from '@/components/ui/button';
 import { toOptions } from '@/lib/options';
 import { inventoryApi, type Lot, type LotsQuery } from './api';
-import { EmptyState, ExpiryText, LotStatusBadge, PageHeader, Quantity } from './components';
+import { ExpiryText, LotStatusBadge, Quantity } from './components';
 import { useProducts } from './hooks';
 import { EXPIRY_WINDOWS, LOT_STATUSES, LOT_STATUS_LABELS } from './labels';
 import { isUuid } from './url-filters';
+import { formatDateTime } from '@/lib/quantity';
 
 const LIST_CONFIG: ListParamsConfig = {
   sorts: ['-receivedAt', 'receivedAt', 'code', '-code', 'expiresAt', '-expiresAt'],
@@ -84,7 +87,7 @@ const columns: Column<Lot>[] = [
     id: 'receivedAt',
     header: 'Recebido',
     sortKey: 'receivedAt',
-    cell: (lot) => new Date(lot.receivedAt).toLocaleDateString('pt-BR'),
+    cell: (lot) => <span className="tabular-nums">{formatDateTime(lot.receivedAt)}</span>,
   },
   {
     id: 'expiresAt',
@@ -130,27 +133,30 @@ export function LotsPage() {
 
   const hasFilters = params.q !== '' || Object.keys(params.filters).length > 0;
   const empty = hasFilters ? (
-    <EmptyState>
-      <p>Nenhum lote para os filtros aplicados.</p>
-      <Button variant="outline" size="sm" onClick={list.clearFilters}>
-        Limpar filtros
-      </Button>
-    </EmptyState>
+    <EmptyState
+      icon={SearchXIcon}
+      title="Nenhum lote encontrado"
+      description="Nenhum lote corresponde à busca e aos filtros aplicados."
+      action={
+        <Button variant="outline" size="sm" onClick={list.clearFilters}>
+          Limpar filtros
+        </Button>
+      }
+    />
   ) : (
-    <EmptyState>
-      <div className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
-        <BoxesIcon className="size-5" aria-hidden />
-      </div>
-      <p className="font-medium text-foreground">Nenhum lote recebido</p>
-      <p>Os lotes nascem no recebimento de café dos fornecedores.</p>
-      {newReceipt}
-    </EmptyState>
+    <EmptyState
+      icon={BoxesIcon}
+      title="Nenhum lote recebido"
+      description="Os lotes nascem no recebimento de café dos fornecedores."
+      action={newReceipt}
+    />
   );
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Lotes"
+        breadcrumbs={[{ label: 'Estoque' }, { label: 'Lotes' }]}
         description="Cada recebimento gera um lote rastreável, com qualidade, validade e saldo por local."
         actions={newReceipt}
       />

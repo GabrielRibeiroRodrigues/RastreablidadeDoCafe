@@ -18,6 +18,7 @@ export function AuthProvider({ children, strategy: injected }: AuthProviderProps
   const queryClient = useQueryClient();
   const [session, setSession] = useState<AuthSession | null>(null);
   const [status, setStatus] = useState<AuthStatus>('loading');
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   const applySession = useCallback((next: AuthSession | null) => {
     // O cliente HTTP lê o token daqui; atualizar antes do render evita requisições sem token.
@@ -42,12 +43,16 @@ export function AuthProvider({ children, strategy: injected }: AuthProviderProps
   const login = useCallback(
     async (email?: string) => {
       const next = await strategy.login(email);
-      if (next) applySession(next);
+      if (next) {
+        setSessionExpired(false);
+        applySession(next);
+      }
     },
     [strategy, applySession],
   );
 
   const completeLogin = useCallback(async () => {
+    setSessionExpired(false);
     applySession(await strategy.handleCallback());
   }, [strategy, applySession]);
 
@@ -58,24 +63,29 @@ export function AuthProvider({ children, strategy: injected }: AuthProviderProps
     applySession(null);
   }, [strategy, queryClient, applySession]);
 
-  // 401 numa chamada autenticada: token expirado ou usuário desativado. Encerra a sessão
-  // (o ProtectedRoute leva ao login, guardando a página atual).
+  // 401 numa chamada autenticada: token expirado ou usuário desativado. Descarta a sessão local
+  // sem passar pelo logout do provedor; o ProtectedRoute leva ao login guardando a página atual,
+  // e o login volta para ela.
   const expiring = useRef(false);
   useEffect(() => {
     apiSession.onUnauthorized = () => {
       if (expiring.current) return;
       expiring.current = true;
-      toast.error('Sua sessão expirou. Entre novamente.');
-      void logout()
-        .catch(() => applySession(null))
+      toast.error('Sua sessão expirou. Entre novamente.', { id: 'session-expired' });
+      const clear = strategy.clearSession ?? strategy.logout;
+      void clear()
+        .catch(() => undefined)
         .finally(() => {
+          queryClient.clear();
+          setSessionExpired(true);
+          applySession(null);
           expiring.current = false;
         });
     };
     return () => {
       apiSession.onUnauthorized = null;
     };
-  }, [logout, applySession]);
+  }, [strategy, queryClient, applySession]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -84,11 +94,12 @@ export function AuthProvider({ children, strategy: injected }: AuthProviderProps
       user: session?.user ?? null,
       accessToken: session?.accessToken ?? null,
       isAuthenticated: status === 'authenticated',
+      sessionExpired,
       login,
       logout,
       completeLogin,
     }),
-    [strategy.mode, status, session, login, logout, completeLogin],
+    [strategy.mode, status, session, sessionExpired, login, logout, completeLogin],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

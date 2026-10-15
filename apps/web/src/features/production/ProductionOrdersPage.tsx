@@ -1,5 +1,7 @@
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { FactoryIcon, Loader2Icon } from 'lucide-react';
+import { FactoryIcon, Loader2Icon, SearchXIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { useInventoryPermissions } from '@/auth/permissions';
 import { DataTable, type Column } from '@/components/catalog/DataTable';
@@ -8,7 +10,6 @@ import { PaginationBar } from '@/components/catalog/PaginationBar';
 import { SearchInput } from '@/components/catalog/SearchInput';
 import { useListParams, type ListParamsConfig } from '@/components/catalog/use-list-params';
 import { Button } from '@/components/ui/button';
-import { EmptyState, PageHeader } from '@/features/inventory/components';
 import { isDateParam } from '@/features/inventory/url-filters';
 import { toOptions } from '@/lib/options';
 import { formatDateTime, startOfLocalDayIso } from '@/lib/quantity';
@@ -108,6 +109,7 @@ export function ProductionOrdersPage() {
     <div className="space-y-6">
       <PageHeader
         title="Produção"
+        breadcrumbs={[{ label: 'Operação' }, { label: 'Produção' }]}
         description="Cada ordem consome lotes de insumo e gera um lote novo, ligado aos de origem — é isso que permite rastrear do café na xícara até a fazenda."
         actions={
           canOperate && (
@@ -158,27 +160,34 @@ export function ProductionOrdersPage() {
           sort=""
           onSortChange={() => undefined}
           empty={
-            <EmptyState>
-              <p>
-                {hasFilters
-                  ? 'Nenhuma ordem para os filtros aplicados.'
-                  : 'Nenhuma ordem de produção ainda.'}
-              </p>
-              {hasFilters ? (
-                <Button variant="outline" size="sm" onClick={list.clearFilters}>
-                  Limpar filtros
-                </Button>
-              ) : (
-                canOperate && (
-                  <Link
-                    to="/producao/nova"
-                    className="text-primary underline-offset-4 hover:underline"
-                  >
-                    Registrar a primeira ordem
-                  </Link>
-                )
-              )}
-            </EmptyState>
+            hasFilters ? (
+              <EmptyState
+                icon={SearchXIcon}
+                title="Nenhuma ordem encontrada"
+                description="Nenhuma ordem de produção corresponde aos filtros aplicados."
+                action={
+                  <Button variant="outline" size="sm" onClick={list.clearFilters}>
+                    Limpar filtros
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={FactoryIcon}
+                title="Nenhuma ordem de produção ainda"
+                description="Beneficiamento, torra, blend e embalagem transformam lotes e mantêm a ligação com a origem."
+                action={
+                  canOperate && (
+                    <Button size="sm" asChild>
+                      <Link to="/producao/nova">
+                        <FactoryIcon />
+                        Registrar a primeira ordem
+                      </Link>
+                    </Button>
+                  )
+                }
+              />
+            )
           }
         />
 
