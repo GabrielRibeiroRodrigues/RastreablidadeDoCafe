@@ -89,7 +89,7 @@ describe('scopeArgs', () => {
     });
 
     it('rejects unknown models (fail closed)', () => {
-      expect(() => scopeArgs('Lot', 'findMany', {}, A)).toThrow(TenantScopeError);
+      expect(() => scopeArgs('NotAModel', 'findMany', {}, A)).toThrow(TenantScopeError);
     });
   });
 
