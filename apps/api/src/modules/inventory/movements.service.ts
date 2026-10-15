@@ -1,7 +1,7 @@
 import { ForbiddenException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthUser } from '../../auth/auth-user.js';
 import { DomainProblemException } from '../../common/http/domain-problem.exception.js';
-import { pageArgs, toPage, type Page } from '../../common/http/pagination.js';
+import { orderBy, pageArgs, toPage, type Page } from '../../common/http/pagination.js';
 import { MovementType, type Prisma } from '../../generated/prisma/client.js';
 import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
 import type { MovementResponse } from './inventory.dto.js';
@@ -108,6 +108,7 @@ export class MovementsService {
     const where: Prisma.StockMovementWhereInput = {
       ...(query.lotId && { lotId: query.lotId }),
       ...(query.type && { type: query.type }),
+      ...(query.userId && { userId: query.userId }),
       ...(query.locationId && {
         OR: [{ fromLocationId: query.locationId }, { toLocationId: query.locationId }],
       }),
@@ -123,7 +124,7 @@ export class MovementsService {
       this.db.client.stockMovement.findMany({
         where,
         include: MOVEMENT_INCLUDE,
-        orderBy: [{ occurredAt: 'desc' }, { id: 'desc' }],
+        orderBy: orderBy(query.sort),
         ...pageArgs(query),
       }),
       this.db.client.stockMovement.count({ where }),

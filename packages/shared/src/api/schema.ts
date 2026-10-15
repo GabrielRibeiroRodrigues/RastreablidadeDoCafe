@@ -1346,6 +1346,11 @@ export interface components {
       reason: string;
     };
     StockRow: {
+      /**
+       * @description Identificador da linha: lote:local
+       * @example 0190…:0190…
+       */
+      id: string;
       lot: components['schemas']['LotSummary'];
       /** Format: date */
       expiresAt: string | null;
@@ -2550,7 +2555,7 @@ export interface operations {
       query?: {
         page?: number;
         pageSize?: number;
-        /** @description Busca pelo código do lote */
+        /** @description Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda) */
         q?: string;
         productId?: string;
         supplierId?: string;
@@ -2708,6 +2713,9 @@ export interface operations {
         from?: string;
         /** @description Até (exclusive) */
         to?: string;
+        /** @description Autor da movimentação */
+        userId?: string;
+        sort?: '-occurredAt' | 'occurredAt' | '-quantity' | 'quantity';
       };
       header?: never;
       path?: never;
@@ -2830,6 +2838,7 @@ export interface operations {
         lotStatus?: components['schemas']['LotStatus'];
         /** @description Busca pelo código do lote */
         q?: string;
+        sort?: 'product' | 'lot' | 'location' | '-quantity' | 'quantity' | 'expiresAt';
       };
       header?: never;
       path?: never;

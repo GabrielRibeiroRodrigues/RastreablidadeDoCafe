@@ -1,7 +1,7 @@
 import { Controller, Get, Injectable, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
+import { IsEnum, IsIn, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ApiPageResponse, PagingDto, toPage, type Page } from '../../common/http/pagination.js';
 import { upperTrim } from '../../common/http/transforms.js';
 import {
@@ -15,6 +15,19 @@ import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
 import { StockRow } from './inventory.dto.js';
 import { toDateOnly } from './inventory.mappers.js';
 import { formatQuantity } from './quantity.js';
+
+const STOCK_SORTS = ['product', 'lot', 'location', '-quantity', 'quantity', 'expiresAt'] as const;
+type StockSort = (typeof STOCK_SORTS)[number];
+
+/** Ordenações fixas (whitelist) — o SQL nunca recebe texto livre do cliente. */
+const STOCK_ORDER: Record<StockSort, Prisma.Sql> = {
+  product: Prisma.sql`p.name, l.code, loc.code`,
+  lot: Prisma.sql`l.code, loc.code`,
+  location: Prisma.sql`loc.code, l.code`,
+  '-quantity': Prisma.sql`b.quantity DESC, l.code`,
+  quantity: Prisma.sql`b.quantity ASC, l.code`,
+  expiresAt: Prisma.sql`l.expires_at ASC NULLS LAST, l.code`,
+};
 
 export class StockQueryDto extends PagingDto {
   @ApiPropertyOptional({ format: 'uuid' })
@@ -38,6 +51,11 @@ export class StockQueryDto extends PagingDto {
   @IsString()
   @MaxLength(30)
   q?: string;
+
+  @ApiPropertyOptional({ enum: STOCK_SORTS, default: 'product' })
+  @IsOptional()
+  @IsIn(STOCK_SORTS)
+  sort: StockSort = 'product';
 }
 
 interface StockSqlRow {
@@ -100,7 +118,7 @@ export class StockService {
           AND (${locationId}::uuid IS NULL OR loc.id = ${locationId}::uuid)
           AND (${lotStatus}::text IS NULL OR l.status::text = ${lotStatus}::text)
           AND (${code}::text IS NULL OR l.code ILIKE ${code}::text)
-        ORDER BY p.name, l.code, loc.code
+        ORDER BY ${STOCK_ORDER[query.sort]}
         LIMIT ${query.pageSize} OFFSET ${offset}`,
     );
 
@@ -111,6 +129,7 @@ export class StockService {
 
 function toStockRow(row: StockSqlRow): StockRow {
   return {
+    id: `${row.lot_id}:${row.location_id}`,
     lot: { id: row.lot_id, code: row.lot_code, status: row.lot_status },
     expiresAt: toDateOnly(row.expires_at),
     product: { id: row.product_id, sku: row.sku, name: row.product_name, type: row.product_type },

@@ -99,6 +99,8 @@ export class MovementResponse {
 }
 
 export class StockRow {
+  @ApiProperty({ example: '0190…:0190…', description: 'Identificador da linha: lote:local' })
+  id!: string;
   @ApiProperty({ type: LotSummary }) lot!: LotSummary;
   @ApiProperty({ type: String, format: 'date', nullable: true }) expiresAt!: string | null;
   @ApiProperty({ type: ProductSummary }) product!: ProductSummary;

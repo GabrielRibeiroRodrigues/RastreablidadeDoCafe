@@ -1347,9 +1347,9 @@
             "name": "q",
             "required": false,
             "in": "query",
-            "description": "Busca pelo código do lote",
+            "description": "Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda)",
             "schema": {
-              "example": "CAF-2026",
+              "example": "bourbon",
               "type": "string"
             }
           },
@@ -1672,6 +1672,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Autor da movimentação",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "-occurredAt",
+              "type": "string",
+              "enum": ["-occurredAt", "occurredAt", "-quantity", "quantity"]
+            }
           }
         ],
         "responses": {
@@ -1891,6 +1911,16 @@
             "description": "Busca pelo código do lote",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "product",
+              "type": "string",
+              "enum": ["product", "lot", "location", "-quantity", "quantity", "expiresAt"]
             }
           }
         ],
@@ -4233,6 +4263,11 @@
       "StockRow": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "example": "0190…:0190…",
+            "description": "Identificador da linha: lote:local"
+          },
           "lot": {
             "$ref": "#/components/schemas/LotSummary"
           },
@@ -4259,7 +4294,7 @@
             "example": "42.500"
           }
         },
-        "required": ["lot", "expiresAt", "product", "location", "unit", "quantity"]
+        "required": ["id", "lot", "expiresAt", "product", "location", "unit", "quantity"]
       },
       "CustomerSummary": {
         "type": "object",
