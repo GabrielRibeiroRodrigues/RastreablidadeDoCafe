@@ -6,8 +6,8 @@
 | --- | ---------------------------------------------------------- | --------------- |
 | 1   | Base do monorepo (pnpm, TS, ESLint, Prettier, Husky, docs) | ✅ concluída    |
 | 2   | Esqueleto da API (config, logs, Swagger, erros, Docker)    | ✅ concluída    |
-| 3   | Prisma: schema, migration, seed de café                    | ⏳ próxima      |
-| 4   | Infra de testes (Jest + Testcontainers)                    | ⬜              |
+| 3   | Prisma: schema, migration, seed de café                    | ✅ concluída    |
+| 4   | Infra de testes (Vitest + Testcontainers)                  | ⏳ próxima      |
 | 5   | Autenticação (JWT/JWKS, emissor simulado, perfis)          | ⬜              |
 | 6   | Multi-tenancy + módulo de empresas + testes de isolamento  | ⬜              |
 | 7   | CRUDs: produto, fornecedor, cliente, local                 | ⬜              |
@@ -35,7 +35,15 @@
 - Dockerfile multi-stage (usuário não-root, healthcheck) e docker-compose com Postgres 17 + perfil `full`.
 - Vitest: 11 testes (env + e2e de health, correlação, problem details, validação, OpenAPI).
 
+### Etapa 3 — Prisma
+
+- Prisma **7.10** com `@prisma/adapter-pg` e cliente gerado em `src/generated/prisma` (ESM, fora do git, gerado no `postinstall`).
+- Observação: no npm a tag `latest` do pacote `prisma` aponta para um RC da v8; o CLI foi fixado em `~7.10.0`.
+- Schema: `companies`, `users`, `products`, `suppliers`, `customers`, `locations` — ver [modelo-de-dados.md](modelo-de-dados.md).
+- Migration `init` versionada; seed idempotente com 2 empresas de café.
+- `PrismaService` com pool configurável (`DATABASE_POOL_MAX`) e `GET /v1/health/ready` (503 se o banco cair).
+
 ### Trabalho em paralelo (agentes)
 
 - **CI básica** (`ci/basic-pipeline`): workflow com format, build, lint, typecheck, test; Dependabot; template de PR.
-- **Base do front** (`feat/web-skeleton`): em andamento.
+- **Base do front** (`feat/web-skeleton`): Vite + React 19 + Tailwind v4 + shadcn/ui, AuthProvider (mock e Cognito/PKCE), layout e páginas placeholder, 15 testes. Ver [web.md](web.md) após o merge.

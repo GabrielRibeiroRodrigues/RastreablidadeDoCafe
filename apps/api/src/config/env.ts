@@ -17,6 +17,9 @@ export const envSchema = z.object({
         .filter(Boolean),
     ),
   SWAGGER_ENABLED: z.stringbool().default(true),
+  DATABASE_URL: z.string().regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection string'),
+  /** Conexões por instância (na Lambda, manter 1–2). */
+  DATABASE_POOL_MAX: z.coerce.number().int().min(1).max(50).default(10),
 });
 
 export type Env = z.infer<typeof envSchema>;

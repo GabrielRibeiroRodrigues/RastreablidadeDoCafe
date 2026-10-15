@@ -9,6 +9,11 @@ export default defineConfig({
     include: ['src/**/*.spec.ts', 'test/**/*.e2e-spec.ts'],
     environment: 'node',
     restoreMocks: true,
-    env: { NODE_ENV: 'test', LOG_LEVEL: 'silent' },
+    // DATABASE_URL fictícia: o Prisma só conecta na primeira consulta. Testes com banco usam Testcontainers.
+    env: {
+      NODE_ENV: 'test',
+      LOG_LEVEL: 'silent',
+      DATABASE_URL: 'postgresql://unused:unused@localhost:1/unused',
+    },
   },
 });

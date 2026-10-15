@@ -34,13 +34,27 @@ npm install -g pnpm@10
 
 Para rodar só um pacote: `pnpm --filter @traceflow/shared build`.
 
+### Banco (rodar com `pnpm --filter @traceflow/api <script>`)
+
+| Script        | O que faz                                                          |
+| ------------- | ------------------------------------------------------------------ |
+| `db:migrate`  | `prisma migrate dev`: cria uma migration a partir do schema        |
+| `db:deploy`   | `prisma migrate deploy`: aplica migrations pendentes (CI/produção) |
+| `db:seed`     | Seed idempotente com dados de café                                 |
+| `db:reset`    | Apaga o banco local, reaplica migrations e roda o seed             |
+| `db:generate` | Regenera o Prisma Client (`src/generated/prisma`, fora do git)     |
+
+Modelo e convenções: [modelo-de-dados.md](modelo-de-dados.md).
+
 ## Rodando a API
 
 ```bash
-pnpm install
+pnpm install                              # também roda `prisma generate` (postinstall)
 pnpm --filter @traceflow/shared build
 cp apps/api/.env.example apps/api/.env   # ajuste se quiser
 pnpm db:up
+pnpm --filter @traceflow/api db:deploy   # aplica as migrations
+pnpm --filter @traceflow/api db:seed     # dados de exemplo de café
 pnpm dev:api
 ```
 

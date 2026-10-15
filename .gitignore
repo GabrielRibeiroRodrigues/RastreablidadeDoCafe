@@ -43,3 +43,6 @@ coverage
 .idea
 .DS_Store
 Thumbs.db
+
+# Prisma Client gerado (prisma generate)
+apps/api/src/generated/

@@ -28,6 +28,8 @@ services:
       LOG_LEVEL: info
       CORS_ORIGINS: http://localhost:5173
       SWAGGER_ENABLED: 'true'
+      DATABASE_URL: postgresql://${POSTGRES_USER:-traceflow}:${POSTGRES_PASSWORD:-traceflow}@postgres:5432/${POSTGRES_DB:-traceflow}
+      DATABASE_POOL_MAX: 5
     ports:
       - '3000:3000'
     depends_on:

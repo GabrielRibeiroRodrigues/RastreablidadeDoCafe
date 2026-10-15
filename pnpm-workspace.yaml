@@ -5,3 +5,5 @@ packages:
 # pnpm 10 bloqueia scripts de instalação por padrão; libere só o necessário.
 onlyBuiltDependencies:
   - esbuild
+  - prisma
+  - '@prisma/engines'
