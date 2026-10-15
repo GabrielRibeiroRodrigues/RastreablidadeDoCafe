@@ -80,4 +80,4 @@ erDiagram
 | Torrefação Serra Azul    | CAF     | ana@serraazul.dev → ADMIN · bruno@serraazul.dev → OPERATOR · carla@serraazul.dev → AUDITOR |
 | Cooperativa Vale do Café | VDC     | diego@valedocafe.dev → ADMIN · elisa@valedocafe.dev → OPERATOR                             |
 
-Com produtos (verde, torrado, blend, embalagem), fornecedores reais de regiões produtoras (Mantiqueira de Minas, Cerrado Mineiro, Alta Mogiana, Sul de Minas), clientes e locais. A segunda empresa existe para demonstrar e testar o isolamento.
+Com produtos (verde, torrado, blend, embalagem), fornecedores fictícios de regiões produtoras reais (Mantiqueira de Minas, Cerrado Mineiro, Alta Mogiana, Sul de Minas), clientes e locais. A segunda empresa existe para demonstrar e testar o isolamento.
