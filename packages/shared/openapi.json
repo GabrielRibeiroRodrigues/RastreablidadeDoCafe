@@ -2624,6 +2624,706 @@
         "tags": ["labels"]
       }
     },
+    "/v1/audit-logs": {
+      "get": {
+        "operationId": "AuditLogsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "entityType",
+            "required": false,
+            "in": "query",
+            "description": "Tipo da entidade (lot, recall, ...)",
+            "schema": {
+              "example": "lot",
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "required": false,
+            "in": "query",
+            "description": "Id da entidade",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": false,
+            "in": "query",
+            "description": "Ação exata, ou prefixo terminado em ponto (ex.: `recall.`)",
+            "schema": {
+              "example": "lot.status_changed",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "A partir de (inclusive)",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Até (exclusive)",
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AuditLogResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["audit"]
+      }
+    },
+    "/v1/non-conformities": {
+      "get": {
+        "operationId": "NonConformitiesController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/NonConformityStatus"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/NonConformityType"
+            }
+          },
+          {
+            "name": "lotId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NonConformityResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["non-conformities"]
+      },
+      "post": {
+        "operationId": "NonConformitiesController_open",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenNonConformityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NonConformityResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote não encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["non-conformities"]
+      }
+    },
+    "/v1/non-conformities/{id}": {
+      "get": {
+        "operationId": "NonConformitiesController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NonConformityResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["non-conformities"]
+      }
+    },
+    "/v1/non-conformities/{id}/release": {
+      "post": {
+        "operationId": "NonConformitiesController_release",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveNonConformityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NonConformityResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NC já resolvida ou lote sob recall"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["non-conformities"]
+      }
+    },
+    "/v1/non-conformities/{id}/discard": {
+      "post": {
+        "operationId": "NonConformitiesController_discard",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveNonConformityDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NonConformityResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "NC já resolvida"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["non-conformities"]
+      }
+    },
+    "/v1/recalls/simulate": {
+      "post": {
+        "operationId": "RecallsController_simulate",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulateRecallDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecallSimulationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote não encontrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["recalls"]
+      }
+    },
+    "/v1/recalls": {
+      "get": {
+        "operationId": "RecallsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RecallStatus"
+            }
+          },
+          {
+            "name": "lotId",
+            "required": false,
+            "in": "query",
+            "description": "Lote de origem",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RecallResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["recalls"]
+      },
+      "post": {
+        "operationId": "RecallsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRecallDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecallDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Já existe recall aberto para o lote"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["recalls"]
+      }
+    },
+    "/v1/recalls/{id}": {
+      "get": {
+        "operationId": "RecallsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecallDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["recalls"]
+      }
+    },
+    "/v1/recalls/{id}/retry": {
+      "post": {
+        "operationId": "RecallsController_retry",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecallDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Recall não está OPEN nem FAILED"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["recalls"]
+      }
+    },
+    "/v1/recalls/{id}/close": {
+      "post": {
+        "operationId": "RecallsController_close",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseRecallDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecallDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Recall não está COMPLETED nem FAILED"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["recalls"]
+      }
+    },
+    "/v1/recalls/{id}/report": {
+      "get": {
+        "operationId": "RecallsController_report",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecallReportResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Recall não encontrado ou relatório ainda não gerado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["recalls"]
+      }
+    },
+    "/v1/alerts/expiring": {
+      "get": {
+        "operationId": "AlertsController_expiring",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Janela em dias (padrão: ALERT_EXPIRY_DAYS, 30)",
+            "schema": {
+              "minimum": 1,
+              "maximum": 365,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpiringLotsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["alerts"]
+      }
+    },
     "/v1/public/trace/{token}": {
       "get": {
         "operationId": "PublicTraceController_get",
@@ -5305,6 +6005,978 @@
           }
         },
         "required": ["url", "expiresAt", "publicUrl"]
+      },
+      "AuditUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ana Souza"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "AuditLogResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "action": {
+            "type": "string",
+            "example": "lot.status_changed"
+          },
+          "entityType": {
+            "type": "string",
+            "example": "lot"
+          },
+          "entityId": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "nullable": true,
+            "description": "Null para jobs agendados",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuditUser"
+              }
+            ]
+          },
+          "before": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Estado antes da operação"
+          },
+          "after": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true,
+            "description": "Estado depois da operação"
+          },
+          "requestId": {
+            "type": "string",
+            "nullable": true
+          },
+          "ip": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "action",
+          "entityType",
+          "entityId",
+          "user",
+          "before",
+          "after",
+          "requestId",
+          "ip",
+          "createdAt"
+        ]
+      },
+      "NcLotSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000009"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          }
+        },
+        "required": ["id", "code", "status", "unit"]
+      },
+      "NonConformityType": {
+        "type": "string",
+        "enum": ["MOISTURE", "DEFECTS", "CONTAMINATION", "PEST", "PACKAGING", "OTHER"]
+      },
+      "NonConformityStatus": {
+        "type": "string",
+        "enum": ["OPEN", "RELEASED", "DISCARDED"]
+      },
+      "NcUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ana Souza"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "NonConformityResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "NC-2026-000001"
+          },
+          "lot": {
+            "$ref": "#/components/schemas/NcLotSummary"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NonConformityType"
+              }
+            ]
+          },
+          "description": {
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NonConformityStatus"
+              }
+            ]
+          },
+          "openedBy": {
+            "$ref": "#/components/schemas/NcUser"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "resolution": {
+            "type": "string",
+            "nullable": true,
+            "description": "Justificativa da liberação/descarte"
+          },
+          "resolvedBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NcUser"
+              }
+            ]
+          },
+          "resolvedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "lot",
+          "type",
+          "description",
+          "status",
+          "openedBy",
+          "openedAt",
+          "resolution",
+          "resolvedBy",
+          "resolvedAt"
+        ]
+      },
+      "OpenNonConformityDto": {
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NonConformityType"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "example": "Umidade de 13,8% na reanálise (limite 12,5%)"
+          }
+        },
+        "required": ["lotId", "type", "description"]
+      },
+      "ResolveNonConformityDto": {
+        "type": "object",
+        "properties": {
+          "justification": {
+            "type": "string",
+            "example": "Reanálise com umidade de 11,9%: lote dentro do padrão"
+          }
+        },
+        "required": ["justification"]
+      },
+      "SimulateRecallDto": {
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Lote de origem do problema"
+          }
+        },
+        "required": ["lotId"]
+      },
+      "AffectedLot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000013"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "balance": {
+            "type": "string",
+            "example": "12.000",
+            "description": "Saldo atual"
+          },
+          "depth": {
+            "type": "number",
+            "example": 2,
+            "description": "Distância até o lote de origem (0 = ele mesmo)"
+          }
+        },
+        "required": ["id", "code", "status", "product", "unit", "balance", "depth"]
+      },
+      "UnitQuantity": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "quantity": {
+            "type": "string",
+            "example": "120.000"
+          }
+        },
+        "required": ["unit", "quantity"]
+      },
+      "AffectedCustomer": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/TraceCustomer"
+          },
+          "shipmentsCount": {
+            "type": "number",
+            "example": 2
+          },
+          "shipmentNumbers": {
+            "example": ["EXP-2026-000003"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "quantities": {
+            "description": "Quantidade recebida, por unidade",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitQuantity"
+            }
+          }
+        },
+        "required": ["customer", "shipmentsCount", "shipmentNumbers", "quantities"]
+      },
+      "RecallTotals": {
+        "type": "object",
+        "properties": {
+          "lots": {
+            "type": "number",
+            "example": 4
+          },
+          "lotsWithStock": {
+            "type": "number",
+            "example": 2
+          },
+          "shipments": {
+            "type": "number",
+            "example": 3
+          },
+          "customers": {
+            "type": "number",
+            "example": 1
+          },
+          "stock": {
+            "description": "Saldo em estoque dos lotes afetados",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitQuantity"
+            }
+          },
+          "shipped": {
+            "description": "Quantidade já expedida a clientes",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitQuantity"
+            }
+          }
+        },
+        "required": ["lots", "lotsWithStock", "shipments", "customers", "stock", "shipped"]
+      },
+      "RecallSimulationResponse": {
+        "type": "object",
+        "properties": {
+          "originLot": {
+            "$ref": "#/components/schemas/AffectedLot"
+          },
+          "origins": {
+            "description": "Fazendas/fornecedores de origem",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceSupplier"
+            }
+          },
+          "lots": {
+            "description": "Lote de origem e todos os derivados",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedLot"
+            }
+          },
+          "shipments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceShipment"
+            }
+          },
+          "customers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedCustomer"
+            }
+          },
+          "totals": {
+            "$ref": "#/components/schemas/RecallTotals"
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "true se o limite de profundidade cortou o grafo"
+          }
+        },
+        "required": [
+          "originLot",
+          "origins",
+          "lots",
+          "shipments",
+          "customers",
+          "totals",
+          "truncated"
+        ]
+      },
+      "RecallLotRef": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000009"
+          }
+        },
+        "required": ["id", "code"]
+      },
+      "RecallSeverity": {
+        "type": "string",
+        "enum": ["LOW", "MEDIUM", "HIGH"]
+      },
+      "RecallStatus": {
+        "type": "string",
+        "enum": ["OPEN", "EXECUTING", "COMPLETED", "FAILED", "CLOSED"]
+      },
+      "RecallUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ana Souza"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "RecallResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "RC-2026-000001"
+          },
+          "originLot": {
+            "$ref": "#/components/schemas/RecallLotRef"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecallSeverity"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecallStatus"
+              }
+            ]
+          },
+          "lotsCount": {
+            "type": "number",
+            "example": 4
+          },
+          "customersCount": {
+            "type": "number",
+            "example": 1
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/RecallUser"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "closedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "originLot",
+          "reason",
+          "severity",
+          "status",
+          "lotsCount",
+          "customersCount",
+          "createdBy",
+          "createdAt",
+          "startedAt",
+          "completedAt",
+          "closedAt"
+        ]
+      },
+      "RecallStepName": {
+        "type": "string",
+        "enum": ["BLOCK_LOTS", "REPORT", "NOTIFY"]
+      },
+      "RecallStepStatus": {
+        "type": "string",
+        "enum": ["PENDING", "RUNNING", "COMPLETED", "FAILED", "SKIPPED"]
+      },
+      "RecallStepResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecallStepName"
+              }
+            ]
+          },
+          "position": {
+            "type": "number",
+            "example": 1
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecallStepStatus"
+              }
+            ]
+          },
+          "attempts": {
+            "type": "number",
+            "example": 1
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "finishedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "error": {
+            "type": "string",
+            "nullable": true
+          },
+          "output": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name",
+          "position",
+          "status",
+          "attempts",
+          "startedAt",
+          "finishedAt",
+          "error",
+          "output"
+        ]
+      },
+      "RecallLotResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000013"
+          },
+          "status": {
+            "description": "Status atual",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "depth": {
+            "type": "number",
+            "example": 1
+          },
+          "balance": {
+            "type": "string",
+            "example": "12.000",
+            "description": "Saldo na criação do recall"
+          },
+          "previousStatus": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "blockedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "product",
+          "unit",
+          "depth",
+          "balance",
+          "previousStatus",
+          "blockedAt"
+        ]
+      },
+      "RecallCustomerContact": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Cafeteria Grão Fino"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "phone": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "city", "state", "email", "phone"]
+      },
+      "RecallCustomerResponse": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/RecallCustomerContact"
+          },
+          "shipmentsCount": {
+            "type": "number",
+            "example": 2
+          },
+          "shipmentNumbers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "quantities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnitQuantity"
+            }
+          }
+        },
+        "required": ["customer", "shipmentsCount", "shipmentNumbers", "quantities"]
+      },
+      "RecallDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "RC-2026-000001"
+          },
+          "originLot": {
+            "$ref": "#/components/schemas/RecallLotRef"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecallSeverity"
+              }
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecallStatus"
+              }
+            ]
+          },
+          "lotsCount": {
+            "type": "number",
+            "example": 4
+          },
+          "customersCount": {
+            "type": "number",
+            "example": 1
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/RecallUser"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "completedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "closedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "orchestration": {
+            "type": "string",
+            "enum": ["LOCAL", "STEP_FUNCTIONS"]
+          },
+          "lastError": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasReport": {
+            "type": "boolean",
+            "description": "Relatório PDF disponível em /recalls/{id}/report"
+          },
+          "closingNotes": {
+            "type": "string",
+            "nullable": true
+          },
+          "closedBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecallUser"
+              }
+            ]
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecallStepResponse"
+            }
+          },
+          "lots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecallLotResponse"
+            }
+          },
+          "customers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RecallCustomerResponse"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "originLot",
+          "reason",
+          "severity",
+          "status",
+          "lotsCount",
+          "customersCount",
+          "createdBy",
+          "createdAt",
+          "startedAt",
+          "completedAt",
+          "closedAt",
+          "orchestration",
+          "lastError",
+          "hasReport",
+          "closingNotes",
+          "closedBy",
+          "steps",
+          "lots",
+          "customers"
+        ]
+      },
+      "CreateRecallDto": {
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Lote de origem do problema"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Ocratoxina acima do limite no laudo do lote verde"
+          },
+          "severity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecallSeverity"
+              }
+            ]
+          }
+        },
+        "required": ["lotId", "reason", "severity"]
+      },
+      "CloseRecallDto": {
+        "type": "object",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "example": "Clientes contatados; estoque recolhido e destinado à destruição"
+          }
+        },
+        "required": ["notes"]
+      },
+      "RecallReportResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL pré-assinada do PDF (curta duração)"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["url", "expiresAt"]
+      },
+      "ExpiringLot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000013"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "balance": {
+            "type": "string",
+            "example": "12.500"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-01"
+          },
+          "daysToExpiry": {
+            "type": "number",
+            "example": 17,
+            "description": "Dias até vencer (negativo = vencido há N dias)"
+          },
+          "expired": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "product",
+          "balance",
+          "unit",
+          "expiresAt",
+          "daysToExpiry",
+          "expired"
+        ]
+      },
+      "ExpiringLotsResponse": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "number",
+            "example": 30
+          },
+          "referenceDate": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-10-15"
+          },
+          "expiredCount": {
+            "type": "number",
+            "example": 3
+          },
+          "data": {
+            "description": "Lotes com saldo que vencem na janela (inclui vencidos), por data",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpiringLot"
+            }
+          }
+        },
+        "required": ["days", "referenceDate", "expiredCount", "data"]
       },
       "PublicLotResponse": {
         "type": "object",
