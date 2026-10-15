@@ -32,6 +32,25 @@ export const envSchema = z
     COGNITO_USER_POOL_ID: z.string().optional(),
     /** App client cujo `client_id` os access tokens devem ter (também usado pelo emissor simulado). */
     COGNITO_CLIENT_ID: z.string().min(1).default('traceflow-local'),
+
+    /** Bucket privado dos anexos. Sem ele a API sobe, mas as rotas de anexos respondem 503. */
+    S3_BUCKET: z.string().min(1).optional(),
+    S3_REGION: z.string().min(1).default('us-east-1'),
+    /** Endpoint S3 usado pela API (MinIO local). Na AWS, deixe vazio. */
+    S3_ENDPOINT: z.url().optional(),
+    /** Endpoint usado para assinar URLs entregues ao navegador (API em contêiner + MinIO). */
+    S3_PUBLIC_ENDPOINT: z.url().optional(),
+    /** MinIO exige path-style (`host/bucket/key`). */
+    S3_FORCE_PATH_STYLE: z.stringbool().default(false),
+    /** Só para MinIO/local: na Lambda, as credenciais vêm da role de execução. */
+    S3_ACCESS_KEY_ID: z.string().min(1).optional(),
+    S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
+    ATTACHMENT_MAX_BYTES: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .default(10 * 1024 * 1024),
+    ATTACHMENT_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
   })
   .superRefine((env, ctx) => {
     if (env.AUTH_MODE === 'mock' && env.NODE_ENV === 'production') {
@@ -47,6 +66,13 @@ export const envSchema = z
           ctx.addIssue({ code: 'custom', path: [key], message: 'required when AUTH_MODE=cognito' });
         }
       }
+    }
+    if (Boolean(env.S3_ACCESS_KEY_ID) !== Boolean(env.S3_SECRET_ACCESS_KEY)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['S3_SECRET_ACCESS_KEY'],
+        message: 'S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY must be set together',
+      });
     }
   });
 
