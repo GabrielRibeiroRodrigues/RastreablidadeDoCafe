@@ -87,6 +87,9 @@ export class ReverseMovementDto {
   reason!: string;
 }
 
+export const MOVEMENT_SORTS = ['-occurredAt', 'occurredAt', '-quantity', 'quantity'] as const;
+export type MovementSort = (typeof MOVEMENT_SORTS)[number];
+
 export class ListMovementsQueryDto extends PagingDto {
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
@@ -112,4 +115,14 @@ export class ListMovementsQueryDto extends PagingDto {
   @IsOptional()
   @IsDateString()
   to?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Autor da movimentação' })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @ApiPropertyOptional({ enum: MOVEMENT_SORTS, default: '-occurredAt' })
+  @IsOptional()
+  @IsIn(MOVEMENT_SORTS)
+  sort: MovementSort = '-occurredAt';
 }

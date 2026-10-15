@@ -31,7 +31,15 @@ export class LotsService {
       ...(query.status && { status: query.status }),
       ...(query.productId && { productId: query.productId }),
       ...(query.supplierId && { supplierId: query.supplierId }),
-      ...(query.q && { code: { contains: query.q, mode: 'insensitive' } }),
+      ...(query.q && {
+        OR: [
+          { code: { contains: query.q, mode: 'insensitive' } },
+          { product: { name: { contains: query.q, mode: 'insensitive' } } },
+          { product: { sku: { contains: query.q, mode: 'insensitive' } } },
+          { supplier: { name: { contains: query.q, mode: 'insensitive' } } },
+          { supplier: { farmName: { contains: query.q, mode: 'insensitive' } } },
+        ],
+      }),
       ...(query.expiresWithinDays !== undefined && {
         expiresAt: { not: null, lte: new Date(Date.now() + query.expiresWithinDays * DAY_MS) },
       }),

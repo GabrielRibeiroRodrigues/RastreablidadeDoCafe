@@ -31,6 +31,7 @@ import { inventoryApi, type LotDetail, type Movement } from './api';
 import { AttachmentsCard } from './AttachmentsCard';
 import { EmptyState, ExpiryText, LotStatusBadge, Quantity } from './components';
 import { EditLotDialog } from './EditLotDialog';
+import { LabelButton } from './LabelDialog';
 import { MoveLotDialog } from './MoveLotDialog';
 import { movementColumns } from './movement-columns';
 import { ChangeStatusDialog, ReverseMovementDialog } from './ReasonDialogs';
@@ -169,6 +170,7 @@ export function LotDetailPage() {
               Rastreabilidade
             </Link>
           </Button>
+          {permissions.canOperate && <LabelButton lot={lot} />}
           {permissions.canOperate && (
             <Button variant="outline" onClick={() => setDialog({ kind: 'edit' })}>
               <PencilIcon />

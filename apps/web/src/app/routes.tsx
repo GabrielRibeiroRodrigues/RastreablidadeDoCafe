@@ -12,6 +12,7 @@ import { locationsResource } from '@/features/locations/resource';
 import { NewProductionOrderPage } from '@/features/production/NewProductionOrderPage';
 import { ProductionOrderDetailPage } from '@/features/production/ProductionOrderDetailPage';
 import { ProductionOrdersPage } from '@/features/production/ProductionOrdersPage';
+import { PublicTracePage } from '@/features/public-trace/PublicTracePage';
 import { productsResource } from '@/features/products/resource';
 import { NewShipmentPage } from '@/features/shipments/NewShipmentPage';
 import { ShipmentDetailPage } from '@/features/shipments/ShipmentDetailPage';
@@ -27,6 +28,8 @@ import { NAV_ITEMS } from './navigation';
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
   { path: '/auth/callback', element: <AuthCallbackPage /> },
+  // Página pública do QR code da etiqueta: fora do layout autenticado, sem login.
+  { path: '/rastreio/:token', element: <PublicTracePage /> },
   {
     element: <ProtectedRoute />,
     children: [

@@ -1347,9 +1347,9 @@
             "name": "q",
             "required": false,
             "in": "query",
-            "description": "Busca pelo código do lote",
+            "description": "Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda)",
             "schema": {
-              "example": "CAF-2026",
+              "example": "bourbon",
               "type": "string"
             }
           },
@@ -1672,6 +1672,26 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Autor da movimentação",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "-occurredAt",
+              "type": "string",
+              "enum": ["-occurredAt", "occurredAt", "-quantity", "quantity"]
+            }
           }
         ],
         "responses": {
@@ -1891,6 +1911,16 @@
             "description": "Busca pelo código do lote",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "product",
+              "type": "string",
+              "enum": ["product", "lot", "location", "-quantity", "quantity", "expiresAt"]
             }
           }
         ],
@@ -2553,6 +2583,79 @@
           }
         ],
         "tags": ["trace"]
+      }
+    },
+    "/v1/lots/{id}/label": {
+      "post": {
+        "operationId": "LabelsController_generate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["labels"]
+      }
+    },
+    "/v1/public/trace/{token}": {
+      "get": {
+        "operationId": "PublicTraceController_get",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicTraceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Código de rastreio não encontrado"
+          },
+          "429": {
+            "description": "Limite de requisições por IP excedido"
+          }
+        },
+        "tags": ["public"]
       }
     },
     "/v1/health": {
@@ -4233,6 +4336,11 @@
       "StockRow": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "example": "0190…:0190…",
+            "description": "Identificador da linha: lote:local"
+          },
           "lot": {
             "$ref": "#/components/schemas/LotSummary"
           },
@@ -4259,7 +4367,7 @@
             "example": "42.500"
           }
         },
-        "required": ["lot", "expiresAt", "product", "location", "unit", "quantity"]
+        "required": ["id", "lot", "expiresAt", "product", "location", "unit", "quantity"]
       },
       "CustomerSummary": {
         "type": "object",
@@ -4873,6 +4981,13 @@
             "type": "string",
             "example": "José Aparecido da Silva"
           },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupplierType"
+              }
+            ]
+          },
           "farmName": {
             "type": "string",
             "nullable": true,
@@ -4899,7 +5014,7 @@
             "example": 1250
           }
         },
-        "required": ["id", "name", "farmName", "region", "city", "state", "altitudeMeters"]
+        "required": ["id", "name", "type", "farmName", "region", "city", "state", "altitudeMeters"]
       },
       "TraceNode": {
         "type": "object",
@@ -5171,6 +5286,233 @@
           }
         },
         "required": ["rootLotId", "nodes", "edges", "truncated", "shipments", "customers"]
+      },
+      "LabelResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL pré-assinada (GET) do PDF da etiqueta, de curta duração"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "publicUrl": {
+            "type": "string",
+            "description": "Página pública de rastreio (conteúdo do QR code)",
+            "example": "https://traceflow.example.com/rastreio/3q2-7wH1y0mXl4bJp9cS8g"
+          }
+        },
+        "required": ["url", "expiresAt", "publicUrl"]
+      },
+      "PublicLotResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000013"
+          },
+          "productName": {
+            "type": "string",
+            "example": "Blend da Casa"
+          },
+          "productType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true,
+            "example": "2025/26"
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bourbon Amarelo"
+          },
+          "roastLevel": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "producedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data de recebimento (café verde) ou de produção/torra"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2027-06-30"
+          },
+          "cuppingScore": {
+            "type": "number",
+            "nullable": true,
+            "example": 86.5
+          },
+          "available": {
+            "type": "boolean",
+            "description": "true = disponível. Motivos de indisponibilidade (ex.: recall) não são expostos"
+          }
+        },
+        "required": [
+          "code",
+          "productName",
+          "productType",
+          "harvest",
+          "variety",
+          "roastLevel",
+          "producedAt",
+          "expiresAt",
+          "cuppingScore",
+          "available"
+        ]
+      },
+      "PublicOriginResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fazenda/cooperativa. Nulo quando a origem é um produtor sem fazenda cadastrada",
+            "example": "Sítio Santa Inês"
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "example": "Mantiqueira de Minas"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "example": "Carmo de Minas"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "example": "MG"
+          },
+          "altitudeMeters": {
+            "type": "number",
+            "nullable": true,
+            "example": 1250
+          }
+        },
+        "required": ["name", "region", "city", "state", "altitudeMeters"]
+      },
+      "PublicTraceStep": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000003"
+          },
+          "productName": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "productType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "stage": {
+            "nullable": true,
+            "description": "Etapa que gerou o lote; nulo para lotes recebidos (colheita/recebimento)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionStage"
+              }
+            ]
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Recebimento ou produção"
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true
+          },
+          "depth": {
+            "type": "number",
+            "description": "Distância até o lote consultado (0 = ele mesmo)",
+            "example": 2
+          },
+          "inputs": {
+            "description": "Códigos dos lotes usados para produzir este",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "origin": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicOriginResponse"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "productName",
+          "productType",
+          "stage",
+          "date",
+          "harvest",
+          "variety",
+          "depth",
+          "inputs",
+          "origin"
+        ]
+      },
+      "PublicTraceResponse": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string",
+            "example": "Torrefação Serra Azul"
+          },
+          "lot": {
+            "$ref": "#/components/schemas/PublicLotResponse"
+          },
+          "origins": {
+            "description": "Fazendas/regiões de origem",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicOriginResponse"
+            }
+          },
+          "chain": {
+            "description": "Cadeia da origem até o lote (mais antigos primeiro)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicTraceStep"
+            }
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "true se a cadeia foi cortada pelo limite de profundidade"
+          }
+        },
+        "required": ["companyName", "lot", "origins", "chain", "truncated"]
       },
       "HealthResponse": {
         "type": "object",

@@ -16,7 +16,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { PagingDto } from '../../common/http/pagination.js';
-import { trim, trimToNull, upperTrim } from '../../common/http/transforms.js';
+import { trim, trimToNull } from '../../common/http/transforms.js';
 import { LotStatus, RoastLevel } from '../../generated/prisma/client.js';
 
 /**
@@ -124,9 +124,12 @@ const LOT_SORTS = [
 export type LotSort = (typeof LOT_SORTS)[number];
 
 export class ListLotsQueryDto extends PagingDto {
-  @ApiPropertyOptional({ description: 'Busca pelo código do lote', example: 'CAF-2026' })
+  @ApiPropertyOptional({
+    description: 'Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda)',
+    example: 'bourbon',
+  })
   @IsOptional()
-  @Transform(upperTrim)
+  @Transform(trim)
   @IsString()
   @MaxLength(30)
   q?: string;

@@ -118,6 +118,10 @@ export const inventoryApi = {
     );
   },
 
+  /** Gera (ou regenera) o PDF da etiqueta; o link público do QR code não muda entre gerações. */
+  generateLabel: (lotId: string) =>
+    unwrap(getApiClient().POST('/v1/lots/{id}/label', { params: { path: { id: lotId } } })),
+
   downloadAttachment: (lotId: string, id: string) =>
     unwrap(
       getApiClient().GET('/v1/lots/{lotId}/attachments/{id}/download', {

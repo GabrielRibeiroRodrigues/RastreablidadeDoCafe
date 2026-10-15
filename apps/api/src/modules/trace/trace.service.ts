@@ -27,6 +27,7 @@ const SUPPLIER_SELECT = {
   select: {
     id: true,
     name: true,
+    type: true,
     farmName: true,
     region: true,
     city: true,

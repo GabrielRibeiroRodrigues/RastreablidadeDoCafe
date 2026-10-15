@@ -51,6 +51,12 @@ export const envSchema = z
       .min(1)
       .default(10 * 1024 * 1024),
     ATTACHMENT_URL_TTL_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
+
+    /** URL pública do front: base do QR code das etiquetas (`{PUBLIC_WEB_URL}/rastreio/{token}`). */
+    PUBLIC_WEB_URL: z
+      .url()
+      .default('http://localhost:5173')
+      .transform((value) => value.replace(/\/+$/, '')),
   })
   .superRefine((env, ctx) => {
     if (env.AUTH_MODE === 'mock' && env.NODE_ENV === 'production') {
