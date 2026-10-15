@@ -15,7 +15,11 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "build": "pnpm -r --if-present build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "dev:api": "pnpm --filter @traceflow/api dev",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "stack:up": "docker compose --profile full up -d --build"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",

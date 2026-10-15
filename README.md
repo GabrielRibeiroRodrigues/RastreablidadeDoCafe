@@ -12,15 +12,15 @@ Rastreabilidade de alimentos é um problema real e cheio de regras interessantes
 
 ## Stack
 
-| Camada         | Tecnologia                                                                       |
-| -------------- | -------------------------------------------------------------------------------- |
-| Monorepo       | pnpm workspaces (`apps/api`, `apps/web`, `packages/shared`, `infra`, `docs`)     |
-| API            | NestJS 11, TypeScript strict, Prisma 7, PostgreSQL 17, Swagger, nestjs-pino      |
-| Web            | React 19, Vite, TanStack Query, React Hook Form + Zod, shadcn/ui                 |
-| Auth           | Amazon Cognito (JWT/JWKS) — emissor simulado em desenvolvimento                  |
-| Testes         | Jest, supertest, Testcontainers (API) · Vitest + Testing Library (web)           |
-| AWS (Semana 6) | Lambda, API Gateway, S3 + CloudFront, RDS, SQS, SNS, Step Functions, EventBridge |
-| IaC / CI       | Terraform · GitHub Actions com OIDC                                              |
+| Camada         | Tecnologia                                                                        |
+| -------------- | --------------------------------------------------------------------------------- |
+| Monorepo       | pnpm workspaces (`apps/api`, `apps/web`, `packages/shared`, `infra`, `docs`)      |
+| API            | NestJS 12 (ESM), TypeScript strict, Prisma 7, PostgreSQL 17, Swagger, nestjs-pino |
+| Web            | React 19, Vite, TanStack Query, React Hook Form + Zod, shadcn/ui                  |
+| Auth           | Amazon Cognito (JWT/JWKS) — emissor simulado em desenvolvimento                   |
+| Testes         | Vitest, supertest, Testcontainers (API) · Vitest + Testing Library (web)          |
+| AWS (Semana 6) | Lambda, API Gateway, S3 + CloudFront, RDS, SQS, SNS, Step Functions, EventBridge  |
+| IaC / CI       | Terraform · GitHub Actions com OIDC                                               |
 
 ## Começando
 

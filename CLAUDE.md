@@ -30,4 +30,5 @@ Leia antes de qualquer tarefa. Vale para qualquer agente trabalhando neste repo 
 
 ## Versões fixadas
 
+- NestJS 12 em ESM (imports relativos com `.js`), testes com Vitest.
 - Node 24, pnpm 10, TypeScript **6.0.x** (o TS 7 nativo ainda não é suportado pelo typescript-eslint/Nest).

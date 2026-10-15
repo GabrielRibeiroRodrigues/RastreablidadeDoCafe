@@ -4,6 +4,9 @@
   "private": true,
   "description": "API do TraceFlow (NestJS)",
   "type": "module",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "nest build",
     "dev": "nest start --watch",

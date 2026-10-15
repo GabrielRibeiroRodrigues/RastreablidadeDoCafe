@@ -21,7 +21,7 @@ flowchart LR
 
 | Pasta             | Papel                                                                     |
 | ----------------- | ------------------------------------------------------------------------- |
-| `apps/api`        | API NestJS (_Semana 1, etapa 2_)                                          |
+| `apps/api`        | API NestJS 12 (ESM), prefixo `/v1`, Swagger em `/docs`                    |
 | `apps/web`        | Front React (_Semana 1, etapa 9_)                                         |
 | `packages/shared` | Constantes de domínio (perfis, enums) e, depois, o cliente tipado OpenAPI |
 | `infra`           | Terraform (_Semana 6_)                                                    |
