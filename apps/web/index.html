@@ -2,11 +2,39 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="description"
+      content="TraceFlow: rastreabilidade de lotes de café do recebimento à expedição."
+    />
+    <meta name="theme-color" content="#2b211b" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <title>TraceFlow</title>
+    <script>
+      // Aplica o tema salvo antes do primeiro paint (sem "flash" do tema claro).
+      (function () {
+        var theme = null;
+        try {
+          theme = window.localStorage.getItem('traceflow.theme');
+        } catch (e) {
+          theme = null;
+        }
+        var dark =
+          theme === 'dark' ||
+          (theme !== 'light' &&
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var root = document.documentElement;
+        if (dark) root.classList.add('dark');
+        root.style.colorScheme = dark ? 'dark' : 'light';
+      })();
+    </script>
   </head>
   <body>
+    <noscript>O TraceFlow precisa de JavaScript habilitado.</noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
