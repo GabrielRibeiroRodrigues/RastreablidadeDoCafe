@@ -1,76 +1,72 @@
-import { describe, expect, it, vi } from 'vitest';
-import { ApiError, apiFetch } from './api';
+import { describe, expect, it } from 'vitest';
+import { ApiError, getErrorMessage, toApiError, translateFieldMessage } from './api';
 
-function jsonResponse(body: unknown, status: number, contentType = 'application/json') {
-  return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': contentType } });
+function problemResponse(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/problem+json' },
+  });
 }
 
-describe('apiFetch', () => {
-  it('sends the bearer token and a request id', async () => {
-    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ ok: true }, 200));
-    vi.stubGlobal('fetch', fetchMock);
-
-    await expect(apiFetch('/v1/products', { accessToken: 'abc' })).resolves.toEqual({ ok: true });
-
-    const [url, init] = fetchMock.mock.calls[0]!;
-    const headers = new Headers(init?.headers);
-    expect(url).toMatch(/^https?:\/\/[^/]+\/v1\/products$/);
-    expect(headers.get('Authorization')).toBe('Bearer abc');
-    expect(headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/);
-  });
-
-  it('parses RFC 9457 problem+json into an ApiError', async () => {
-    const problem = {
-      type: 'https://traceflow.dev/problems/validation',
-      title: 'Dados inválidos',
-      status: 422,
-      detail: 'Um ou mais campos são inválidos.',
-      errors: [{ field: 'sku', message: 'SKU já cadastrado' }],
-    };
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn<typeof fetch>()
-        .mockResolvedValue(jsonResponse(problem, 422, 'application/problem+json')),
-    );
-
-    const error = await apiFetch('/v1/products', { method: 'POST', json: {} }).catch(
-      (e: unknown) => e,
+describe('toApiError', () => {
+  it('parses RFC 9457 problem+json with field errors as message arrays', async () => {
+    const error = await toApiError(
+      problemResponse(
+        {
+          type: '/problems/validation-error',
+          title: 'Validation error',
+          status: 400,
+          detail: 'One or more fields are invalid.',
+          instance: '/v1/products',
+          requestId: 'from-api',
+          errors: [{ field: 'sku', messages: ['must be unique', 'other'] }],
+        },
+        400,
+      ),
+      'from-client',
     );
 
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({
-      status: 422,
-      title: 'Dados inválidos',
-      detail: 'Um ou mais campos são inválidos.',
-      errors: [{ field: 'sku', message: 'SKU já cadastrado' }],
+      status: 400,
+      type: '/problems/validation-error',
+      requestId: 'from-api',
+      errors: [{ field: 'sku', messages: ['must be unique', 'other'] }],
     });
   });
 
   it('falls back to the status text when the body is not problem+json', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi
-        .fn<typeof fetch>()
-        .mockResolvedValue(new Response('<html>', { status: 502, statusText: 'Bad Gateway' })),
+    const error = await toApiError(
+      new Response('<html>', { status: 502, statusText: 'Bad Gateway' }),
+      'req-1',
     );
+    expect(error).toMatchObject({ status: 502, title: 'Bad Gateway', requestId: 'req-1' });
+  });
+});
 
-    await expect(apiFetch('/v1/products')).rejects.toMatchObject({
-      status: 502,
-      title: 'Bad Gateway',
-    });
+describe('getErrorMessage', () => {
+  const error = (status: number) => new ApiError({ type: 'x', title: 'T', status }, 'req-9');
+
+  it.each([
+    [403, 'Você não tem permissão para esta ação.'],
+    [404, 'Registro não encontrado.'],
+    [409, 'Já existe um cadastro com estes dados.'],
+  ])('translates status %i', (status, message) => {
+    expect(getErrorMessage(error(status))).toBe(message);
   });
 
-  it('turns network failures into an ApiError with status 0', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed to fetch')),
-    );
+  it('includes the request id on server errors', () => {
+    expect(getErrorMessage(error(500))).toContain('req-9');
+  });
+});
 
-    const error = await apiFetch('/v1/dev/users').catch((e: unknown) => e);
-
-    expect(error).toBeInstanceOf(ApiError);
-    expect((error as ApiError).isNetworkError).toBe(true);
-    expect((error as ApiError).title).toBe('Não foi possível conectar à API');
+describe('translateFieldMessage', () => {
+  it.each([
+    ['must be unique', 'Já existe um cadastro com este valor.'],
+    ['name must be longer than or equal to 2 characters', 'Informe pelo menos 2 caracteres.'],
+    ['document must be a valid CPF or CNPJ', 'CPF ou CNPJ inválido.'],
+    ['something new', 'something new'],
+  ])('%s', (input, expected) => {
+    expect(translateFieldMessage(input)).toBe(expected);
   });
 });

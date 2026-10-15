@@ -1,9 +1,8 @@
 import { z } from 'zod';
-import { getEnv } from '@/config/env';
 
 /**
- * Wrapper mínimo sobre `fetch`. Será substituído (ou embrulhado) pelo cliente
- * `openapi-fetch` gerado a partir do Swagger da API.
+ * Modelo de erro da API: RFC 9457 (`application/problem+json`). As chamadas em si
+ * ficam em `api-client.ts` (openapi-fetch tipado pelo contrato gerado).
  */
 
 const problemSchema = z.object({
@@ -12,11 +11,13 @@ const problemSchema = z.object({
   status: z.number().int(),
   detail: z.string().optional(),
   instance: z.string().optional(),
-  errors: z.array(z.object({ field: z.string(), message: z.string() })).optional(),
+  requestId: z.string().optional(),
+  errors: z.array(z.object({ field: z.string(), messages: z.array(z.string()) })).optional(),
 });
 
-/** Corpo RFC 9457 (`application/problem+json`) devolvido pela API. */
+/** Corpo RFC 9457 devolvido pela API. */
 export type ProblemDetails = z.infer<typeof problemSchema>;
+/** Erro de um campo: `{ field: 'sku', messages: ['must be unique'] }`. */
 export type ProblemFieldError = NonNullable<ProblemDetails['errors']>[number];
 
 export class ApiError extends Error {
@@ -26,6 +27,7 @@ export class ApiError extends Error {
   readonly title: string;
   readonly detail: string | undefined;
   readonly errors: ProblemFieldError[];
+  /** ID de correlação: o devolvido pela API ou, na falta dele, o enviado pelo cliente. */
   readonly requestId: string;
 
   constructor(problem: ProblemDetails, requestId: string, options?: ErrorOptions) {
@@ -36,7 +38,7 @@ export class ApiError extends Error {
     this.title = problem.title;
     this.detail = problem.detail;
     this.errors = problem.errors ?? [];
-    this.requestId = requestId;
+    this.requestId = problem.requestId ?? requestId;
   }
 
   get isNetworkError(): boolean {
@@ -68,52 +70,68 @@ export async function toApiError(response: Response, requestId: string): Promise
   );
 }
 
-export interface ApiRequestOptions extends Omit<RequestInit, 'body'> {
-  /** Corpo serializado como JSON. */
-  json?: unknown;
-  /** Token de acesso; quando presente vai no header `Authorization: Bearer`. */
-  accessToken?: string | null;
-}
-
-export async function apiFetch<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { json, accessToken, headers: initHeaders, ...init } = options;
-  const requestId = crypto.randomUUID();
-
-  const headers = new Headers(initHeaders);
-  headers.set('Accept', 'application/json, application/problem+json');
-  headers.set('x-request-id', requestId);
-  if (accessToken) headers.set('Authorization', `Bearer ${accessToken}`);
-  if (json !== undefined) headers.set('Content-Type', 'application/json');
-
-  let response: Response;
-  try {
-    response = await fetch(`${getEnv().apiUrl}${path}`, {
-      ...init,
-      headers,
-      body: json === undefined ? undefined : JSON.stringify(json),
-    });
-  } catch (cause) {
-    if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
-    throw new ApiError(
-      {
-        type: 'about:blank',
-        title: 'Não foi possível conectar à API',
-        status: 0,
-        detail: `Verifique se a API está em execução em ${getEnv().apiUrl}.`,
-      },
-      requestId,
-      { cause },
-    );
-  }
-
-  if (!response.ok) throw await toApiError(response, requestId);
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
+/** `ApiError` para quando a API não respondeu (rede, CORS, API fora do ar). */
+export function networkError(apiUrl: string, requestId: string, cause: unknown): ApiError {
+  return new ApiError(
+    {
+      type: 'about:blank',
+      title: 'Não foi possível conectar à API',
+      status: 0,
+      detail: `Verifique se a API está em execução em ${apiUrl}.`,
+    },
+    requestId,
+    { cause },
+  );
 }
 
 /** Mensagem amigável (pt-BR) para exibir em toasts e alertas. */
 export function getErrorMessage(error: unknown): string {
-  if (error instanceof ApiError) return error.detail ?? error.title;
+  if (error instanceof ApiError) {
+    switch (error.status) {
+      case 0:
+        return error.detail ?? error.title;
+      case 400:
+        return 'Alguns campos estão inválidos. Revise o formulário.';
+      case 401:
+        return 'Sua sessão expirou. Entre novamente.';
+      case 403:
+        return 'Você não tem permissão para esta ação.';
+      case 404:
+        return 'Registro não encontrado.';
+      case 409:
+        return 'Já existe um cadastro com estes dados.';
+      default:
+        return error.status >= 500
+          ? `Erro inesperado na API. Tente novamente em instantes (ID: ${error.requestId}).`
+          : (error.detail ?? error.title);
+    }
+  }
   if (error instanceof Error) return error.message;
   return 'Ocorreu um erro inesperado.';
+}
+
+const FIELD_MESSAGES: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
+  [/must be unique/i, () => 'Já existe um cadastro com este valor.'],
+  [/should not be empty|must not be empty/i, () => 'Campo obrigatório.'],
+  [/longer than or equal to (\d+)/i, (m) => `Informe pelo menos ${m[1]} caracteres.`],
+  [/shorter than or equal to (\d+)/i, (m) => `Informe no máximo ${m[1]} caracteres.`],
+  [/must be one of the following values/i, () => 'Selecione uma opção válida.'],
+  [/must be an email/i, () => 'Informe um e-mail válido.'],
+  [/valid CPF or CNPJ/i, () => 'CPF ou CNPJ inválido.'],
+  [/must not be greater than (\d+)/i, (m) => `O valor máximo é ${m[1]}.`],
+  [/must not be less than (\d+)/i, (m) => `O valor mínimo é ${m[1]}.`],
+  [/must be an integer/i, () => 'Informe um número inteiro.'],
+  [/should not exist/i, () => 'Campo não permitido.'],
+];
+
+/**
+ * Traduz as mensagens de validação da API (class-validator, em inglês) para a UI.
+ * Mensagens desconhecidas são exibidas como vieram.
+ */
+export function translateFieldMessage(message: string): string {
+  for (const [pattern, translate] of FIELD_MESSAGES) {
+    const match = message.match(pattern);
+    if (match) return translate(match);
+  }
+  return message;
 }

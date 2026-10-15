@@ -2,6 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { fakeJwt } from '@/test/fake-jwt';
+import { json, mockApi } from '@/test/mock-api';
 import { renderApp } from '@/test/render-app';
 import { createMockStrategy, type DevUser } from './strategies/mock';
 import type { AuthStrategy } from './types';
@@ -23,30 +24,15 @@ const DEV_USERS: DevUser[] = [
 
 const futureExp = () => Math.floor(Date.now() / 1000) + 3600;
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
 /** Simula a API de desenvolvimento (`/v1/dev/users` e `/v1/dev/token`). */
-function urlOf(input: Parameters<typeof fetch>[0]): string {
-  return input instanceof Request ? input.url : input.toString();
-}
-
 function stubDevApi() {
-  const fetchMock = vi.fn<typeof fetch>((input, init) => {
-    const url = urlOf(input);
-    if (url.endsWith('/v1/dev/users')) return Promise.resolve(json(DEV_USERS));
-    if (url.endsWith('/v1/dev/token') && init?.method === 'POST') {
+  return mockApi({
+    'GET /v1/dev/users': () => json(DEV_USERS),
+    'POST /v1/dev/token': () => {
       const token = fakeJwt({ sub: 'user-ana', 'cognito:groups': ['admin'], exp: futureExp() });
-      return Promise.resolve(json({ accessToken: token, expiresIn: 3600 }));
-    }
-    return Promise.resolve(json({ title: 'Not Found', status: 404 }, 404));
+      return json({ accessToken: token, expiresIn: 3600 });
+    },
   });
-  vi.stubGlobal('fetch', fetchMock);
-  return fetchMock;
 }
 
 describe('authentication flow', () => {
@@ -64,7 +50,7 @@ describe('authentication flow', () => {
   });
 
   it('logs in as a dev user and returns to the requested page', async () => {
-    const fetchMock = stubDevApi();
+    const api = stubDevApi();
     const user = userEvent.setup();
 
     const { router } = renderApp({ path: '/fornecedores' });
@@ -76,8 +62,8 @@ describe('authentication flow', () => {
     expect(screen.getAllByText('Café Serra Azul').length).toBeGreaterThan(0);
     expect(screen.getByText('Administrador')).toBeInTheDocument();
 
-    const tokenCall = fetchMock.mock.calls.find(([url]) => urlOf(url).endsWith('/v1/dev/token'));
-    expect(tokenCall?.[1]?.body).toBe(JSON.stringify({ email: 'ana@serraazul.com.br' }));
+    const [tokenRequest] = api.find('POST', '/v1/dev/token');
+    expect(await tokenRequest?.json()).toEqual({ email: 'ana@serraazul.com.br' });
     expect(window.sessionStorage.getItem('traceflow.auth.session')).toContain('Ana Torres');
   });
 

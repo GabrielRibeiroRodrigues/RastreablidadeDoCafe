@@ -1,24 +1,14 @@
-import type { Role } from '@traceflow/shared';
-import { apiFetch } from '@/lib/api';
+import type { ApiSchema } from '@traceflow/shared';
+import { getApiClient, unwrap } from '@/lib/api-client';
 import { decodeJwtPayload, extractRoles } from '@/lib/jwt';
 import { sessionStore } from '../session-storage';
 import type { AuthSession, AuthStrategy } from '../types';
 
 /** Usuário de desenvolvimento servido por `GET /v1/dev/users` (só com AUTH_MODE=mock na API). */
-export interface DevUser {
-  email: string;
-  name: string;
-  roles: Role[];
-  companyName: string;
-}
-
-interface DevTokenResponse {
-  accessToken: string;
-  expiresIn: number;
-}
+export type DevUser = ApiSchema<'DevUser'>;
 
 export function fetchDevUsers(signal?: AbortSignal): Promise<DevUser[]> {
-  return apiFetch<DevUser[]>('/v1/dev/users', signal ? { signal } : {});
+  return unwrap(getApiClient().GET('/v1/dev/users', signal ? { signal } : {}));
 }
 
 export function createMockStrategy(): AuthStrategy {
@@ -32,10 +22,9 @@ export function createMockStrategy(): AuthStrategy {
     async login(email) {
       if (!email) throw new Error('Selecione um usuário de desenvolvimento.');
 
-      const { accessToken } = await apiFetch<DevTokenResponse>('/v1/dev/token', {
-        method: 'POST',
-        json: { email },
-      });
+      const { accessToken } = await unwrap(
+        getApiClient().POST('/v1/dev/token', { body: { email } }),
+      );
 
       // Nome e empresa vêm da lista de usuários de dev (melhor esforço).
       const devUser = await fetchDevUsers()

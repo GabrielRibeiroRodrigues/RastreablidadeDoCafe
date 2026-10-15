@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { NAV_ITEMS } from '@/app/navigation';
 import { useAuth } from '@/auth/auth-context';
 import { ROLE_LABELS } from '@/auth/roles';
+import { useMe } from '@/auth/use-me';
 import { BrandMark } from '@/components/BrandMark';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -28,6 +29,9 @@ function initials(name: string): string {
 
 export function AppHeader() {
   const { user, logout } = useAuth();
+  // A empresa vem de `GET /v1/me` (nos dois modos); o nome do login mock é só o valor inicial.
+  const me = useMe();
+  const companyName = me.data?.company.name ?? user?.companyName ?? null;
 
   const handleLogout = () => {
     logout().catch((error: unknown) => toast.error(getErrorMessage(error)));
@@ -55,10 +59,10 @@ export function AppHeader() {
       </DropdownMenu>
       <BrandMark className="md:hidden [&_svg]:size-7" />
 
-      {user?.companyName && (
+      {companyName && (
         <div className="hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
           <Building2Icon className="size-4" aria-hidden />
-          <span className="font-medium text-foreground">{user.companyName}</span>
+          <span className="font-medium text-foreground">{companyName}</span>
         </div>
       )}
 
@@ -85,9 +89,7 @@ export function AppHeader() {
               <DropdownMenuLabel className="space-y-1.5 py-2 font-normal">
                 <div className="text-sm font-medium text-foreground">{user.name}</div>
                 <div className="truncate text-xs text-muted-foreground">{user.email}</div>
-                {user.companyName && (
-                  <div className="text-xs text-muted-foreground">{user.companyName}</div>
-                )}
+                {companyName && <div className="text-xs text-muted-foreground">{companyName}</div>}
                 {user.roles.length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-0.5">
                     {user.roles.map((role) => (
