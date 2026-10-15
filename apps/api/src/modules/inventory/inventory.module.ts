@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { DocumentNumberService } from './document-number.service.js';
 import { LotCodeService } from './lot-code.service.js';
 import { LotsController } from './lots.controller.js';
 import { LotsService } from './lots.service.js';
@@ -15,12 +16,13 @@ import { StockLedgerService } from './stock-ledger.service.js';
   providers: [
     StockLedgerService,
     LotCodeService,
+    DocumentNumberService,
     LotsService,
     ReceiptsService,
     MovementsService,
     StockService,
   ],
-  // A produção (Semana 3) reutiliza o razão e a geração de códigos.
-  exports: [StockLedgerService, LotCodeService, LotsService],
+  // Produção e expedição (Semana 3) reutilizam o razão, os códigos e a numeração de documentos.
+  exports: [StockLedgerService, LotCodeService, DocumentNumberService, LotsService],
 })
 export class InventoryModule {}

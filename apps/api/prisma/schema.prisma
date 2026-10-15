@@ -79,15 +79,20 @@ model Company {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  users        User[]
-  products     Product[]
-  suppliers    Supplier[]
-  customers    Customer[]
-  locations    Location[]
-  lots         Lot[]
-  movements    StockMovement[]
-  lotSequences LotSequence[]
-  attachments  Attachment[]
+  users            User[]
+  products         Product[]
+  suppliers        Supplier[]
+  customers        Customer[]
+  locations        Location[]
+  lots             Lot[]
+  movements        StockMovement[]
+  lotSequences     LotSequence[]
+  productionOrders ProductionOrder[]
+  lotOrigins       LotOrigin[]
+  shipments        Shipment[]
+  shipmentItems    ShipmentItem[]
+  sequences        DocumentSequence[]
+  attachments      Attachment[]
 
   @@map("companies")
 }
@@ -106,9 +111,11 @@ model User {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company     Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  movements   StockMovement[]
-  attachments Attachment[]
+  company          Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  movements        StockMovement[]
+  attachments      Attachment[]
+  productionOrders ProductionOrder[]
+  shipments        Shipment[]
 
   /// Alvo de FKs compostas: garante no banco que referências são da mesma empresa.
   @@unique([companyId, id])
@@ -183,9 +190,11 @@ model Customer {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company   Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  shipments Shipment[]
 
   @@unique([companyId, document])
+  @@unique([companyId, id])
   @@index([companyId, name])
   @@map("customers")
 }
@@ -204,6 +213,7 @@ model Location {
   company       Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
   movementsFrom StockMovement[] @relation("MovementFrom")
   movementsTo   StockMovement[] @relation("MovementTo")
+  shipmentItems ShipmentItem[]
 
   @@unique([companyId, code])
   @@map("locations")
@@ -264,16 +274,23 @@ model Lot {
   /// Pontuação SCA (0–100)
   cuppingScore    Decimal?    @map("cupping_score") @db.Decimal(5, 2)
   notes           String?
+  /// Token aleatório do QR code da página pública (não expõe o id nem permite enumerar lotes).
+  publicToken     String?     @unique @map("public_token") @db.VarChar(40)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company     Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company       Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
   /// FK composta: o produto precisa ser da mesma empresa.
-  product     Product         @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  product       Product          @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
   /// FK simples (opcional): a mesma empresa é validada no serviço.
-  supplier    Supplier?       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
-  movements   StockMovement[]
-  attachments Attachment[]
+  supplier      Supplier?        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  movements     StockMovement[]
+  attachments   Attachment[]
+  /// Genealogia: de quais lotes este veio, e quais lotes vieram dele.
+  origins       LotOrigin[]      @relation("ChildLot")
+  derived       LotOrigin[]      @relation("ParentLot")
+  producedBy    ProductionOrder?
+  shipmentItems ShipmentItem[]
 
   @@unique([companyId, id])
   @@unique([companyId, code])
@@ -327,6 +344,7 @@ model StockMovement {
   toLocation   Location?      @relation("MovementTo", fields: [toLocationId], references: [id], onDelete: Restrict)
   reversalOf   StockMovement? @relation("Reversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
   reversedBy   StockMovement? @relation("Reversal")
+  shipmentItem ShipmentItem?
 
   @@unique([companyId, idempotencyKey])
   @@index([companyId, lotId])
@@ -354,4 +372,140 @@ model Attachment {
 
   @@index([companyId, lotId])
   @@map("attachments")
+}
+
+// ─────────────────────── Semana 3: produção, genealogia e expedição ───────────────────────
+
+/// Etapas da cadeia do café após o recebimento (a colheita é o próprio lote recebido da fazenda).
+enum ProductionStage {
+  PROCESSING // beneficiamento (café em coco/pergaminho → café verde)
+  ROASTING // torra
+  BLENDING // blend de cafés torrados
+  PACKAGING // embalagem
+
+  @@map("production_stage")
+}
+
+/// Sequências de documentos por empresa e ano (OP-2026-000001, EXP-2026-000001).
+model DocumentSequence {
+  companyId String @map("company_id") @db.Uuid
+  /// Ex.: "production_order", "shipment"
+  kind      String @db.VarChar(40)
+  year      Int
+  lastValue Int    @map("last_value")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@id([companyId, kind, year])
+  @@map("document_sequences")
+}
+
+/// Ordem de produção executada: consome lotes de insumo e gera um lote novo, numa transação.
+model ProductionOrder {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  companyId      String          @map("company_id") @db.Uuid
+  /// Ex.: OP-2026-000001
+  number         String          @db.VarChar(30)
+  stage          ProductionStage
+  outputLotId    String          @map("output_lot_id") @db.Uuid
+  /// Massa dos insumos em kg (sacas convertidas; embalagens/unidades não entram).
+  inputMassKg    Decimal         @map("input_mass_kg") @db.Decimal(14, 3)
+  /// Massa produzida em kg (null se a saída for em unidades).
+  outputMassKg   Decimal?        @map("output_mass_kg") @db.Decimal(14, 3)
+  /// Rendimento = saída / entrada × 100 (ex.: torra ≈ 82%).
+  yieldPercent   Decimal?        @map("yield_percent") @db.Decimal(6, 2)
+  /// Perda = entrada − saída, em kg.
+  lossKg         Decimal?        @map("loss_kg") @db.Decimal(14, 3)
+  notes          String?
+  userId         String          @map("user_id") @db.Uuid
+  performedAt    DateTime        @default(now()) @map("performed_at") @db.Timestamptz(3)
+  idempotencyKey String?         @map("idempotency_key") @db.VarChar(100)
+  requestHash    String?         @map("request_hash") @db.VarChar(64)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company   Company     @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  outputLot Lot         @relation(fields: [companyId, outputLotId], references: [companyId, id], onDelete: Restrict)
+  user      User        @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+  origins   LotOrigin[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, outputLotId])
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, performedAt])
+  @@map("production_orders")
+}
+
+/// Genealogia (aresta do grafo): o lote filho foi feito consumindo `quantity` do lote pai.
+/// Só inclusão — base das consultas recursivas de rastreabilidade (WITH RECURSIVE).
+model LotOrigin {
+  id                String   @id @default(uuid(7)) @db.Uuid
+  companyId         String   @map("company_id") @db.Uuid
+  childLotId        String   @map("child_lot_id") @db.Uuid
+  parentLotId       String   @map("parent_lot_id") @db.Uuid
+  productionOrderId String   @map("production_order_id") @db.Uuid
+  /// Quantidade consumida do pai, na unidade do pai.
+  quantity          Decimal  @db.Decimal(14, 3)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company         Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  child           Lot             @relation("ChildLot", fields: [companyId, childLotId], references: [companyId, id], onDelete: Restrict)
+  parent          Lot             @relation("ParentLot", fields: [companyId, parentLotId], references: [companyId, id], onDelete: Restrict)
+  productionOrder ProductionOrder @relation(fields: [companyId, productionOrderId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([productionOrderId, parentLotId])
+  @@index([companyId, childLotId])
+  @@index([companyId, parentLotId])
+  @@map("lot_origins")
+}
+
+/// Expedição para um cliente: cada item é uma saída (ISSUE) do razão.
+model Shipment {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  companyId      String   @map("company_id") @db.Uuid
+  /// Ex.: EXP-2026-000001
+  number         String   @db.VarChar(30)
+  customerId     String   @map("customer_id") @db.Uuid
+  /// Pedido do cliente / NF de saída
+  orderRef       String?  @map("order_ref") @db.VarChar(60)
+  shippedAt      DateTime @default(now()) @map("shipped_at") @db.Timestamptz(3)
+  notes          String?
+  userId         String   @map("user_id") @db.Uuid
+  idempotencyKey String?  @map("idempotency_key") @db.VarChar(100)
+  requestHash    String?  @map("request_hash") @db.VarChar(64)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company  Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  customer Customer       @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  user     User           @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+  items    ShipmentItem[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, number])
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, customerId])
+  @@index([companyId, shippedAt])
+  @@map("shipments")
+}
+
+model ShipmentItem {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  shipmentId String   @map("shipment_id") @db.Uuid
+  lotId      String   @map("lot_id") @db.Uuid
+  locationId String   @map("location_id") @db.Uuid
+  quantity   Decimal  @db.Decimal(14, 3)
+  /// Saída (ISSUE) gerada no razão para este item.
+  movementId String   @unique @map("movement_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company  Company       @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  shipment Shipment      @relation(fields: [companyId, shipmentId], references: [companyId, id], onDelete: Restrict)
+  lot      Lot           @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
+  location Location      @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  movement StockMovement @relation(fields: [movementId], references: [id], onDelete: Restrict)
+
+  @@index([companyId, shipmentId])
+  @@index([companyId, lotId])
+  @@map("shipment_items")
 }
