@@ -631,6 +631,102 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/dashboard': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['DashboardController_summary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/stock.csv': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ReportsController_stock'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/movements.csv': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ReportsController_movements'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/production.csv': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ReportsController_production'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/shipments.csv': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ReportsController_shipments'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/imports/{entity}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ImportsController_import'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/public/trace/{token}': {
     parameters: {
       query?: never;
@@ -1754,6 +1850,151 @@ export interface components {
        * @example https://traceflow.example.com/rastreio/3q2-7wH1y0mXl4bJp9cS8g
        */
       publicUrl: string;
+    };
+    LotStatusCounts: {
+      /** @example 12 */
+      available: number;
+      /** @example 1 */
+      quarantine: number;
+      /** @example 0 */
+      blocked: number;
+      /** @example 30 */
+      consumed: number;
+    };
+    DashboardProduct: {
+      /** Format: uuid */
+      id: string;
+      /** @example VRD-BOURBON-AM */
+      sku: string;
+      /** @example Café verde Bourbon Amarelo */
+      name: string;
+    };
+    ExpiringLot: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      product: components['schemas']['DashboardProduct'];
+      /**
+       * Format: date
+       * @example 2026-11-02
+       */
+      expiresAt: string;
+      /**
+       * @description Saldo atual do lote (todos os locais)
+       * @example 42.500
+       */
+      balance: string;
+      unit: components['schemas']['Unit'];
+    };
+    ExpiringSoon: {
+      /**
+       * @description Janela em dias (inclui lotes já vencidos)
+       * @example 30
+       */
+      days: number;
+      /**
+       * @description Lotes com saldo que vencem na janela
+       * @example 3
+       */
+      count: number;
+      /** @description Até 5, os que vencem primeiro */
+      items: components['schemas']['ExpiringLot'][];
+    };
+    ProductStock: {
+      /** Format: uuid */
+      productId: string;
+      /** @example VRD-BOURBON-AM */
+      sku: string;
+      /** @example Café verde Bourbon Amarelo */
+      name: string;
+      type: components['schemas']['ProductType'];
+      unit: components['schemas']['Unit'];
+      /** @example 1250.000 */
+      quantity: string;
+    };
+    Production30d: {
+      /** @example 8 */
+      orders: number;
+      /**
+       * @description Rendimento médio ponderado pela massa (Σ saída ÷ Σ entrada × 100)
+       * @example 83.4
+       */
+      avgYieldPercent: number | null;
+      /**
+       * @description Perda total em kg
+       * @example 96.500
+       */
+      lossKg: string;
+    };
+    Shipments30d: {
+      /** @example 5 */
+      count: number;
+      /**
+       * @description Clientes distintos atendidos
+       * @example 3
+       */
+      customers: number;
+    };
+    DashboardResponse: {
+      /** @description Lotes por situação */
+      lots: components['schemas']['LotStatusCounts'];
+      expiringSoon: components['schemas']['ExpiringSoon'];
+      /**
+       * @description Movimentações com data de hoje (America/Sao_Paulo)
+       * @example 14
+       */
+      movementsToday: number;
+      /** @description Até 8 produtos com maior saldo */
+      stockByProduct: components['schemas']['ProductStock'][];
+      /** @description Ordens de produção dos últimos 30 dias */
+      production30d: components['schemas']['Production30d'];
+      /** @description Expedições dos últimos 30 dias */
+      shipments30d: components['schemas']['Shipments30d'];
+      /** @description Até 8 movimentações mais recentes */
+      recentMovements: components['schemas']['MovementResponse'][];
+    };
+    ImportRowError: {
+      /**
+       * @description Linha do arquivo (1 = cabeçalho)
+       * @example 3
+       */
+      line: number;
+      /**
+       * @description Coluna (ou `row` para a linha inteira)
+       * @example sku
+       */
+      field: string;
+      /**
+       * @example [
+       *       "sku already exists"
+       *     ]
+       */
+      messages: string[];
+    };
+    ImportResult: {
+      /**
+       * @example products
+       * @enum {string}
+       */
+      entity: 'products' | 'suppliers' | 'customers' | 'locations';
+      /** @example true */
+      dryRun: boolean;
+      /**
+       * @description Linhas de dados no arquivo
+       * @example 120
+       */
+      total: number;
+      /** @example 118 */
+      valid: number;
+      /** @example 2 */
+      invalid: number;
+      /**
+       * @description Registros gravados (0 em dry-run ou com erros)
+       * @example 0
+       */
+      created: number;
+      errors: components['schemas']['ImportRowError'][];
     };
     PublicLotResponse: {
       /** @example CAF-2026-000013 */
@@ -2956,6 +3197,7 @@ export interface operations {
         productId?: string;
         locationId?: string;
         lotStatus?: components['schemas']['LotStatus'];
+        productType?: components['schemas']['ProductType'];
         /** @description Busca pelo código do lote */
         q?: string;
         sort?: 'product' | 'lot' | 'location' | '-quantity' | 'quantity' | 'expiresAt';
@@ -2993,6 +3235,9 @@ export interface operations {
         to?: string;
         /** @description Busca por número ou referência do pedido */
         q?: string;
+        /** @description Quem registrou a expedição */
+        userId?: string;
+        sort?: '-shippedAt' | 'shippedAt' | '-number' | 'number';
       };
       header?: never;
       path?: never;
@@ -3259,6 +3504,11 @@ export interface operations {
         from?: string;
         /** @description Até (exclusive) */
         to?: string;
+        /** @description Ordens que consumiram ou geraram o lote */
+        lotId?: string;
+        /** @description Quem registrou a ordem */
+        userId?: string;
+        sort?: '-performedAt' | 'performedAt' | '-number' | 'number';
       };
       header?: never;
       path?: never;
@@ -3428,6 +3678,169 @@ export interface operations {
       };
       /** @description Armazenamento não configurado (S3_BUCKET) */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  DashboardController_summary: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DashboardResponse'];
+        };
+      };
+    };
+  };
+  ReportsController_stock: {
+    parameters: {
+      query?: {
+        productId?: string;
+        locationId?: string;
+        lotStatus?: components['schemas']['LotStatus'];
+        productType?: components['schemas']['ProductType'];
+        /** @description Busca pelo código do lote */
+        q?: string;
+        sort?: 'product' | 'lot' | 'location' | '-quantity' | 'quantity' | 'expiresAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description CSV para Excel pt-BR (UTF-8 com BOM, separador ";", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+        };
+      };
+    };
+  };
+  ReportsController_movements: {
+    parameters: {
+      query?: {
+        /** @description A partir de (inclusive), ISO 8601 */
+        from?: string;
+        /** @description Até (exclusive), ISO 8601 */
+        to?: string;
+        type?: components['schemas']['MovementType'];
+        lotId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description CSV para Excel pt-BR (UTF-8 com BOM, separador ";", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+        };
+      };
+    };
+  };
+  ReportsController_production: {
+    parameters: {
+      query?: {
+        /** @description A partir de (inclusive), ISO 8601 */
+        from?: string;
+        /** @description Até (exclusive), ISO 8601 */
+        to?: string;
+        stage?: components['schemas']['ProductionStage'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description CSV para Excel pt-BR (UTF-8 com BOM, separador ";", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+        };
+      };
+    };
+  };
+  ReportsController_shipments: {
+    parameters: {
+      query?: {
+        /** @description A partir de (inclusive), ISO 8601 */
+        from?: string;
+        /** @description Até (exclusive), ISO 8601 */
+        to?: string;
+        customerId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description CSV para Excel pt-BR (UTF-8 com BOM, separador ";", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
+        };
+      };
+    };
+  };
+  ImportsController_import: {
+    parameters: {
+      query?: {
+        /** @description true: só valida. false: valida e, sem nenhum erro, grava tudo (tudo ou nada). */
+        dryRun?: boolean;
+      };
+      header?: never;
+      path: {
+        entity: 'products' | 'suppliers' | 'customers' | 'locations';
+      };
+      cookie?: never;
+    };
+    /** @description CSV com cabeçalho (UTF-8 ou Windows-1252, separador ";" ou ","). Máximo de 5000 linhas. */
+    requestBody: {
+      content: {
+        'text/csv': string;
+        'multipart/form-data': string;
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ImportResult'];
+        };
+      };
+      /** @description Arquivo acima de 2 MB ou de 5.000 linhas */
+      413: {
         headers: {
           [name: string]: unknown;
         };

@@ -1905,6 +1905,14 @@
             }
           },
           {
+            "name": "productType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ProductType"
+            }
+          },
+          {
             "name": "q",
             "required": false,
             "in": "query",
@@ -2025,6 +2033,26 @@
             "description": "Busca por número ou referência do pedido",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Quem registrou a expedição",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "-shippedAt",
+              "type": "string",
+              "enum": ["-shippedAt", "shippedAt", "-number", "number"]
             }
           }
         ],
@@ -2395,6 +2423,36 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "lotId",
+            "required": false,
+            "in": "query",
+            "description": "Ordens que consumiram ou geraram o lote",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Quem registrou a ordem",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "-performedAt",
+              "type": "string",
+              "enum": ["-performedAt", "performedAt", "-number", "number"]
+            }
           }
         ],
         "responses": {
@@ -2622,6 +2680,346 @@
           }
         ],
         "tags": ["labels"]
+      }
+    },
+    "/v1/dashboard": {
+      "get": {
+        "operationId": "DashboardController_summary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["dashboard"]
+      }
+    },
+    "/v1/reports/stock.csv": {
+      "get": {
+        "operationId": "ReportsController_stock",
+        "parameters": [
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "locationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lotStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LotStatus"
+            }
+          },
+          {
+            "name": "productType",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ProductType"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca pelo código do lote",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "product",
+              "type": "string",
+              "enum": ["product", "lot", "location", "-quantity", "quantity", "expiresAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV para Excel pt-BR (UTF-8 com BOM, separador \";\", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["reports"]
+      }
+    },
+    "/v1/reports/movements.csv": {
+      "get": {
+        "operationId": "ReportsController_movements",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "A partir de (inclusive), ISO 8601",
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Até (exclusive), ISO 8601",
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/MovementType"
+            }
+          },
+          {
+            "name": "lotId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV para Excel pt-BR (UTF-8 com BOM, separador \";\", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["reports"]
+      }
+    },
+    "/v1/reports/production.csv": {
+      "get": {
+        "operationId": "ReportsController_production",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "A partir de (inclusive), ISO 8601",
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Até (exclusive), ISO 8601",
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "stage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ProductionStage"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV para Excel pt-BR (UTF-8 com BOM, separador \";\", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["reports"]
+      }
+    },
+    "/v1/reports/shipments.csv": {
+      "get": {
+        "operationId": "ReportsController_shipments",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "A partir de (inclusive), ISO 8601",
+            "schema": {
+              "example": "2026-10-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Até (exclusive), ISO 8601",
+            "schema": {
+              "example": "2026-11-01",
+              "type": "string"
+            }
+          },
+          {
+            "name": "customerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV para Excel pt-BR (UTF-8 com BOM, separador \";\", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["reports"]
+      }
+    },
+    "/v1/imports/{entity}": {
+      "post": {
+        "operationId": "ImportsController_import",
+        "parameters": [
+          {
+            "name": "entity",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "enum": ["products", "suppliers", "customers", "locations"],
+              "type": "string"
+            }
+          },
+          {
+            "name": "dryRun",
+            "required": false,
+            "in": "query",
+            "description": "true: só valida. false: valida e, sem nenhum erro, grava tudo (tudo ou nada).",
+            "schema": {
+              "default": true,
+              "type": "boolean"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "CSV com cabeçalho (UTF-8 ou Windows-1252, separador \";\" ou \",\"). Máximo de 5000 linhas.",
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Arquivo acima de 2 MB ou de 5.000 linhas"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["imports"]
       }
     },
     "/v1/public/trace/{token}": {
@@ -5305,6 +5703,297 @@
           }
         },
         "required": ["url", "expiresAt", "publicUrl"]
+      },
+      "LotStatusCounts": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "number",
+            "example": 12
+          },
+          "quarantine": {
+            "type": "number",
+            "example": 1
+          },
+          "blocked": {
+            "type": "number",
+            "example": 0
+          },
+          "consumed": {
+            "type": "number",
+            "example": 30
+          }
+        },
+        "required": ["available", "quarantine", "blocked", "consumed"]
+      },
+      "DashboardProduct": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "VRD-BOURBON-AM"
+          },
+          "name": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          }
+        },
+        "required": ["id", "sku", "name"]
+      },
+      "ExpiringLot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000123"
+          },
+          "product": {
+            "$ref": "#/components/schemas/DashboardProduct"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "example": "2026-11-02"
+          },
+          "balance": {
+            "type": "string",
+            "example": "42.500",
+            "description": "Saldo atual do lote (todos os locais)"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          }
+        },
+        "required": ["id", "code", "product", "expiresAt", "balance", "unit"]
+      },
+      "ExpiringSoon": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "number",
+            "example": 30,
+            "description": "Janela em dias (inclui lotes já vencidos)"
+          },
+          "count": {
+            "type": "number",
+            "example": 3,
+            "description": "Lotes com saldo que vencem na janela"
+          },
+          "items": {
+            "description": "Até 5, os que vencem primeiro",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpiringLot"
+            }
+          }
+        },
+        "required": ["days", "count", "items"]
+      },
+      "ProductStock": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "VRD-BOURBON-AM"
+          },
+          "name": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "quantity": {
+            "type": "string",
+            "example": "1250.000"
+          }
+        },
+        "required": ["productId", "sku", "name", "type", "unit", "quantity"]
+      },
+      "Production30d": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "number",
+            "example": 8
+          },
+          "avgYieldPercent": {
+            "type": "number",
+            "nullable": true,
+            "example": 83.4,
+            "description": "Rendimento médio ponderado pela massa (Σ saída ÷ Σ entrada × 100)"
+          },
+          "lossKg": {
+            "type": "string",
+            "example": "96.500",
+            "description": "Perda total em kg"
+          }
+        },
+        "required": ["orders", "avgYieldPercent", "lossKg"]
+      },
+      "Shipments30d": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 5
+          },
+          "customers": {
+            "type": "number",
+            "example": 3,
+            "description": "Clientes distintos atendidos"
+          }
+        },
+        "required": ["count", "customers"]
+      },
+      "DashboardResponse": {
+        "type": "object",
+        "properties": {
+          "lots": {
+            "description": "Lotes por situação",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatusCounts"
+              }
+            ]
+          },
+          "expiringSoon": {
+            "$ref": "#/components/schemas/ExpiringSoon"
+          },
+          "movementsToday": {
+            "type": "number",
+            "example": 14,
+            "description": "Movimentações com data de hoje (America/Sao_Paulo)"
+          },
+          "stockByProduct": {
+            "description": "Até 8 produtos com maior saldo",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductStock"
+            }
+          },
+          "production30d": {
+            "description": "Ordens de produção dos últimos 30 dias",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Production30d"
+              }
+            ]
+          },
+          "shipments30d": {
+            "description": "Expedições dos últimos 30 dias",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Shipments30d"
+              }
+            ]
+          },
+          "recentMovements": {
+            "description": "Até 8 movimentações mais recentes",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MovementResponse"
+            }
+          }
+        },
+        "required": [
+          "lots",
+          "expiringSoon",
+          "movementsToday",
+          "stockByProduct",
+          "production30d",
+          "shipments30d",
+          "recentMovements"
+        ]
+      },
+      "ImportRowError": {
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "number",
+            "example": 3,
+            "description": "Linha do arquivo (1 = cabeçalho)"
+          },
+          "field": {
+            "type": "string",
+            "example": "sku",
+            "description": "Coluna (ou `row` para a linha inteira)"
+          },
+          "messages": {
+            "example": ["sku already exists"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["line", "field", "messages"]
+      },
+      "ImportResult": {
+        "type": "object",
+        "properties": {
+          "entity": {
+            "type": "string",
+            "enum": ["products", "suppliers", "customers", "locations"],
+            "example": "products"
+          },
+          "dryRun": {
+            "type": "boolean",
+            "example": true
+          },
+          "total": {
+            "type": "number",
+            "example": 120,
+            "description": "Linhas de dados no arquivo"
+          },
+          "valid": {
+            "type": "number",
+            "example": 118
+          },
+          "invalid": {
+            "type": "number",
+            "example": 2
+          },
+          "created": {
+            "type": "number",
+            "example": 0,
+            "description": "Registros gravados (0 em dry-run ou com erros)"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowError"
+            }
+          }
+        },
+        "required": ["entity", "dryRun", "total", "valid", "invalid", "created", "errors"]
       },
       "PublicLotResponse": {
         "type": "object",
