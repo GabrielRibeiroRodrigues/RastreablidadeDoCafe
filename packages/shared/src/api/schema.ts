@@ -151,6 +151,198 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/suppliers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['SuppliersController_list'];
+    put?: never;
+    post: operations['SuppliersController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/suppliers/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['SuppliersController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['SuppliersController_update'];
+    trace?: never;
+  };
+  '/v1/suppliers/{id}/deactivate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['SuppliersController_deactivate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/suppliers/{id}/activate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['SuppliersController_activate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/customers': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['CustomersController_list'];
+    put?: never;
+    post: operations['CustomersController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/customers/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['CustomersController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['CustomersController_update'];
+    trace?: never;
+  };
+  '/v1/customers/{id}/deactivate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['CustomersController_deactivate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/customers/{id}/activate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['CustomersController_activate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/locations': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['LocationsController_list'];
+    put?: never;
+    post: operations['LocationsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/locations/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['LocationsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['LocationsController_update'];
+    trace?: never;
+  };
+  '/v1/locations/{id}/deactivate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['LocationsController_deactivate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/locations/{id}/activate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['LocationsController_activate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/health': {
     parameters: {
       query?: never;
@@ -311,6 +503,301 @@ export interface components {
       defaultRoastLevel?: components['schemas']['RoastLevel'] | null;
       /** @example Notas de caramelo */
       description?: Record<string, never> | null;
+    };
+    /** @enum {string} */
+    SupplierType: 'PRODUCER' | 'FARM' | 'COOPERATIVE' | 'TRADER';
+    SupplierResponse: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      type: components['schemas']['SupplierType'];
+      document: string | null;
+      farmName: string | null;
+      region: string | null;
+      city: string | null;
+      state: string | null;
+      altitudeMeters: number | null;
+      varieties: string[];
+      email: string | null;
+      phone: string | null;
+      isActive: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateSupplierDto: {
+      /** @example José Aparecido da Silva */
+      name: string;
+      type: components['schemas']['SupplierType'];
+      /**
+       * @description CPF ou CNPJ (com ou sem pontuação; armazenado só com dígitos)
+       * @example 111.222.333-96
+       */
+      document?: string | null;
+      /** @example Sítio Santa Inês */
+      farmName?: string | null;
+      /** @example Mantiqueira de Minas */
+      region?: string | null;
+      /** @example Carmo de Minas */
+      city?: string | null;
+      /**
+       * @example MG
+       * @enum {string|null}
+       */
+      state?:
+        | 'AC'
+        | 'AL'
+        | 'AP'
+        | 'AM'
+        | 'BA'
+        | 'CE'
+        | 'DF'
+        | 'ES'
+        | 'GO'
+        | 'MA'
+        | 'MT'
+        | 'MS'
+        | 'MG'
+        | 'PA'
+        | 'PB'
+        | 'PR'
+        | 'PE'
+        | 'PI'
+        | 'RJ'
+        | 'RN'
+        | 'RS'
+        | 'RO'
+        | 'RR'
+        | 'SC'
+        | 'SP'
+        | 'SE'
+        | 'TO'
+        | null;
+      /** @example 1250 */
+      altitudeMeters?: number | null;
+      /**
+       * @example [
+       *       "Bourbon Amarelo",
+       *       "Catuaí Vermelho"
+       *     ]
+       */
+      varieties?: string[];
+      /** @example contato@fazenda.dev */
+      email?: string | null;
+      /** @example 35999990000 */
+      phone?: string | null;
+    };
+    UpdateSupplierDto: {
+      /** @example José Aparecido da Silva */
+      name?: string;
+      type?: components['schemas']['SupplierType'];
+      /**
+       * @description CPF ou CNPJ (com ou sem pontuação; armazenado só com dígitos)
+       * @example 111.222.333-96
+       */
+      document?: string | null;
+      /** @example Sítio Santa Inês */
+      farmName?: string | null;
+      /** @example Mantiqueira de Minas */
+      region?: string | null;
+      /** @example Carmo de Minas */
+      city?: string | null;
+      /**
+       * @example MG
+       * @enum {string|null}
+       */
+      state?:
+        | 'AC'
+        | 'AL'
+        | 'AP'
+        | 'AM'
+        | 'BA'
+        | 'CE'
+        | 'DF'
+        | 'ES'
+        | 'GO'
+        | 'MA'
+        | 'MT'
+        | 'MS'
+        | 'MG'
+        | 'PA'
+        | 'PB'
+        | 'PR'
+        | 'PE'
+        | 'PI'
+        | 'RJ'
+        | 'RN'
+        | 'RS'
+        | 'RO'
+        | 'RR'
+        | 'SC'
+        | 'SP'
+        | 'SE'
+        | 'TO'
+        | null;
+      /** @example 1250 */
+      altitudeMeters?: number | null;
+      /**
+       * @example [
+       *       "Bourbon Amarelo",
+       *       "Catuaí Vermelho"
+       *     ]
+       */
+      varieties?: string[];
+      /** @example contato@fazenda.dev */
+      email?: string | null;
+      /** @example 35999990000 */
+      phone?: string | null;
+    };
+    CustomerResponse: {
+      /** Format: uuid */
+      id: string;
+      name: string;
+      document: string | null;
+      email: string | null;
+      phone: string | null;
+      city: string | null;
+      state: string | null;
+      isActive: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateCustomerDto: {
+      /** @example Cafeteria Grão Fino */
+      name: string;
+      /**
+       * @description CPF ou CNPJ (com ou sem pontuação; armazenado só com dígitos)
+       * @example 44.555.666/0001-81
+       */
+      document?: string | null;
+      /** @example compras@graofino.dev */
+      email?: string | null;
+      /** @example 11988887777 */
+      phone?: string | null;
+      /** @example São Paulo */
+      city?: string | null;
+      /**
+       * @example SP
+       * @enum {string|null}
+       */
+      state?:
+        | 'AC'
+        | 'AL'
+        | 'AP'
+        | 'AM'
+        | 'BA'
+        | 'CE'
+        | 'DF'
+        | 'ES'
+        | 'GO'
+        | 'MA'
+        | 'MT'
+        | 'MS'
+        | 'MG'
+        | 'PA'
+        | 'PB'
+        | 'PR'
+        | 'PE'
+        | 'PI'
+        | 'RJ'
+        | 'RN'
+        | 'RS'
+        | 'RO'
+        | 'RR'
+        | 'SC'
+        | 'SP'
+        | 'SE'
+        | 'TO'
+        | null;
+    };
+    UpdateCustomerDto: {
+      /** @example Cafeteria Grão Fino */
+      name?: string;
+      /**
+       * @description CPF ou CNPJ (com ou sem pontuação; armazenado só com dígitos)
+       * @example 44.555.666/0001-81
+       */
+      document?: string | null;
+      /** @example compras@graofino.dev */
+      email?: string | null;
+      /** @example 11988887777 */
+      phone?: string | null;
+      /** @example São Paulo */
+      city?: string | null;
+      /**
+       * @example SP
+       * @enum {string|null}
+       */
+      state?:
+        | 'AC'
+        | 'AL'
+        | 'AP'
+        | 'AM'
+        | 'BA'
+        | 'CE'
+        | 'DF'
+        | 'ES'
+        | 'GO'
+        | 'MA'
+        | 'MT'
+        | 'MS'
+        | 'MG'
+        | 'PA'
+        | 'PB'
+        | 'PR'
+        | 'PE'
+        | 'PI'
+        | 'RJ'
+        | 'RN'
+        | 'RS'
+        | 'RO'
+        | 'RR'
+        | 'SC'
+        | 'SP'
+        | 'SE'
+        | 'TO'
+        | null;
+    };
+    /** @enum {string} */
+    LocationType: 'WAREHOUSE' | 'SILO' | 'ROASTERY' | 'QUARANTINE' | 'SHIPPING';
+    LocationResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example ARM-01 */
+      code: string;
+      name: string;
+      type: components['schemas']['LocationType'];
+      description: string | null;
+      isActive: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    CreateLocationDto: {
+      /**
+       * @description Código curto, único na empresa
+       * @example ARM-01
+       */
+      code: string;
+      /** @example Armazém de café verde */
+      name: string;
+      type: components['schemas']['LocationType'];
+      description?: string | null;
+    };
+    UpdateLocationDto: {
+      /**
+       * @description Código curto, único na empresa
+       * @example ARM-01
+       */
+      code?: string;
+      /** @example Armazém de café verde */
+      name?: string;
+      type?: components['schemas']['LocationType'];
+      description?: string | null;
     };
     HealthResponse: {
       /** @example ok */
@@ -612,6 +1099,541 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['ProductResponse'];
+        };
+      };
+    };
+  };
+  SuppliersController_list: {
+    parameters: {
+      query?: {
+        page?: components['schemas']['Object'];
+        pageSize?: components['schemas']['Object'];
+        status?: 'active' | 'inactive' | 'all';
+        /** @description Busca por nome, fazenda ou documento */
+        q?: string;
+        type?: components['schemas']['SupplierType'];
+        state?:
+          | 'AC'
+          | 'AL'
+          | 'AP'
+          | 'AM'
+          | 'BA'
+          | 'CE'
+          | 'DF'
+          | 'ES'
+          | 'GO'
+          | 'MA'
+          | 'MT'
+          | 'MS'
+          | 'MG'
+          | 'PA'
+          | 'PB'
+          | 'PR'
+          | 'PE'
+          | 'PI'
+          | 'RJ'
+          | 'RN'
+          | 'RS'
+          | 'RO'
+          | 'RR'
+          | 'SC'
+          | 'SP'
+          | 'SE'
+          | 'TO';
+        sort?: 'name' | '-name' | 'createdAt' | '-createdAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['SupplierResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  SuppliersController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateSupplierDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierResponse'];
+        };
+      };
+      /** @description Documento já cadastrado na empresa */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  SuppliersController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  SuppliersController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateSupplierDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  SuppliersController_deactivate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierResponse'];
+        };
+      };
+    };
+  };
+  SuppliersController_activate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['SupplierResponse'];
+        };
+      };
+    };
+  };
+  CustomersController_list: {
+    parameters: {
+      query?: {
+        page?: components['schemas']['Object'];
+        pageSize?: components['schemas']['Object'];
+        status?: 'active' | 'inactive' | 'all';
+        /** @description Busca por nome, documento ou e-mail */
+        q?: string;
+        state?:
+          | 'AC'
+          | 'AL'
+          | 'AP'
+          | 'AM'
+          | 'BA'
+          | 'CE'
+          | 'DF'
+          | 'ES'
+          | 'GO'
+          | 'MA'
+          | 'MT'
+          | 'MS'
+          | 'MG'
+          | 'PA'
+          | 'PB'
+          | 'PR'
+          | 'PE'
+          | 'PI'
+          | 'RJ'
+          | 'RN'
+          | 'RS'
+          | 'RO'
+          | 'RR'
+          | 'SC'
+          | 'SP'
+          | 'SE'
+          | 'TO';
+        sort?: 'name' | '-name' | 'createdAt' | '-createdAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['CustomerResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  CustomersController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateCustomerDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerResponse'];
+        };
+      };
+      /** @description Documento já cadastrado na empresa */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  CustomersController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  CustomersController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateCustomerDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  CustomersController_deactivate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerResponse'];
+        };
+      };
+    };
+  };
+  CustomersController_activate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CustomerResponse'];
+        };
+      };
+    };
+  };
+  LocationsController_list: {
+    parameters: {
+      query?: {
+        page?: components['schemas']['Object'];
+        pageSize?: components['schemas']['Object'];
+        status?: 'active' | 'inactive' | 'all';
+        /** @description Busca por código ou nome */
+        q?: string;
+        type?: components['schemas']['LocationType'];
+        sort?: 'code' | '-code' | 'name' | '-name';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['LocationResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  LocationsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateLocationDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+      /** @description Código já usado na empresa */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LocationsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LocationsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLocationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LocationsController_deactivate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+    };
+  };
+  LocationsController_activate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LocationResponse'];
         };
       };
     };

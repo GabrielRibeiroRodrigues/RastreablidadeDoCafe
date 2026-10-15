@@ -5,7 +5,10 @@ import { LoggingModule } from './common/logging/logging.module.js';
 import { validateEnv } from './config/env.js';
 import { HealthModule } from './health/health.module.js';
 import { CompaniesModule } from './modules/companies/companies.module.js';
+import { CustomersModule } from './modules/customers/customers.module.js';
+import { LocationsModule } from './modules/locations/locations.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
+import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { TenancyModule } from './tenancy/tenancy.module.js';
 
@@ -18,6 +21,9 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     AuthModule,
     CompaniesModule,
     ProductsModule,
+    SuppliersModule,
+    CustomersModule,
+    LocationsModule,
     HealthModule,
   ],
 })

@@ -2,11 +2,8 @@ import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 import { PageQueryDto } from '../../common/http/pagination.js';
+import { trim, upperTrim } from '../../common/http/transforms.js';
 import { ProductType, RoastLevel, Unit } from '../../generated/prisma/client.js';
-
-const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
-const upperTrim = ({ value }: { value: unknown }) =>
-  typeof value === 'string' ? value.trim().toUpperCase() : value;
 
 export class CreateProductDto {
   @ApiProperty({ description: 'Código interno, único na empresa', example: 'VRD-BOURBON-AM' })

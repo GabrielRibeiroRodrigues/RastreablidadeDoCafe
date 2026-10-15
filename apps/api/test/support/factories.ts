@@ -1,8 +1,13 @@
 import { randomInt, randomUUID } from 'node:crypto';
 import {
+  LocationType,
   ProductType,
   Role,
+  SupplierType,
   Unit,
+  type Customer,
+  type Location,
+  type Supplier,
   type Company,
   type Product,
   type User,
@@ -42,6 +47,25 @@ export function factories(prisma: PrismaService) {
           name: 'Café verde teste',
           type: ProductType.GREEN,
           unit: Unit.KG,
+          ...data,
+        },
+      }),
+
+    supplier: (companyId: string, data: Partial<Supplier> = {}): Promise<Supplier> =>
+      prisma.supplier.create({
+        data: { companyId, name: 'Fazenda Teste', type: SupplierType.FARM, ...data },
+      }),
+
+    customer: (companyId: string, data: Partial<Customer> = {}): Promise<Customer> =>
+      prisma.customer.create({ data: { companyId, name: 'Cliente Teste', ...data } }),
+
+    location: (companyId: string, data: Partial<Location> = {}): Promise<Location> =>
+      prisma.location.create({
+        data: {
+          companyId,
+          code: `LOC-${randomUUID().slice(0, 8).toUpperCase()}`,
+          name: 'Armazém Teste',
+          type: LocationType.WAREHOUSE,
           ...data,
         },
       }),

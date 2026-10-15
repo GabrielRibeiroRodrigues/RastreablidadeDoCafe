@@ -45,7 +45,7 @@ interface SeedCompany {
 
 /** Torrefação de cafés especiais — empresa principal para demonstração. */
 const serraAzul: SeedCompany = {
-  taxId: '12345678000190',
+  taxId: '12345678000195',
   name: 'Torrefação Serra Azul',
   lotPrefix: 'CAF',
   users: [
@@ -119,7 +119,7 @@ const serraAzul: SeedCompany = {
   ],
   suppliers: [
     {
-      document: '11122233344',
+      document: '11122233396',
       name: 'José Aparecido da Silva',
       type: SupplierType.PRODUCER,
       farmName: 'Sítio Santa Inês',
@@ -130,7 +130,7 @@ const serraAzul: SeedCompany = {
       varieties: ['Bourbon Amarelo', 'Catuaí Vermelho'],
     },
     {
-      document: '22333444000155',
+      document: '22333444000181',
       name: 'Fazenda Pedra Grande Ltda.',
       type: SupplierType.FARM,
       farmName: 'Fazenda Pedra Grande',
@@ -141,7 +141,7 @@ const serraAzul: SeedCompany = {
       varieties: ['Mundo Novo', 'Catuaí Amarelo'],
     },
     {
-      document: '33444555000166',
+      document: '33444555000181',
       name: 'Cooperativa Alta Mogiana',
       type: SupplierType.COOPERATIVE,
       region: 'Alta Mogiana',
@@ -153,21 +153,21 @@ const serraAzul: SeedCompany = {
   ],
   customers: [
     {
-      document: '44555666000177',
+      document: '44555666000181',
       name: 'Cafeteria Grão Fino',
       email: 'compras@graofino.dev',
       city: 'São Paulo',
       state: 'SP',
     },
     {
-      document: '55666777000188',
+      document: '55666777000181',
       name: 'Empório Mineiro',
       email: 'pedidos@emporiomineiro.dev',
       city: 'Belo Horizonte',
       state: 'MG',
     },
     {
-      document: '66777888000199',
+      document: '66777888000181',
       name: 'Padaria Pão & Prosa',
       city: 'Campinas',
       state: 'SP',
@@ -184,7 +184,7 @@ const serraAzul: SeedCompany = {
 
 /** Segunda empresa: existe para demonstrar (e testar) o isolamento entre empresas. */
 const valeDoCafe: SeedCompany = {
-  taxId: '98765432000110',
+  taxId: '98765432000198',
   name: 'Cooperativa Vale do Café',
   lotPrefix: 'VDC',
   users: [
@@ -211,7 +211,7 @@ const valeDoCafe: SeedCompany = {
   ],
   suppliers: [
     {
-      document: '77788899900',
+      document: '77788899941',
       name: 'Maria Helena Ferreira',
       type: SupplierType.PRODUCER,
       farmName: 'Sítio Boa Vista',
@@ -224,7 +224,7 @@ const valeDoCafe: SeedCompany = {
   ],
   customers: [
     {
-      document: '88999000000111',
+      document: '88777666000100',
       name: 'Exportadora Porto Seguro',
       city: 'Santos',
       state: 'SP',

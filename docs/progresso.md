@@ -10,8 +10,8 @@
 | 4   | Infra de testes (Vitest + Testcontainers)                  | ✅ concluída    |
 | 5   | Autenticação (JWT/JWKS, emissor simulado, perfis)          | ✅ concluída    |
 | 6   | Multi-tenancy + módulo de empresas + testes de isolamento  | ✅ concluída    |
-| 7   | CRUDs: produto, fornecedor, cliente, local                 | ⏳ próxima      |
-| 8   | CI (GitHub Actions) e geração do cliente OpenAPI           | 🟡 CI básica    |
+| 7   | CRUDs: produto, fornecedor, cliente, local                 | ✅ concluída    |
+| 8   | CI (GitHub Actions) e geração do cliente OpenAPI           | ✅ concluída    |
 | 9   | Front: login e telas de cadastro                           | 🟡 em andamento |
 
 ## Registro
@@ -69,6 +69,20 @@
 - `GET/PATCH /v1/companies/me` (PATCH só admin).
 - 43 testes novos: 26 unitários das regras + 17 de integração (listar, buscar, atualizar, excluir, criar com `companyId` forjado, mover de empresa, `OR` para burlar, transação, concorrência, SQL bruto, HTTP). Total na API: 92.
 - Bug encontrado pelos testes: consultas lazy do Prisma executando fora do contexto — documentado em [multi-tenancy.md](multi-tenancy.md).
+
+### Etapa 7 — Cadastros
+
+- Produtos, fornecedores, clientes e locais com o mesmo contrato: lista paginada (busca, filtros, ordenação, status), detalhe, criação, edição, ativar/desativar (sem exclusão). Ver [cadastros.md](cadastros.md).
+- Validações de domínio: CPF/CNPJ com dígito verificador, UF, altitude, variedades, SKU/código normalizados, grau de torra só para torrados/blends.
+- `describeCatalogResource()`: suíte e2e padrão (isolamento, perfis, ciclo de vida, paginação) aplicada aos 4 recursos.
+- Conflitos de unicidade informam o campo (com o driver adapter, extraído do nome da constraint).
+- 166 testes na API.
+
+### Etapa 8 — Contrato OpenAPI
+
+- `pnpm openapi`: gera `packages/shared/openapi.json` (Nest em modo preview, sem banco) e os tipos `packages/shared/src/api/schema.ts` (openapi-typescript).
+- CI: passo `openapi:check` falha se a API mudou sem regenerar o contrato.
+- Observação: openapi-typescript declara peer `typescript@^5`, mas funciona com o 6.0.
 
 ### Trabalho em paralelo (agentes)
 
