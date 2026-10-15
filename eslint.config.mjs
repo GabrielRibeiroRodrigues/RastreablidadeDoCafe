@@ -46,6 +46,37 @@ export default tseslint.config(
     files: ['apps/web/src/components/ui/**/*.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
   },
+  // Isolamento por empresa (ADR 0004): SQL bruto não passa pela extensão de tenant.
+  {
+    files: ['apps/api/src/**/*.ts'],
+    ignores: ['apps/api/src/prisma/**', 'apps/api/src/tenancy/**'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'MemberExpression[property.name=/^\\$(queryRaw|executeRaw)(Unsafe)?$/]',
+          message: 'Raw SQL bypasses tenant isolation. Use TenantPrismaService.sql() (ADR 0004).',
+        },
+      ],
+    },
+  },
+  // Módulos de negócio só falam com o banco pelo cliente escopado por empresa.
+  {
+    files: ['apps/api/src/modules/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/prisma/prisma.service.js'],
+              message: 'Use TenantPrismaService in business modules (ADR 0004).',
+            },
+          ],
+        },
+      ],
+    },
+  },
   {
     files: ['**/*.{js,mjs,cjs}'],
     ...tseslint.configs.disableTypeChecked,

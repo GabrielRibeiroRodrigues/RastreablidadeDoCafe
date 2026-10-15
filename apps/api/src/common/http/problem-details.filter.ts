@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { STATUS_CODES } from 'node:http';
+import { Prisma } from '../../generated/prisma/client.js';
 import { ValidationProblemException, type FieldError } from './validation.js';
 
 /** Corpo de erro no formato RFC 9457 (Problem Details for HTTP APIs). */
@@ -68,6 +69,9 @@ export function toProblem(exception: unknown): ProblemDetails {
     };
   }
 
+  const prismaProblem = fromPrismaError(exception);
+  if (prismaProblem) return prismaProblem;
+
   // Nunca vaza detalhes internos de erros inesperados.
   return {
     type: 'about:blank',
@@ -75,6 +79,52 @@ export function toProblem(exception: unknown): ProblemDetails {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     detail: 'An unexpected error occurred.',
   };
+}
+
+/**
+ * Erros conhecidos do Prisma viram respostas de negócio. Um registro de outra empresa nunca é
+ * encontrado (a extensão de tenant filtra), então chega aqui como P2025 → 404, sem revelar que existe.
+ */
+function fromPrismaError(exception: unknown): ProblemDetails | undefined {
+  if (!(exception instanceof Prisma.PrismaClientKnownRequestError)) return undefined;
+
+  switch (exception.code) {
+    case 'P2025':
+      return {
+        type: 'about:blank',
+        title: 'Not Found',
+        status: HttpStatus.NOT_FOUND,
+        detail: 'Resource not found.',
+      };
+    case 'P2002':
+      return {
+        type: '/problems/conflict',
+        title: 'Conflict',
+        status: HttpStatus.CONFLICT,
+        detail: 'A record with the same unique value already exists.',
+        ...uniqueFields(exception.meta),
+      };
+    case 'P2003':
+      return {
+        type: '/problems/conflict',
+        title: 'Conflict',
+        status: HttpStatus.CONFLICT,
+        detail: 'The operation conflicts with related records.',
+      };
+    default:
+      return undefined;
+  }
+}
+
+/** Campos em conflito, sem o `companyId` (detalhe interno do isolamento). */
+function uniqueFields(meta: Record<string, unknown> | undefined): Pick<ProblemDetails, 'errors'> {
+  const target = meta?.['target'];
+  const fields = Array.isArray(target)
+    ? target.filter((field): field is string => typeof field === 'string' && field !== 'companyId')
+    : [];
+  return fields.length
+    ? { errors: fields.map((field) => ({ field, messages: ['must be unique'] })) }
+    : {};
 }
 
 function extractDetail(response: string | object): string | undefined {

@@ -9,8 +9,8 @@
 | 3   | Prisma: schema, migration, seed de café                    | ✅ concluída    |
 | 4   | Infra de testes (Vitest + Testcontainers)                  | ✅ concluída    |
 | 5   | Autenticação (JWT/JWKS, emissor simulado, perfis)          | ✅ concluída    |
-| 6   | Multi-tenancy + módulo de empresas + testes de isolamento  | ⏳ próxima      |
-| 7   | CRUDs: produto, fornecedor, cliente, local                 | ⬜              |
+| 6   | Multi-tenancy + módulo de empresas + testes de isolamento  | ✅ concluída    |
+| 7   | CRUDs: produto, fornecedor, cliente, local                 | ⏳ próxima      |
 | 8   | CI (GitHub Actions) e geração do cliente OpenAPI           | 🟡 CI básica    |
 | 9   | Front: login e telas de cadastro                           | 🟡 em andamento |
 
@@ -59,6 +59,16 @@
 - `GET /v1/me` com usuário, perfis e empresa.
 - 33 testes novos: claims, env, token forjado/expirado/ID token/outro client/usuário inativo, matriz de perfis. Total na API: 49.
 - Documentação: [autenticacao.md](autenticacao.md).
+
+### Etapa 6 — Isolamento entre empresas
+
+- Contexto por requisição (`nestjs-cls`) com a empresa vinda do usuário autenticado.
+- Extensão do Prisma que escopa toda operação (`scopeArgs`), falhando fechado sem contexto.
+- `TenantPrismaService.sql()` para SQL bruto; ESLint impede SQL bruto e o cliente sem filtro nos módulos de negócio.
+- Erros do Prisma mapeados: P2025 → 404, P2002 → 409 (com campos), P2003 → 409.
+- `GET/PATCH /v1/companies/me` (PATCH só admin).
+- 43 testes novos: 26 unitários das regras + 17 de integração (listar, buscar, atualizar, excluir, criar com `companyId` forjado, mover de empresa, `OR` para burlar, transação, concorrência, SQL bruto, HTTP). Total na API: 92.
+- Bug encontrado pelos testes: consultas lazy do Prisma executando fora do contexto — documentado em [multi-tenancy.md](multi-tenancy.md).
 
 ### Trabalho em paralelo (agentes)
 

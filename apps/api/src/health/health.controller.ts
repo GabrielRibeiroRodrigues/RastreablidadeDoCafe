@@ -43,7 +43,7 @@ export class HealthController {
   @ApiServiceUnavailableResponse({ description: 'Banco indisponível' })
   async ready(): Promise<ReadinessResponse> {
     try {
-      await this.prisma.$queryRaw`SELECT 1`;
+      await this.prisma.ping();
     } catch {
       throw new ServiceUnavailableException('Database is unreachable');
     }

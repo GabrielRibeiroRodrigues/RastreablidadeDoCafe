@@ -5,6 +5,7 @@ import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy, type SecretOrKeyProvider } from 'passport-jwt';
 import type { Env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { TenantContext } from '../tenancy/tenant-context.js';
 import { parseAccessTokenClaims } from './access-token-claims.js';
 import type { AuthUser } from './auth-user.js';
 import { MOCK_ISSUER, MockKeyStore } from './mock-key-store.js';
@@ -23,6 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     config: ConfigService<Env, true>,
     mockKeys: MockKeyStore,
     private readonly prisma: PrismaService,
+    private readonly tenant: TenantContext,
   ) {
     const mode = config.get('AUTH_MODE', { infer: true });
     const { issuer, keyProvider } =
@@ -54,6 +56,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     if (!user?.isActive) {
       throw new UnauthorizedException('User is not registered or is inactive');
     }
+
+    // A partir daqui, toda consulta de negócio desta requisição fica presa a esta empresa.
+    this.tenant.set(user.companyId, user.id);
 
     return {
       id: user.id,

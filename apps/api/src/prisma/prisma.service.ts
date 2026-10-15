@@ -20,6 +20,11 @@ export class PrismaService extends PrismaClient implements OnModuleDestroy {
     });
   }
 
+  /** Verificação de conectividade (sem dados de negócio, por isso fora do escopo de tenant). */
+  async ping(): Promise<void> {
+    await this.$queryRaw`SELECT 1`;
+  }
+
   async onModuleDestroy(): Promise<void> {
     await this.$disconnect();
   }

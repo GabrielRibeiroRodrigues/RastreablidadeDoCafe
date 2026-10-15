@@ -13,6 +13,11 @@ import { resolveRequestId } from './request-id.js';
           level: config.get('LOG_LEVEL', { infer: true }),
           genReqId: resolveRequestId,
           customAttributeKeys: { reqId: 'requestId' },
+          // Após a autenticação, cada linha de log da requisição carrega empresa e usuário.
+          customProps: (req) => {
+            const user = (req as { user?: { id: string; companyId: string } }).user;
+            return user ? { companyId: user.companyId, userId: user.id } : {};
+          },
           // Logs enxutos (custo de ingestão no CloudWatch): sem headers, só o essencial.
           serializers: {
             req: (req: { id: unknown; method: string; url: string }) => ({
