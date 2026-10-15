@@ -343,6 +343,134 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/lots': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['LotsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['LotsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['LotsController_update'];
+    trace?: never;
+  };
+  '/v1/lots/{id}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['LotsController_changeStatus'];
+    trace?: never;
+  };
+  '/v1/receipts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ReceiptsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/movements': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MovementsController_list'];
+    put?: never;
+    post: operations['MovementsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/movements/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MovementsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/movements/{id}/reverse': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['MovementsController_reverse'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/stock': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['StockController_position'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/health': {
     parameters: {
       query?: never;
@@ -797,6 +925,289 @@ export interface components {
       name?: string;
       type?: components['schemas']['LocationType'];
       description?: string | null;
+    };
+    /** @enum {string} */
+    LotStatus: 'AVAILABLE' | 'QUARANTINE' | 'BLOCKED' | 'CONSUMED';
+    ProductSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example VRD-BOURBON-AM */
+      sku: string;
+      /** @example Café verde Bourbon Amarelo */
+      name: string;
+      type: components['schemas']['ProductType'];
+    };
+    SupplierSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example José Aparecido da Silva */
+      name: string;
+      /** @example Sítio Santa Inês */
+      farmName: string | null;
+    };
+    LotResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      supplier: components['schemas']['SupplierSummary'] | null;
+      unit: components['schemas']['Unit'];
+      /**
+       * @description Quantidade recebida/produzida
+       * @example 60.000
+       */
+      initialQuantity: string;
+      /**
+       * @description Saldo atual (soma de todos os locais)
+       * @example 42.500
+       */
+      balance: string;
+      /**
+       * Format: date
+       * @example 2027-06-30
+       */
+      expiresAt: string | null;
+      /** Format: date-time */
+      receivedAt: string;
+      /** @example 2025/26 */
+      harvest: string | null;
+      /** @example Bourbon Amarelo */
+      variety: string | null;
+      /** @example 1250 */
+      altitudeMeters: number | null;
+      /** @example 17 */
+      screenSize: number | null;
+      /** @example 11.5 */
+      moisturePercent: number | null;
+      roastLevel: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore: number | null;
+      notes: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    LocationSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example ARM-01 */
+      code: string;
+      /** @example Armazém de café verde */
+      name: string;
+      type: components['schemas']['LocationType'];
+    };
+    LocationBalance: {
+      location: components['schemas']['LocationSummary'];
+      /** @example 42.500 */
+      quantity: string;
+    };
+    LotDetailResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      supplier: components['schemas']['SupplierSummary'] | null;
+      unit: components['schemas']['Unit'];
+      /**
+       * @description Quantidade recebida/produzida
+       * @example 60.000
+       */
+      initialQuantity: string;
+      /**
+       * @description Saldo atual (soma de todos os locais)
+       * @example 42.500
+       */
+      balance: string;
+      /**
+       * Format: date
+       * @example 2027-06-30
+       */
+      expiresAt: string | null;
+      /** Format: date-time */
+      receivedAt: string;
+      /** @example 2025/26 */
+      harvest: string | null;
+      /** @example Bourbon Amarelo */
+      variety: string | null;
+      /** @example 1250 */
+      altitudeMeters: number | null;
+      /** @example 17 */
+      screenSize: number | null;
+      /** @example 11.5 */
+      moisturePercent: number | null;
+      roastLevel: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore: number | null;
+      notes: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** @description Saldo por local (só locais com saldo) */
+      stock: components['schemas']['LocationBalance'][];
+    };
+    UpdateLotDto: {
+      /**
+       * Format: date
+       * @description Validade (AAAA-MM-DD)
+       * @example 2027-06-30
+       */
+      expiresAt?: string | null;
+      /**
+       * @description Safra
+       * @example 2025/26
+       */
+      harvest?: string | null;
+      /** @example Bourbon Amarelo */
+      variety?: string | null;
+      /** @example 1250 */
+      altitudeMeters?: number | null;
+      /** @example 17 */
+      screenSize?: number | null;
+      /** @example 11.5 */
+      moisturePercent?: number | null;
+      roastLevel?: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore?: number | null;
+      notes?: string | null;
+    };
+    /** @enum {string} */
+    SettableLotStatus: 'AVAILABLE' | 'QUARANTINE' | 'BLOCKED';
+    ChangeLotStatusDto: {
+      status: components['schemas']['SettableLotStatus'];
+      /** @example Umidade acima de 12,5% na análise de recebimento */
+      reason: string;
+    };
+    CreateReceiptDto: {
+      /**
+       * Format: date
+       * @description Validade (AAAA-MM-DD)
+       * @example 2027-06-30
+       */
+      expiresAt?: string | null;
+      /**
+       * @description Safra
+       * @example 2025/26
+       */
+      harvest?: string | null;
+      /** @example Bourbon Amarelo */
+      variety?: string | null;
+      /** @example 1250 */
+      altitudeMeters?: number | null;
+      /** @example 17 */
+      screenSize?: number | null;
+      /** @example 11.5 */
+      moisturePercent?: number | null;
+      roastLevel?: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore?: number | null;
+      notes?: string | null;
+      /** Format: uuid */
+      productId: string;
+      /** Format: uuid */
+      supplierId?: string | null;
+      /**
+       * Format: uuid
+       * @description Local de destino (quarentena → lote em quarentena)
+       */
+      locationId: string;
+      /**
+       * @description Quantidade na unidade do produto
+       * @example 60.000
+       */
+      quantity: string;
+      /** @description Data/hora do recebimento (padrão: agora) */
+      receivedAt?: string;
+      /** @example NF 004512 */
+      documentRef?: string | null;
+    };
+    /** @enum {string} */
+    MovementType:
+      'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT' | 'CONSUMPTION' | 'PRODUCTION' | 'REVERSAL';
+    LotSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+    };
+    UserSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example Bruno Costa */
+      name: string;
+    };
+    MovementResponse: {
+      /** Format: uuid */
+      id: string;
+      type: components['schemas']['MovementType'];
+      lot: components['schemas']['LotSummary'];
+      fromLocation: components['schemas']['LocationSummary'] | null;
+      toLocation: components['schemas']['LocationSummary'] | null;
+      /** @example 10.000 */
+      quantity: string;
+      user: components['schemas']['UserSummary'];
+      /** Format: date-time */
+      occurredAt: string;
+      /** @example NF 12345 */
+      documentRef: string | null;
+      reason: string | null;
+      /** Format: uuid */
+      reversalOfId: string | null;
+      /**
+       * Format: uuid
+       * @description Estorno desta
+       */
+      reversedById: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    /** @enum {string} */
+    ManualMovementType: 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT' | 'CONSUMPTION';
+    CreateMovementDto: {
+      type: components['schemas']['ManualMovementType'];
+      /** Format: uuid */
+      lotId: string;
+      /**
+       * Format: uuid
+       * @description Origem: ISSUE, TRANSFER, CONSUMPTION e ajuste de perda
+       */
+      fromLocationId?: string;
+      /**
+       * Format: uuid
+       * @description Destino: TRANSFER e ajuste de sobra
+       */
+      toLocationId?: string;
+      /** @example 10.000 */
+      quantity: string;
+      /** @description Quando aconteceu (padrão: agora) */
+      occurredAt?: string;
+      /** @example Pedido 2026-0457 */
+      documentRef?: string | null;
+      /**
+       * @description Obrigatório em ajustes
+       * @example Quebra no inventário mensal
+       */
+      reason?: string | null;
+    };
+    ReverseMovementDto: {
+      /** @example Lançado no lote errado */
+      reason: string;
+    };
+    StockRow: {
+      lot: components['schemas']['LotSummary'];
+      /** Format: date */
+      expiresAt: string | null;
+      product: components['schemas']['ProductSummary'];
+      location: components['schemas']['LocationSummary'];
+      unit: components['schemas']['Unit'];
+      /** @example 42.500 */
+      quantity: string;
     };
     HealthResponse: {
       /** @example ok */
@@ -1633,6 +2044,311 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['LocationResponse'];
+        };
+      };
+    };
+  };
+  LotsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Busca pelo código do lote */
+        q?: string;
+        productId?: string;
+        supplierId?: string;
+        status?: components['schemas']['LotStatus'];
+        /** @description Só lotes que vencem nos próximos N dias (inclui vencidos) */
+        expiresWithinDays?: number;
+        sort?: '-receivedAt' | 'receivedAt' | 'code' | '-code' | 'expiresAt' | '-expiresAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['LotResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  LotsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotDetailResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LotsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLotDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotDetailResponse'];
+        };
+      };
+    };
+  };
+  LotsController_changeStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChangeLotStatusDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotDetailResponse'];
+        };
+      };
+    };
+  };
+  ReceiptsController_create: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReceiptDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotDetailResponse'];
+        };
+      };
+      /** @description Produto inativo ou local inativo */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Idempotency-Key reutilizada com outro corpo */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  MovementsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        lotId?: string;
+        /** @description Origem ou destino */
+        locationId?: string;
+        type?: components['schemas']['MovementType'];
+        /** @description A partir de (inclusive) */
+        from?: string;
+        /** @description Até (exclusive) */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['MovementResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  MovementsController_create: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateMovementDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MovementResponse'];
+        };
+      };
+      /** @description Saldo insuficiente ou lote bloqueado/em quarentena */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  MovementsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MovementResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  MovementsController_reverse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReverseMovementDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MovementResponse'];
+        };
+      };
+      /** @description Já estornada, é um estorno, ou o saldo não comporta */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  StockController_position: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        productId?: string;
+        locationId?: string;
+        lotStatus?: components['schemas']['LotStatus'];
+        /** @description Busca pelo código do lote */
+        q?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['StockRow'][];
+            meta: components['schemas']['PageMeta'];
+          };
         };
       };
     };

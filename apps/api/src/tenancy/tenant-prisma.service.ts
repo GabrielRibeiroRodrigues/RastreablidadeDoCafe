@@ -43,4 +43,31 @@ export class TenantPrismaService {
   sql<T>(build: (companyId: string) => Prisma.Sql): Promise<T> {
     return this.prisma.$queryRaw<T>(build(this.tenant.requireCompanyId()));
   }
+
+  /**
+   * Transação interativa escopada. O `tx` tem os modelos com a mesma extensão de tenant e um
+   * `sql()` que roda **dentro** da transação — necessário para `SELECT ... FOR UPDATE`.
+   */
+  transaction<T>(
+    fn: (tx: TenantTransaction) => Promise<T>,
+    options?: { timeout?: number; maxWait?: number },
+  ): Promise<T> {
+    const companyId = this.tenant.requireCompanyId();
+    return this.client.$transaction(
+      (tx) =>
+        fn(
+          Object.assign(tx, {
+            sql: <R>(build: (companyId: string) => Prisma.Sql) => tx.$queryRaw<R>(build(companyId)),
+          }),
+        ),
+      { timeout: 10_000, maxWait: 5_000, ...options },
+    );
+  }
 }
+
+type TransactionClient = Parameters<Parameters<TenantPrismaClient['$transaction']>[0]>[0];
+
+export type TenantTransaction = TransactionClient & {
+  /** SQL bruto dentro da transação; o builder recebe a empresa do contexto e deve usá-la. */
+  sql<R>(build: (companyId: string) => Prisma.Sql): Promise<R>;
+};

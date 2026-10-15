@@ -6,6 +6,7 @@ import { validateEnv } from './config/env.js';
 import { HealthModule } from './health/health.module.js';
 import { CompaniesModule } from './modules/companies/companies.module.js';
 import { CustomersModule } from './modules/customers/customers.module.js';
+import { InventoryModule } from './modules/inventory/inventory.module.js';
 import { LocationsModule } from './modules/locations/locations.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
 import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
@@ -24,6 +25,7 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     SuppliersModule,
     CustomersModule,
     LocationsModule,
+    InventoryModule,
     HealthModule,
   ],
 })

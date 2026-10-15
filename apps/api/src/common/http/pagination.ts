@@ -15,8 +15,8 @@ export const MAX_PAGE_SIZE = 100;
 export const RECORD_STATUSES = ['active', 'inactive', 'all'] as const;
 export type RecordStatus = (typeof RECORD_STATUSES)[number];
 
-/** Parâmetros comuns de listagem: paginação por página (adequada a tabelas de cadastro). */
-export class PageQueryDto {
+/** Só paginação (para listas sem o conceito de ativo/inativo, como lotes e movimentações). */
+export class PagingDto {
   @ApiPropertyOptional({ type: Number, minimum: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)
@@ -31,7 +31,10 @@ export class PageQueryDto {
   @Min(1)
   @Max(MAX_PAGE_SIZE)
   pageSize = 20;
+}
 
+/** Paginação + situação do cadastro (cadastros são desativados, nunca apagados). */
+export class PageQueryDto extends PagingDto {
   @ApiPropertyOptional({ enum: RECORD_STATUSES, default: 'active' })
   @IsOptional()
   @IsIn(RECORD_STATUSES)
@@ -58,11 +61,11 @@ export interface Page<T> {
 }
 
 /** `skip`/`take` do Prisma a partir da página pedida. */
-export function pageArgs({ page, pageSize }: PageQueryDto): { skip: number; take: number } {
+export function pageArgs({ page, pageSize }: PagingDto): { skip: number; take: number } {
   return { skip: (page - 1) * pageSize, take: pageSize };
 }
 
-export function toPage<T>(data: T[], total: number, { page, pageSize }: PageQueryDto): Page<T> {
+export function toPage<T>(data: T[], total: number, { page, pageSize }: PagingDto): Page<T> {
   return { data, meta: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } };
 }
 
