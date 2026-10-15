@@ -10,8 +10,11 @@ export const DEFAULT_PAGE_SIZE = 20;
 export interface ListParamsConfig {
   sorts: readonly string[];
   defaultSort: string;
-  /** Filtros extras aceitos na URL, com os valores válidos de cada um. */
-  filters?: Record<string, readonly string[]>;
+  /**
+   * Filtros extras aceitos na URL: a lista de valores válidos de cada um, ou uma função de
+   * validação (ex.: UUID de um produto, data `AAAA-MM-DD`).
+   */
+  filters?: Record<string, readonly string[] | ((value: string) => boolean)>;
 }
 
 export interface ListParams {
@@ -34,7 +37,8 @@ export function parseListParams(search: URLSearchParams, config: ListParamsConfi
   const filters: Record<string, string> = {};
   for (const [name, allowed] of Object.entries(config.filters ?? {})) {
     const value = search.get(name);
-    if (value !== null && allowed.includes(value)) filters[name] = value;
+    const valid = typeof allowed === 'function' ? allowed : (v: string) => allowed.includes(v);
+    if (value !== null && value !== '' && valid(value)) filters[name] = value;
   }
 
   return {

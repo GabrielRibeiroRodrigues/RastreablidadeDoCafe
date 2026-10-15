@@ -1,6 +1,6 @@
 # Front-end (`apps/web`)
 
-SPA em React 19 + Vite + TypeScript strict: layout, autenticação e as telas de cadastro (Produtos, Fornecedores, Clientes e Locais), que falam com a API por um cliente tipado gerado do OpenAPI.
+SPA em React 19 + Vite + TypeScript strict: layout, autenticação, as telas de cadastro (Produtos, Fornecedores, Clientes e Locais) e as telas de estoque (Recebimento, Lotes, Estoque e Movimentações), que falam com a API por um cliente tipado gerado do OpenAPI.
 
 ## Stack
 
@@ -23,13 +23,13 @@ apps/web/src
 ├── auth/           # AuthProvider, useAuth, ProtectedRoute, estratégias mock/cognito
 ├── components/
 │   ├── catalog/    # blocos genéricos das telas de cadastro (tabela, filtros, CatalogPage...)
-│   ├── form/       # campos RHF, TagInput, schemas Zod comuns, erros da API → campos
+│   ├── form/       # campos RHF, TagInput, EntityCombobox, schemas Zod, erros da API → campos
 │   ├── layout/     # AppLayout, AppSidebar, AppHeader
 │   └── ui/         # componentes gerados pelo shadcn/ui (não editar à mão sem motivo)
 ├── config/env.ts   # leitura e validação (Zod) das variáveis VITE_*
 ├── features/       # um cadastro por pasta: api.ts, <X>Form.tsx, resource.tsx e testes
-│                   # (products, suppliers, customers, locations)
-├── lib/            # api-client.ts (openapi-fetch), api.ts (ApiError), br.ts, jwt.ts
+│                   # (products, suppliers, customers, locations); inventory/ = telas de estoque
+├── lib/            # api-client.ts (openapi-fetch), api.ts (ApiError), br.ts, quantity.ts, jwt.ts
 ├── pages/          # login, callback do Cognito, 404
 └── test/           # setup do Vitest, mock da API (fetch), sessão de teste
 ```
@@ -49,6 +49,11 @@ Para adicionar um componente do shadcn: `pnpm dlx shadcn@latest add <nome>` dent
 | `/fornecedores`  | privado | cadastro de fornecedores                   |
 | `/clientes`      | privado | cadastro de clientes                       |
 | `/locais`        | privado | cadastro de locais de estoque              |
+| `/recebimento`   | privado | novo recebimento (admin e operador)        |
+| `/lotes`         | privado | lista de lotes                             |
+| `/lotes/:id`     | privado | detalhe do lote, ações e histórico         |
+| `/estoque`       | privado | posição de estoque (lote × local)          |
+| `/movimentacoes` | privado | razão de movimentações                     |
 | `*`              | público | 404                                        |
 
 Rotas privadas ficam sob `ProtectedRoute`: enquanto a sessão é restaurada mostra um carregando; sem sessão, redireciona para `/login` guardando a rota original, para voltar a ela após o login.
@@ -90,6 +95,12 @@ Os perfis (`admin`, `operator`, `auditor`) vêm do claim `cognito:groups` do **a
 
 As regras ficam em `auth/permissions.ts` (`useCatalogPermissions`); a API aplica as mesmas.
 
+| Perfil   | Nas telas de estoque (`useInventoryPermissions`)                                         |
+| -------- | ---------------------------------------------------------------------------------------- |
+| auditor  | somente leitura (`/recebimento` mostra aviso; sem botões de ação no lote)                |
+| operator | recebe, movimenta (saída, transferência, consumo), edita dados, anexa, põe em quarentena |
+| admin    | tudo do operador + ajuste de inventário, estorno, bloquear e liberar o lote              |
+
 ### Empresa no cabeçalho
 
 O cabeçalho mostra a empresa de `GET /v1/me` (`useMe`, em `auth/use-me.ts`) nos **dois** modos de login — no Cognito o token não traz a empresa. O nome vindo do login mock é só o valor inicial.
@@ -116,6 +127,18 @@ Um middleware único:
 - em 401 de chamada autenticada, avisa o `AuthProvider`.
 
 `unwrap()` devolve só o `data`. `getErrorMessage()` traduz o status para pt-BR (400, 401, 403, 404, 409 e 5xx com o `requestId`) e `translateFieldMessage()` traduz as mensagens mais comuns do class-validator ("must be unique" → "Já existe um cadastro com este valor.").
+
+O `ApiError` guarda também os campos extras do problema (`extensions`, ex.: `available`, `location`). Problemas de domínio têm mensagem própria, escolhida pelo `type` antes do status:
+
+| `type`                             | Mensagem                                                     |
+| ---------------------------------- | ------------------------------------------------------------ |
+| `/problems/insufficient-stock`     | "Saldo insuficiente em ARM-01: disponível 40,000"            |
+| `/problems/lot-not-movable`        | "Lote em quarentena/bloqueado não pode ser movimentado"      |
+| `/problems/already-reversed`       | "Esta movimentação já foi estornada."                        |
+| `/problems/invalid-reversal`       | estorno de estorno                                           |
+| `/problems/idempotency-key-reused` | mesma chave com outro corpo                                  |
+| `/problems/invalid-movement`       | motivo do ajuste, origem = destino, ajuste com os dois lados |
+| `/problems/lot-consumed` e outros  | lote consumido, produto inativo, destino inativo             |
 
 O QueryClient não repete consultas que falharam com 4xx. No logout o cache do TanStack Query é limpo, para não exibir dados de uma empresa a outro usuário.
 
@@ -161,6 +184,77 @@ Os formulários validam no cliente com Zod (mesmas regras da API) antes de envia
 - **Telefone**: aceita pontuação, envia só dígitos (10 a 13) e é exibido como `(11) 98888-7777`.
 - **UF**: select com as 27 unidades federativas.
 - Campos opcionais vazios são enviados como `null`.
+
+## Telas de estoque (`features/inventory`)
+
+Contrato da API em [estoque.md](estoque.md) e [anexos.md](anexos.md). A barra lateral ganhou a seção **Estoque** (Lotes, Estoque, Movimentações); Produção, Expedição e Recall seguem em "Em breve".
+
+### Recebimento (`/recebimento`)
+
+Formulário em duas partes:
+
+- **Recebimento**: produto (busca no servidor, só ativos, mostra SKU e unidade), fornecedor (busca, opcional), local de destino (select com o tipo; escolher um local de quarentena avisa que o lote nasce em quarentena), quantidade na unidade do produto, data/hora (padrão: agora), NF/documento e validade.
+- **Qualidade**: safra, variedade, altitude, peneira (8–20), umidade %, pontuação SCA (0–100), grau de torra e observações. Mesmas faixas da API; aceitam vírgula decimal.
+
+O envio leva `Idempotency-Key`. Ao sucesso: toast "Lote CAF-… recebido" e navegação para o detalhe do lote.
+
+### Lotes (`/lotes`)
+
+Tabela com código (link), produto, fornecedor/fazenda, saldo e quantidade inicial, data de recebimento, validade e status (Disponível, Quarentena, Bloqueado, Consumido). Validade **vencida** em vermelho e **vencendo em até 30 dias** em âmbar. Filtros: busca por código, produto, status e "vencendo em N dias" (7/15/30/60/90); ordenação por código, recebimento e validade; tudo na URL (`/lotes?lotStatus=QUARANTINE&expiresWithinDays=30`). Lotes consumidos aparecem esmaecidos.
+
+### Detalhe do lote (`/lotes/:id`)
+
+- Cabeçalho: código, status, produto, fornecedor/fazenda.
+- Cartões: saldo atual × quantidade inicial e data de recebimento; validade (com dias restantes); qualidade.
+- **Saldo por local** e **Anexos** (lista, upload e download — ver abaixo).
+- **Histórico de movimentações** (`GET /v1/movements?lotId=`, até 100 mais recentes): data, tipo, origem → destino, quantidade, usuário, documento, motivo e o selo **Estornada** (linha esmaecida). Link para a tela de Movimentações já filtrada pelo lote.
+
+Ações conforme o perfil:
+
+| Ação           | Quem            | Detalhes                                                                                                                                                        |
+| -------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Movimentar     | admin, operador | Saída, Transferência, Consumo e Ajuste (só admin: perda na origem ou sobra no destino, motivo obrigatório). Origem só entre locais com saldo, com o disponível. |
+| Estornar       | admin           | Por linha do histórico; não aparece em estornos nem em movimentações já estornadas. Motivo obrigatório.                                                         |
+| Alterar status | admin, operador | Operador só põe em quarentena; admin escolhe Disponível/Quarentena/Bloqueado. Motivo obrigatório. Oculto em lote consumido.                                     |
+| Editar dados   | admin, operador | Validade e qualidade (`PATCH /v1/lots/:id`); campo vazio limpa o valor.                                                                                         |
+
+O diálogo de movimentação valida no cliente (quantidade ≤ disponível na origem, origem ≠ destino), mas o resultado da API sempre prevalece: se o saldo mudou por outro usuário, o 409 aparece no topo do diálogo ("Saldo insuficiente em ARM-01: disponível 10,500") e os saldos são recarregados. Lote em quarentena ou bloqueado mostra um aviso e o erro da API (`lot-not-movable`).
+
+**Anexos**: PDF, JPEG, PNG ou WebP até 10 MB. O navegador pede o formulário pré-assinado (`POST /v1/lots/:id/attachments`), envia o arquivo direto ao bucket (campos primeiro, arquivo por último) e confirma (`/confirm`). O download abre a URL pré-assinada numa nova aba. Sem armazenamento configurado (503), o cartão avisa.
+
+### Estoque (`/estoque`)
+
+`GET /v1/stock`: uma linha por lote × local com lote (link), produto, local e tipo, quantidade com unidade, validade (mesmo destaque) e status do lote. Filtros: busca pelo código, produto, local e status do lote, na URL.
+
+### Movimentações (`/movimentacoes`)
+
+`GET /v1/movements` paginado, mais recentes primeiro: data, tipo, lote (link), origem → destino, quantidade, usuário, documento e motivo. Filtros: tipo, local (origem ou destino), período (de/até em dias locais; "até" inclui o dia) e lote (`?lotId=`, removível).
+
+### Quantidades, datas e idempotência
+
+- `lib/quantity.ts`: a API usa string decimal com ponto (`"1250.500"`); a tela mostra `1.250,5 kg`. Campos aceitam vírgula (`1250,5` → `"1250.5"`), até 3 casas. Comparações usam milésimos em `bigint` (sem erro de ponto flutuante). Unidades: `kg`, `sc` (saca de 60 kg) e `un`.
+- Datas só-dia (`expiresAt`) são lidas como data local, sem o deslocamento de fuso do `new Date("AAAA-MM-DD")`.
+- `useIdempotencyKey`: uma chave (`crypto.randomUUID()`) por envio; repetir o mesmo corpo (ex.: após erro de rede) reaproveita a chave e a API devolve o resultado original em vez de lançar de novo. Corpo diferente → chave nova; sucesso → descarta.
+- Qualquer mudança no razão invalida as consultas `lots`, `movements` e `stock`.
+
+### Rótulos
+
+| Tipo          | Rótulo        | Status       | Rótulo     |
+| ------------- | ------------- | ------------ | ---------- |
+| `RECEIPT`     | Entrada       | `AVAILABLE`  | Disponível |
+| `ISSUE`       | Saída         | `QUARANTINE` | Quarentena |
+| `TRANSFER`    | Transferência | `BLOCKED`    | Bloqueado  |
+| `ADJUSTMENT`  | Ajuste        | `CONSUMED`   | Consumido  |
+| `CONSUMPTION` | Consumo       |              |            |
+| `PRODUCTION`  | Produção      |              |            |
+| `REVERSAL`    | Estorno       |              |            |
+
+### Lacunas da API percebidas pelo front
+
+- `MovementResponse` não traz a unidade do produto: na tela de Movimentações a quantidade aparece sem unidade (no detalhe do lote, a unidade vem do lote).
+- `GET /v1/lots` só busca pelo código (não por produto/fornecedor em texto); `GET /v1/movements` não tem ordenação nem filtro por usuário.
+- No problema `lot-not-movable`, a extensão `status` (status do lote) é sobrescrita pelo `status` HTTP do RFC 9457; o front lê o status do lote do `detail` (renomear para `lotStatus` resolveria).
+- `GET /v1/stock` não ordena nem devolve um `id` de linha (o front usa `lote:local`).
 
 ## Testes
 

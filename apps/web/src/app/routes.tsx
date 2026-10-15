@@ -3,6 +3,11 @@ import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { CatalogPage } from '@/components/catalog/CatalogPage';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { customersResource } from '@/features/customers/resource';
+import { LotDetailPage } from '@/features/inventory/LotDetailPage';
+import { LotsPage } from '@/features/inventory/LotsPage';
+import { MovementsPage } from '@/features/inventory/MovementsPage';
+import { ReceiptPage } from '@/features/inventory/ReceiptPage';
+import { StockPage } from '@/features/inventory/StockPage';
 import { locationsResource } from '@/features/locations/resource';
 import { productsResource } from '@/features/products/resource';
 import { suppliersResource } from '@/features/suppliers/resource';
@@ -38,6 +43,11 @@ export const routes: RouteObject[] = [
             path: locationsResource.nav.path,
             element: <CatalogPage key="locations" resource={locationsResource} />,
           },
+          { path: '/lotes', element: <LotsPage /> },
+          { path: '/lotes/:id', element: <LotDetailPage /> },
+          { path: '/recebimento', element: <ReceiptPage /> },
+          { path: '/estoque', element: <StockPage /> },
+          { path: '/movimentacoes', element: <MovementsPage /> },
         ],
       },
     ],
