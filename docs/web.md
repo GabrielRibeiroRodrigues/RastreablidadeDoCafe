@@ -1,6 +1,6 @@
 # Front-end (`apps/web`)
 
-SPA em React 19 + Vite + TypeScript strict: layout, autenticação, as telas de cadastro (Produtos, Fornecedores, Clientes e Locais) e as telas de estoque (Recebimento, Lotes, Estoque e Movimentações), que falam com a API por um cliente tipado gerado do OpenAPI.
+SPA em React 19 + Vite + TypeScript strict: layout, autenticação, as telas de cadastro (Produtos, Fornecedores, Clientes e Locais) as telas de estoque (Recebimento, Lotes, Estoque e Movimentações) e as de operação (Produção, Expedição e Rastreabilidade), que falam com a API por um cliente tipado gerado do OpenAPI.
 
 ## Stack
 
@@ -28,7 +28,8 @@ apps/web/src
 │   └── ui/         # componentes gerados pelo shadcn/ui (não editar à mão sem motivo)
 ├── config/env.ts   # leitura e validação (Zod) das variáveis VITE_*
 ├── features/       # um cadastro por pasta: api.ts, <X>Form.tsx, resource.tsx e testes
-│                   # (products, suppliers, customers, locations); inventory/ = telas de estoque
+│                   # (products, suppliers, customers, locations); inventory/ = telas de estoque;
+│                   # production/, shipments/ e trace/ = produção, expedição e rastreabilidade
 ├── lib/            # api-client.ts (openapi-fetch), api.ts (ApiError), br.ts, quantity.ts, jwt.ts
 ├── pages/          # login, callback do Cognito, 404
 └── test/           # setup do Vitest, mock da API (fetch), sessão de teste
@@ -40,21 +41,29 @@ Para adicionar um componente do shadcn: `pnpm dlx shadcn@latest add <nome>` dent
 
 ## Rotas
 
-| Rota             | Acesso  | Conteúdo                                   |
-| ---------------- | ------- | ------------------------------------------ |
-| `/login`         | público | seleção de usuário (mock) ou botão Cognito |
-| `/auth/callback` | público | conclui o login do Cognito e redireciona   |
-| `/`              | privado | redireciona para `/produtos`               |
-| `/produtos`      | privado | cadastro de produtos                       |
-| `/fornecedores`  | privado | cadastro de fornecedores                   |
-| `/clientes`      | privado | cadastro de clientes                       |
-| `/locais`        | privado | cadastro de locais de estoque              |
-| `/recebimento`   | privado | novo recebimento (admin e operador)        |
-| `/lotes`         | privado | lista de lotes                             |
-| `/lotes/:id`     | privado | detalhe do lote, ações e histórico         |
-| `/estoque`       | privado | posição de estoque (lote × local)          |
-| `/movimentacoes` | privado | razão de movimentações                     |
-| `*`              | público | 404                                        |
+| Rota                         | Acesso  | Conteúdo                                          |
+| ---------------------------- | ------- | ------------------------------------------------- |
+| `/login`                     | público | seleção de usuário (mock) ou botão Cognito        |
+| `/auth/callback`             | público | conclui o login do Cognito e redireciona          |
+| `/`                          | privado | redireciona para `/produtos`                      |
+| `/produtos`                  | privado | cadastro de produtos                              |
+| `/fornecedores`              | privado | cadastro de fornecedores                          |
+| `/clientes`                  | privado | cadastro de clientes                              |
+| `/locais`                    | privado | cadastro de locais de estoque                     |
+| `/recebimento`               | privado | novo recebimento (admin e operador)               |
+| `/lotes`                     | privado | lista de lotes                                    |
+| `/lotes/:id`                 | privado | detalhe do lote, ações e histórico                |
+| `/estoque`                   | privado | posição de estoque (lote × local)                 |
+| `/movimentacoes`             | privado | razão de movimentações                            |
+| `/producao`                  | privado | ordens de produção                                |
+| `/producao/nova`             | privado | nova ordem (admin e operador)                     |
+| `/producao/:id`              | privado | detalhe da ordem                                  |
+| `/expedicao`                 | privado | expedições                                        |
+| `/expedicao/nova`            | privado | nova expedição (admin e operador)                 |
+| `/expedicao/:id`             | privado | detalhe da expedição                              |
+| `/rastreabilidade`           | privado | busca de lote para rastrear                       |
+| `/lotes/:id/rastreabilidade` | privado | árvore para trás (origem) e para frente (destino) |
+| `*`                          | público | 404                                               |
 
 Rotas privadas ficam sob `ProtectedRoute`: enquanto a sessão é restaurada mostra um carregando; sem sessão, redireciona para `/login` guardando a rota original, para voltar a ela após o login.
 
@@ -130,15 +139,18 @@ Um middleware único:
 
 O `ApiError` guarda também os campos extras do problema (`extensions`, ex.: `available`, `location`). Problemas de domínio têm mensagem própria, escolhida pelo `type` antes do status:
 
-| `type`                             | Mensagem                                                     |
-| ---------------------------------- | ------------------------------------------------------------ |
-| `/problems/insufficient-stock`     | "Saldo insuficiente em ARM-01: disponível 40,000"            |
-| `/problems/lot-not-movable`        | "Lote em quarentena/bloqueado não pode ser movimentado"      |
-| `/problems/already-reversed`       | "Esta movimentação já foi estornada."                        |
-| `/problems/invalid-reversal`       | estorno de estorno                                           |
-| `/problems/idempotency-key-reused` | mesma chave com outro corpo                                  |
-| `/problems/invalid-movement`       | motivo do ajuste, origem = destino, ajuste com os dois lados |
-| `/problems/lot-consumed` e outros  | lote consumido, produto inativo, destino inativo             |
+| `type`                             | Mensagem                                                            |
+| ---------------------------------- | ------------------------------------------------------------------- |
+| `/problems/insufficient-stock`     | "Saldo insuficiente em ARM-01: disponível 40,000"                   |
+| `/problems/lot-not-movable`        | "Lote em quarentena/bloqueado não pode ser movimentado"             |
+| `/problems/already-reversed`       | "Esta movimentação já foi estornada."                               |
+| `/problems/invalid-reversal`       | estorno de estorno                                                  |
+| `/problems/idempotency-key-reused` | mesma chave com outro corpo                                         |
+| `/problems/invalid-movement`       | motivo do ajuste, origem = destino, ajuste com os dois lados        |
+| `/problems/lot-consumed` e outros  | lote consumido, produto inativo, destino inativo                    |
+| `/problems/invalid-production`     | `detail` traduzido (saída > entrada, etapa × tipo, produto inativo) |
+| `/problems/invalid-shipment`       | par (lote, local) repetido na expedição                             |
+| `/problems/inactive-customer`      | cliente inativo não recebe expedições                               |
 
 O QueryClient não repete consultas que falharam com 4xx. No logout o cache do TanStack Query é limpo, para não exibir dados de uma empresa a outro usuário.
 
@@ -187,7 +199,7 @@ Os formulários validam no cliente com Zod (mesmas regras da API) antes de envia
 
 ## Telas de estoque (`features/inventory`)
 
-Contrato da API em [estoque.md](estoque.md) e [anexos.md](anexos.md). A barra lateral ganhou a seção **Estoque** (Lotes, Estoque, Movimentações); Produção, Expedição e Recall seguem em "Em breve".
+Contrato da API em [estoque.md](estoque.md) e [anexos.md](anexos.md). A barra lateral ganhou a seção **Estoque** (Lotes, Estoque, Movimentações); a seção **Operação** (Produção, Expedição e Rastreabilidade) veio na Semana 3 e só o Recall segue em "Em breve".
 
 ### Recebimento (`/recebimento`)
 
@@ -254,6 +266,58 @@ O diálogo de movimentação valida no cliente (quantidade ≤ disponível na or
 - `GET /v1/lots` só busca pelo código (não por produto/fornecedor em texto); `GET /v1/movements` não tem ordenação nem filtro por usuário.
 - `GET /v1/stock` não ordena nem devolve um `id` de linha (o front usa `lote:local`).
 - Resolvidas na integração: `MovementResponse` passou a trazer `unit`; o problema `lot-not-movable` traz o status do lote em `lotStatus` (antes era `status`, sobrescrito pelo código HTTP).
+
+## Produção, expedição e rastreabilidade (Semana 3)
+
+Contrato da API em [producao-rastreabilidade.md](producao-rastreabilidade.md) e [expedicao.md](expedicao.md). Código em `features/production`, `features/shipments` e `features/trace`. Permissões: as mesmas do estoque (`useInventoryPermissions().canOperate`) — o auditor não vê "Nova ordem" nem "Nova expedição", e as rotas `/nova` mostram um aviso de somente leitura.
+
+### Produção (`/producao`)
+
+Lista paginada: número (link), etapa, lote gerado (link + produto), nº de insumos, rendimento (torra fora de 75–90% em âmbar), perda em kg, data e usuário. Filtros na URL: busca (número da OP ou código do lote gerado), etapa e período (`from`/`to` em dias locais, como em Movimentações — bloco `PeriodFilter`).
+
+**Nova ordem** (`/producao/nova`), em três passos:
+
+1. **Etapa**: cartões Beneficiamento, Torra, Blend e Embalagem com uma linha de explicação. Trocar a etapa limpa insumos e produto.
+2. **Insumos**: linhas com um `StockLotPicker` (saldos de `/v1/stock` de lotes disponíveis, filtrados no cliente pelos tipos aceitos na etapa; mostra lote, produto, local e disponível) e a quantidade (≤ disponível, validada no cliente). Um par (lote, local) já escolhido some das outras linhas. Até 20 insumos.
+3. **Saída**: produto (só tipos aceitos como saída), local, quantidade, data, dados opcionais do lote (validade, pontuação SCA, grau de torra — só para torrado/blend, com o padrão do produto —, observações) e observações da ordem.
+
+| Etapa          | Insumos                   | Saída            |
+| -------------- | ------------------------- | ---------------- |
+| Beneficiamento | café verde                | café verde       |
+| Torra          | café verde                | torrado          |
+| Blend          | torrado, blend            | blend            |
+| Embalagem      | torrado, blend, embalagem | torrado ou blend |
+
+O cartão **Balanço de massa** (fixo à direita no desktop, antes dos botões no celular) mostra ao vivo a massa de entrada e de saída em kg (1 saca = 60 kg; embalagens e quantidades em unidades ficam fora, como na API), o rendimento e a perda estimados; avisa se a torra sai de 75–90% e bloqueia saída maior que a entrada. O envio leva `Idempotency-Key` (`useIdempotencyKey`); ao sucesso: toast "OP-… concluída — lote CAF-… gerado" e navegação para o detalhe.
+
+**Detalhe** (`/producao/:id`): etapa, data e usuário; balanço (entrada, saída, rendimento, perda) e observações; cartão do lote gerado (link, tipo, status, quantidade); tabela de insumos consumidos com links; botão para a rastreabilidade do lote gerado.
+
+### Expedição (`/expedicao`)
+
+Lista paginada: número (link), cliente, pedido/NF, nº de itens, data e usuário. Filtros na URL: busca (número ou pedido/NF), cliente, lote (combobox sobre `/v1/lots`, `?lotId=`) e período.
+
+**Nova expedição** (`/expedicao/nova`): cliente (combobox, só ativos), pedido/NF, data/hora (padrão: agora), itens (lote × local de lotes disponíveis via `StockLotPicker`, quantidade ≤ disponível; até 50) e observações. `Idempotency-Key` por envio. Erros da API (saldo insuficiente, lote não movimentável, par repetido, cliente inativo) aparecem no topo do formulário e no toast; um 409 recarrega os saldos.
+
+**Detalhe** (`/expedicao/:id`): cliente (documento, cidade/UF, link para as outras expedições dele), pedido/NF e observações, itens com link para o lote e um aviso: a correção é feita pelo estorno da saída do item no histórico do lote (o estorno mantém o número `EXP-…` como documento).
+
+### Rastreabilidade (`/rastreabilidade` e `/lotes/:id/rastreabilidade`)
+
+- `/rastreabilidade`: busca pelo código (ou parte dele). Código exato vai direto para a árvore; senão, lista até 10 lotes para escolher.
+- O detalhe do lote tem o botão **Rastreabilidade** no cabeçalho.
+- Duas abas (`?aba=destino` na URL para a segunda): **Para trás (origem)** e **Para frente (destino)**.
+- Resumo no topo: para trás — nº de origens/fazendas, lotes de origem e ordens de produção; para frente — nº de **clientes afetados** ("Clientes que receberam produto derivado deste lote"), expedições e lotes derivados.
+- Aviso **Grafo truncado** quando a API corta a profundidade (`truncated`).
+
+**Árvore visual** (`TraceTree` + `layout.ts`): colunas por profundidade — para trás, fazendas à esquerda e o lote consultado à direita; para frente, o lote à esquerda e as expedições/clientes à direita. Cartões de lote (código, quantidade inicial, produto, tipo, status, safra/variedade; clicar abre a rastreabilidade daquele lote), de fazenda (nome, produtor, região, cidade/UF, altitude) e de expedição (cliente, cidade/UF, `EXP-…`, data, quantidade e lote). As ligações são curvas SVG com rótulo (quantidade na unidade do lote de origem + número da OP + etapa; "Recebimento"/"Expedido" nas pontas, tracejadas); as que tocam o lote consultado ficam em destaque.
+
+Como funciona: `layout.ts` monta colunas e ligações a partir de `nodes`/`edges` (+ `supplier` dos nós ou `shipments`) e ordena cada coluna pela posição média dos vizinhos (baricentro), partindo da coluna do lote consultado, para reduzir cruzamentos. As colunas são uma grade CSS comum; depois do layout, as posições dos cartões são medidas no DOM (`getBoundingClientRect`, refeito com `ResizeObserver`) e as curvas e rótulos são desenhados por cima. Em telas estreitas a árvore rola na horizontal dentro do próprio contêiner (a página não). Abaixo da árvore: tabela das fazendas de origem ou das expedições (base do recall).
+
+### Lacunas da API percebidas nas telas da Semana 3
+
+- `GET /v1/stock` não filtra por tipo de produto: o seletor de insumos busca até 100 saldos disponíveis e filtra no cliente (com muitos lotes, pode ser preciso digitar o código).
+- `GET /v1/production-orders` e `GET /v1/shipments` não ordenam nem filtram por usuário; a listagem de produção não filtra por lote de insumo.
+- `ProductionOrderResponse` não traz os locais dos insumos nem o local de saída; `TraceNode` não traz o saldo atual do lote.
+- Os `detail` de `/problems/invalid-production` vêm em inglês: o front traduz os casos conhecidos por expressão regular (frágil se a mensagem mudar).
 
 ## Testes
 
