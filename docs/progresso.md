@@ -2,17 +2,19 @@
 
 ## Semana 1 — Fundação e cadastros
 
-| #   | Etapa                                                      | Status          |
-| --- | ---------------------------------------------------------- | --------------- |
-| 1   | Base do monorepo (pnpm, TS, ESLint, Prettier, Husky, docs) | ✅ concluída    |
-| 2   | Esqueleto da API (config, logs, Swagger, erros, Docker)    | ✅ concluída    |
-| 3   | Prisma: schema, migration, seed de café                    | ✅ concluída    |
-| 4   | Infra de testes (Vitest + Testcontainers)                  | ✅ concluída    |
-| 5   | Autenticação (JWT/JWKS, emissor simulado, perfis)          | ✅ concluída    |
-| 6   | Multi-tenancy + módulo de empresas + testes de isolamento  | ✅ concluída    |
-| 7   | CRUDs: produto, fornecedor, cliente, local                 | ✅ concluída    |
-| 8   | CI (GitHub Actions) e geração do cliente OpenAPI           | ✅ concluída    |
-| 9   | Front: login e telas de cadastro                           | 🟡 em andamento |
+| #   | Etapa                                                      | Status       |
+| --- | ---------------------------------------------------------- | ------------ |
+| 1   | Base do monorepo (pnpm, TS, ESLint, Prettier, Husky, docs) | ✅ concluída |
+| 2   | Esqueleto da API (config, logs, Swagger, erros, Docker)    | ✅ concluída |
+| 3   | Prisma: schema, migration, seed de café                    | ✅ concluída |
+| 4   | Infra de testes (Vitest + Testcontainers)                  | ✅ concluída |
+| 5   | Autenticação (JWT/JWKS, emissor simulado, perfis)          | ✅ concluída |
+| 6   | Multi-tenancy + módulo de empresas + testes de isolamento  | ✅ concluída |
+| 7   | CRUDs: produto, fornecedor, cliente, local                 | ✅ concluída |
+| 8   | CI (GitHub Actions) e geração do cliente OpenAPI           | ✅ concluída |
+| 9   | Front: login e telas de cadastro                           | ✅ concluída |
+
+**Semana 1 concluída (2026-10-15).** API com 166 testes, web com 41; fluxo completo verificado no navegador (cadastro pela UI na empresa A, invisível para a empresa B).
 
 ## Registro
 
@@ -84,7 +86,22 @@
 - CI: passo `openapi:check` falha se a API mudou sem regenerar o contrato.
 - Observação: openapi-typescript declara peer `typescript@^5`, mas funciona com o 6.0.
 
+### Etapa 9 — Front: login e cadastros
+
+- Cliente tipado `openapi-fetch` sobre o contrato gerado; erros problem+json viram `ApiError` (campos mapeados nos formulários); 401 encerra a sessão.
+- Blocos genéricos: tabela paginada no servidor, busca com debounce, filtros, ordenação, estado na URL, vazio/carregando/erro, formulário com RHF + Zod, confirmação de desativação.
+- Telas de Produtos, Fornecedores, Clientes e Locais; ações escondidas conforme o perfil. Cabeçalho mostra a empresa via `/v1/me`.
+- Correção no contrato: `page`/`pageSize` e `description` saíam como `object` no OpenAPI (faltava o tipo explícito no DTO); os casts no front foram removidos.
+- Smoke test no navegador (Playwright): fornecedor, cliente e local salvos pela UI na Serra Azul não aparecem para a Vale do Café.
+
 ### Trabalho em paralelo (agentes)
 
 - **CI básica** (`ci/basic-pipeline`): workflow com format, build, lint, typecheck, test; Dependabot; template de PR.
 - **Base do front** (`feat/web-skeleton`): Vite + React 19 + Tailwind v4 + shadcn/ui, AuthProvider (mock e Cognito/PKCE), layout e páginas placeholder, 15 testes. Ver [web.md](web.md) após o merge.
+- **Telas de cadastro** (`feat/web-catalog`): feitas em paralelo aos CRUDs de fornecedor/cliente/local, contra o contrato combinado; trocadas para os tipos gerados quando a API ficou pronta.
+
+## Próximos passos
+
+- Publicar no GitHub (push + PRs) e ver a CI rodar de verdade.
+- Semana 2: lotes, movimentações imutáveis, saldo com `SELECT ... FOR UPDATE`, idempotência, recebimento e anexos.
+- Pendências conhecidas: mensagens de erro da API em inglês (o front traduz as comuns); sem tela de detalhe só-leitura para auditor; máscara de CPF/CNPJ durante a digitação.
