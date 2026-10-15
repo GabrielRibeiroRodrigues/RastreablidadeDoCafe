@@ -17,12 +17,14 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
 import { TraceModule } from './modules/trace/trace.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { PublicModule } from './public/public.module.js';
+import { SecurityModule } from './security/security.module.js';
 import { TenancyModule } from './tenancy/tenancy.module.js';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, cache: true, validate: validateEnv }),
     LoggingModule,
+    SecurityModule,
     PrismaModule,
     TenancyModule,
     AuthModule,

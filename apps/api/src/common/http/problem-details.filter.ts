@@ -15,6 +15,11 @@ import { ValidationProblemException, type FieldError } from './validation.js';
 /** Corpo de erro no formato RFC 9457 (Problem Details for HTTP APIs). */
 export interface ProblemDetails {
   type: string;
+  /**
+   * Código curto e estável (`INSUFFICIENT_STOCK`, `NOT_FOUND`...) para o front traduzir sem
+   * depender do texto em inglês de `detail`. Derivado do `type` (ou do status, se `about:blank`).
+   */
+  code?: string;
   title: string;
   status: number;
   detail?: string;
@@ -36,7 +41,7 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     const req = ctx.getRequest<Request & { id?: unknown }>();
     const res = ctx.getResponse<Response>();
 
-    const problem = toProblem(exception);
+    const problem = withCode(toProblem(exception));
     if (problem.status >= 500) {
       this.logger.error(exception);
     }
@@ -48,6 +53,22 @@ export class ProblemDetailsFilter implements ExceptionFilter {
     };
     res.status(problem.status).type(PROBLEM_CONTENT_TYPE).json(body);
   }
+}
+
+/** `/problems/insufficient-stock` → `INSUFFICIENT_STOCK`; `about:blank` + 404 → `NOT_FOUND`. */
+export function problemCode(type: string, status: number): string {
+  const slug = type.startsWith('/problems/')
+    ? type.slice('/problems/'.length)
+    : (STATUS_CODES[status] ?? 'error');
+  return slug
+    .replace(/[^a-zA-Z0-9]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .toUpperCase();
+}
+
+/** Garante o `code` (um `code` explícito nas extensões tem precedência). */
+export function withCode(problem: ProblemDetails): ProblemDetails {
+  return { ...problem, code: problem.code ?? problemCode(problem.type, problem.status) };
 }
 
 export function toProblem(exception: unknown): ProblemDetails {

@@ -19,7 +19,17 @@ export const envSchema = z
           .map((origin) => origin.trim())
           .filter(Boolean),
       ),
-    SWAGGER_ENABLED: z.stringbool().default(true),
+    /** Swagger UI em `/docs`. Padrão: ligado fora de produção, desligado em produção. */
+    SWAGGER_ENABLED: z.stringbool().optional(),
+    /**
+     * Quantos proxies confiáveis há na frente da API (`trust proxy` do Express). 0 = conexão direta;
+     * 1 atrás de API Gateway/ALB. Sem isso, IP do cliente (logs e rate limit) seria o do proxy.
+     */
+    TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(0),
+    /** Limite global de requisições por minuto por IP (rotas `/v1/health*` ficam de fora). */
+    RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(100_000).default(300),
+    /** Tempo máximo de uma requisição antes de responder 503 (fica abaixo dos 30 s do API Gateway). */
+    REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1000).max(900_000).default(25_000),
     DATABASE_URL: z
       .string()
       .regex(/^postgres(ql)?:\/\//, 'must be a postgres:// connection string'),
@@ -66,6 +76,13 @@ export const envSchema = z
         message: 'mock authentication is forbidden when NODE_ENV=production',
       });
     }
+    if (env.NODE_ENV === 'production' && env.CORS_ORIGINS.includes('*')) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['CORS_ORIGINS'],
+        message: 'wildcard origin is forbidden when NODE_ENV=production',
+      });
+    }
     if (env.AUTH_MODE === 'cognito') {
       for (const key of ['COGNITO_REGION', 'COGNITO_USER_POOL_ID'] as const) {
         if (!env[key]) {
@@ -80,9 +97,28 @@ export const envSchema = z
         message: 'S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY must be set together',
       });
     }
-  });
+  })
+  .transform((env) => ({
+    ...env,
+    SWAGGER_ENABLED: env.SWAGGER_ENABLED ?? env.NODE_ENV !== 'production',
+  }));
 
 export type Env = z.infer<typeof envSchema>;
+
+/** Configurações aceitas mas suspeitas em produção: avisam no boot, sem impedir a subida. */
+export function productionWarnings(env: Env): string[] {
+  if (env.NODE_ENV !== 'production') return [];
+  const warnings: string[] = [];
+  const local = env.CORS_ORIGINS.filter((origin) => /localhost|127\.0\.0\.1/.test(origin));
+  if (local.length) {
+    warnings.push(`CORS_ORIGINS contains local origins in production: ${local.join(', ')}`);
+  }
+  if (env.SWAGGER_ENABLED) warnings.push('SWAGGER_ENABLED=true in production exposes /docs');
+  if (env.TRUST_PROXY === 0) {
+    warnings.push('TRUST_PROXY=0 in production: set 1 behind API Gateway/ALB');
+  }
+  return warnings;
+}
 
 /** Usado pelo ConfigModule: falha no boot com uma mensagem legível se o ambiente for inválido. */
 export function validateEnv(raw: Record<string, unknown>): Env {
