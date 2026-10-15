@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeftIcon,
   ArrowLeftRightIcon,
+  GitForkIcon,
   PencilIcon,
   RefreshCwIcon,
   ShieldAlertIcon,
@@ -162,6 +163,12 @@ export function LotDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button variant="outline" asChild>
+            <Link to={`/lotes/${lot.id}/rastreabilidade`}>
+              <GitForkIcon />
+              Rastreabilidade
+            </Link>
+          </Button>
           {permissions.canOperate && (
             <Button variant="outline" onClick={() => setDialog({ kind: 'edit' })}>
               <PencilIcon />

@@ -2,6 +2,7 @@ import {
   ArrowLeftRightIcon,
   BoxesIcon,
   FactoryIcon,
+  GitForkIcon,
   LayersIcon,
   PackageIcon,
   SirenIcon,
@@ -46,6 +47,28 @@ export const OPERATION_ITEMS: NavLinkItem[] = [
   },
 ];
 
+/** Produção, expedição e rastreabilidade (Semana 3). */
+export const PRODUCTION_ITEMS: NavLinkItem[] = [
+  {
+    path: '/producao',
+    label: 'Produção',
+    description: 'Ordens de beneficiamento, torra, blend e embalagem.',
+    icon: FactoryIcon,
+  },
+  {
+    path: '/expedicao',
+    label: 'Expedição',
+    description: 'Saídas de lotes para clientes.',
+    icon: TruckIcon,
+  },
+  {
+    path: '/rastreabilidade',
+    label: 'Rastreabilidade',
+    description: 'Origem e destino de cada lote, da fazenda ao cliente.',
+    icon: GitForkIcon,
+  },
+];
+
 /** Cadastros da Semana 1. */
 export const NAV_ITEMS: NavItem[] = [
   {
@@ -87,7 +110,5 @@ export function navItem(path: string): NavItem {
 
 /** Módulos do roadmap, exibidos desabilitados na barra lateral. */
 export const UPCOMING_ITEMS: Array<{ label: string; icon: LucideIcon }> = [
-  { label: 'Produção', icon: FactoryIcon },
-  { label: 'Expedição', icon: TruckIcon },
   { label: 'Recall', icon: SirenIcon },
 ];

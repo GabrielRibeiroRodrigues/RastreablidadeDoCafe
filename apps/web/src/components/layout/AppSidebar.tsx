@@ -1,6 +1,12 @@
 import { NavLink } from 'react-router';
 import { cn } from 'cn';
-import { NAV_ITEMS, OPERATION_ITEMS, UPCOMING_ITEMS, type NavLinkItem } from '@/app/navigation';
+import {
+  NAV_ITEMS,
+  OPERATION_ITEMS,
+  PRODUCTION_ITEMS,
+  UPCOMING_ITEMS,
+  type NavLinkItem,
+} from '@/app/navigation';
 import { BrandMark } from '@/components/BrandMark';
 import { useAuth } from '@/auth/auth-context';
 
@@ -73,6 +79,7 @@ export function AppSidebar() {
 
       <nav aria-label="Navegação principal" className="flex-1 overflow-y-auto px-3 py-5">
         <NavSection title="Estoque" items={OPERATION_ITEMS} />
+        <NavSection title="Operação" items={PRODUCTION_ITEMS} className="pt-6" />
         <NavSection title="Cadastros" items={NAV_ITEMS} className="pt-6" />
 
         <p className="px-2 pt-6 pb-2 text-[0.7rem] font-medium tracking-wider text-sidebar-muted uppercase">
