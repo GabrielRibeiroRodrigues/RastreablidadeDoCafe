@@ -79,11 +79,15 @@ model Company {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  users     User[]
-  products  Product[]
-  suppliers Supplier[]
-  customers Customer[]
-  locations Location[]
+  users        User[]
+  products     Product[]
+  suppliers    Supplier[]
+  customers    Customer[]
+  locations    Location[]
+  lots         Lot[]
+  movements    StockMovement[]
+  lotSequences LotSequence[]
+  attachments  Attachment[]
 
   @@map("companies")
 }
@@ -102,8 +106,12 @@ model User {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  movements   StockMovement[]
+  attachments Attachment[]
 
+  /// Alvo de FKs compostas: garante no banco que referências são da mesma empresa.
+  @@unique([companyId, id])
   @@index([companyId])
   @@map("users")
 }
@@ -123,7 +131,9 @@ model Product {
   updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  lots    Lot[]
 
+  @@unique([companyId, id])
   @@unique([companyId, sku])
   @@index([companyId, name])
   @@map("products")
@@ -152,6 +162,7 @@ model Supplier {
   updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  lots    Lot[]
 
   @@unique([companyId, document])
   @@index([companyId, name])
@@ -190,8 +201,157 @@ model Location {
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company       Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  movementsFrom StockMovement[] @relation("MovementFrom")
+  movementsTo   StockMovement[] @relation("MovementTo")
 
   @@unique([companyId, code])
   @@map("locations")
+}
+
+// ───────────────────────────── Semana 2: lotes e estoque ─────────────────────────────
+
+enum LotStatus {
+  AVAILABLE // disponível
+  QUARANTINE // em quarentena: não sai nem é transferido
+  BLOCKED // bloqueado (ex.: recall): não sai nem é transferido
+  CONSUMED // saldo zerado (automático)
+
+  @@map("lot_status")
+}
+
+/// Tipos de movimentação. Todas são linhas imutáveis do razão de estoque (ADR 0007).
+enum MovementType {
+  RECEIPT // entrada (recebimento de fornecedor): só destino
+  ISSUE // saída (venda/expedição): só origem
+  TRANSFER // transferência entre locais: origem e destino
+  ADJUSTMENT // ajuste de inventário: origem (perda) ou destino (sobra)
+  CONSUMPTION // consumo em produção: só origem
+  PRODUCTION // produção de lote novo: só destino
+  REVERSAL // estorno: origem/destino invertidos de uma movimentação anterior
+
+  @@map("movement_type")
+}
+
+enum AttachmentStatus {
+  PENDING // URL de upload emitida, arquivo ainda não confirmado
+  UPLOADED
+
+  @@map("attachment_status")
+}
+
+model Lot {
+  id              String      @id @default(uuid(7)) @db.Uuid
+  companyId       String      @map("company_id") @db.Uuid
+  /// Ex.: CAF-2026-000123 (prefixo da empresa, ano, sequência anual)
+  code            String      @db.VarChar(30)
+  productId       String      @map("product_id") @db.Uuid
+  supplierId      String?     @map("supplier_id") @db.Uuid
+  /// Quantidade recebida/produzida originalmente (o saldo vem do razão)
+  initialQuantity Decimal     @map("initial_quantity") @db.Decimal(14, 3)
+  unit            Unit
+  status          LotStatus   @default(AVAILABLE)
+  expiresAt       DateTime?   @map("expires_at") @db.Date
+  receivedAt      DateTime    @default(now()) @map("received_at") @db.Timestamptz(3)
+  /// Safra, ex.: "2025/26"
+  harvest         String?     @db.VarChar(9)
+  variety         String?     @db.VarChar(60)
+  altitudeMeters  Int?        @map("altitude_meters")
+  /// Peneira (8–20)
+  screenSize      Int?        @map("screen_size")
+  moisturePercent Decimal?    @map("moisture_percent") @db.Decimal(4, 2)
+  roastLevel      RoastLevel? @map("roast_level")
+  /// Pontuação SCA (0–100)
+  cuppingScore    Decimal?    @map("cupping_score") @db.Decimal(5, 2)
+  notes           String?
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company     Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  /// FK composta: o produto precisa ser da mesma empresa.
+  product     Product         @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  /// FK simples (opcional): a mesma empresa é validada no serviço.
+  supplier    Supplier?       @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  movements   StockMovement[]
+  attachments Attachment[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, code])
+  @@index([companyId, status])
+  @@index([companyId, productId])
+  @@index([companyId, expiresAt])
+  @@map("lots")
+}
+
+/// Sequência anual de códigos de lote por empresa (incremento atômico via ON CONFLICT).
+model LotSequence {
+  companyId String @map("company_id") @db.Uuid
+  year      Int
+  lastValue Int    @map("last_value")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@id([companyId, year])
+  @@map("lot_sequences")
+}
+
+/// Razão de estoque: linhas IMUTÁVEIS (trigger no banco bloqueia UPDATE/DELETE).
+/// Saldo de um lote num local = entradas (to) − saídas (from).
+model StockMovement {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  companyId      String       @map("company_id") @db.Uuid
+  type           MovementType
+  lotId          String       @map("lot_id") @db.Uuid
+  fromLocationId String?      @map("from_location_id") @db.Uuid
+  toLocationId   String?      @map("to_location_id") @db.Uuid
+  /// Sempre positiva; a direção vem de origem/destino.
+  quantity       Decimal      @db.Decimal(14, 3)
+  userId         String       @map("user_id") @db.Uuid
+  occurredAt     DateTime     @default(now()) @map("occurred_at") @db.Timestamptz(3)
+  /// Documento de referência: NF, ordem de produção, pedido...
+  documentRef    String?      @map("document_ref") @db.VarChar(60)
+  reason         String?
+  /// Estorno: aponta a movimentação estornada (cada uma só pode ser estornada uma vez).
+  reversalOfId   String?      @unique @map("reversal_of_id") @db.Uuid
+  /// Chave de idempotência enviada pelo cliente (header Idempotency-Key).
+  idempotencyKey String?      @map("idempotency_key") @db.VarChar(100)
+  /// Hash do corpo da requisição original, para detectar reuso da chave com outro conteúdo.
+  requestHash    String?      @map("request_hash") @db.VarChar(64)
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  /// FKs compostas: lote e usuário precisam ser da mesma empresa.
+  lot          Lot            @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
+  user         User           @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+  fromLocation Location?      @relation("MovementFrom", fields: [fromLocationId], references: [id], onDelete: Restrict)
+  toLocation   Location?      @relation("MovementTo", fields: [toLocationId], references: [id], onDelete: Restrict)
+  reversalOf   StockMovement? @relation("Reversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy   StockMovement? @relation("Reversal")
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, lotId])
+  @@index([companyId, occurredAt])
+  @@map("stock_movements")
+}
+
+model Attachment {
+  id           String           @id @default(uuid(7)) @db.Uuid
+  companyId    String           @map("company_id") @db.Uuid
+  lotId        String           @map("lot_id") @db.Uuid
+  fileName     String           @map("file_name") @db.VarChar(200)
+  contentType  String           @map("content_type") @db.VarChar(100)
+  sizeBytes    Int              @map("size_bytes")
+  /// Chave no bucket: {companyId}/lots/{lotId}/{uuid}
+  storageKey   String           @unique @map("storage_key")
+  status       AttachmentStatus @default(PENDING)
+  uploadedById String           @map("uploaded_by_id") @db.Uuid
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  uploadedAt   DateTime?        @map("uploaded_at") @db.Timestamptz(3)
+
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  lot        Lot     @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
+  uploadedBy User    @relation(fields: [companyId, uploadedById], references: [companyId, id], onDelete: Restrict)
+
+  @@index([companyId, lotId])
+  @@map("attachments")
 }
