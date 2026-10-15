@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldLabel } from '@/components/ui/field';
 import { LOCATION_TYPE_LABELS } from '@/features/locations/api';
-import { getErrorMessage } from '@/lib/api';
+import { ApiError, getErrorMessage } from '@/lib/api';
 import {
   UNIT_SHORT,
   formatQuantity,
@@ -180,8 +180,11 @@ export function MoveLotDialog({
       form.reset();
       await invalidate();
     },
-    onError: (error) =>
-      toast.error('Não foi possível movimentar o lote', { description: getErrorMessage(error) }),
+    onError: (error) => {
+      toast.error('Não foi possível movimentar o lote', { description: getErrorMessage(error) });
+      // Conflito (saldo ou status mudou por outro usuário): atualiza o lote e os saldos exibidos.
+      if (error instanceof ApiError && error.status === 409) void invalidate();
+    },
   });
 
   const submit = form.handleSubmit(async (values) => {

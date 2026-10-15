@@ -107,12 +107,16 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
     `Saldo insuficiente em ${text(ext.location) || 'origem'}: disponível ${formatQuantityRaw(
       text(ext.available) || '0',
     )}`,
-  '/problems/lot-not-movable': ({ extensions: ext }) =>
-    ext.status === 'BLOCKED'
-      ? 'Lote bloqueado não pode ser movimentado.'
-      : ext.status === 'QUARANTINE'
-        ? 'Lote em quarentena não pode ser movimentado (só para um local de quarentena).'
-        : 'Lote em quarentena/bloqueado não pode ser movimentado.',
+  '/problems/lot-not-movable': ({ extensions: ext, detail }) => {
+    // A extensão `status` da API colide com o status HTTP do RFC 9457 e se perde; o status do
+    // lote é lido de `lotStatus` (se vier) ou do `detail` ("Lot X is BLOCKED and ...").
+    const lotStatus = text(ext.lotStatus) || /\bis (QUARANTINE|BLOCKED)\b/.exec(detail ?? '')?.[1];
+    if (lotStatus === 'BLOCKED') return 'Lote bloqueado não pode ser movimentado.';
+    if (lotStatus === 'QUARANTINE') {
+      return 'Lote em quarentena não pode ser movimentado (só para um local de quarentena).';
+    }
+    return 'Lote em quarentena/bloqueado não pode ser movimentado.';
+  },
   '/problems/already-reversed': () => 'Esta movimentação já foi estornada.',
   '/problems/invalid-reversal': () =>
     'Um estorno não pode ser estornado; lance uma nova movimentação.',
