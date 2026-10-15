@@ -4,7 +4,7 @@ Mini ERP de **rastreabilidade de lotes de café** para pequenas indústrias: rec
 
 Projeto de portfólio para demonstrar arquitetura de aplicação de negócio + AWS (serverless, eventos, IaC), com custo próximo de zero.
 
-> **Status:** Semana 1 — Fundação e cadastros ✅ concluída. Próxima: Semana 2 (lotes e estoque). Veja [docs/progresso.md](docs/progresso.md).
+> **Status:** Semanas 1 e 2 ✅ (cadastros, lotes, razão de estoque, anexos). Próxima: Semana 3 (produção, expedição e rastreabilidade). Veja [docs/progresso.md](docs/progresso.md).
 
 ## Por que este domínio?
 

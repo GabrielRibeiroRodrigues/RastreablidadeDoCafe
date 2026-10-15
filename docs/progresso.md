@@ -26,7 +26,7 @@
 | 2   | Recebimento, lotes e status                                        | ✅ concluída |
 | 3   | Movimentações, saldo com FOR UPDATE, estorno, idempotência, /stock | ✅ concluída |
 | 4   | Anexos com S3 (MinIO local)                                        | ✅ concluída |
-| 5   | Telas de lotes, recebimento e movimentações                        | ⬜           |
+| 5   | Telas de lotes, recebimento e movimentações                        | ✅ concluída |
 
 **Testes pendentes (Semana 2):** saídas simultâneas no mesmo lote (só passam as que cabem no saldo), corrida de `Idempotency-Key`, trigger de imutabilidade, códigos de lote sob concorrência, regras de status/direção por tipo, isolamento entre empresas nos novos recursos, anexos.
 
@@ -129,6 +129,15 @@
 - Local: MinIO no docker-compose (`pnpm storage:up`), imagens da comunidade `pgsty/minio` (a MinIO parou de publicar imagens oficiais).
 - Sem `S3_BUCKET` a API sobe normalmente e as rotas de anexo respondem 503.
 - `pnpm openapi` agora funciona sem `.env` (`openapi-env.ts` importado primeiro).
+
+### Semana 2 — Etapa 5 (telas, agente em paralelo)
+
+- Recebimento, Lotes (validade vencida/vencendo destacada), detalhe do lote (saldo por local, histórico com estorno, anexos, ações por perfil), Estoque e Movimentações. Ver [web.md](web.md).
+- Idempotency-Key gerada por tentativa de envio; quantidades exibidas em pt-BR e enviadas como decimal com ponto.
+- Verificado no navegador contra a API real: recebimento, transferência, saldo insuficiente (checagem no cliente e 409 da API), saída, estorno, bloqueio, edição, upload de PDF, perfis de operador e auditor.
+- Ajustes na API durante a integração: `lotStatus` no problema `lot-not-movable` (antes `status`, sobrescrito pelo código HTTP) e `unit` em `MovementResponse`.
+
+**Semana 2 concluída (2026-10-15), sem testes automatizados novos (a pedido).**
 
 ## Próximos passos
 
