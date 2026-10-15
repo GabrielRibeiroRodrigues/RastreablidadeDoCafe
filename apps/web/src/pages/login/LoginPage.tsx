@@ -83,7 +83,9 @@ export function LoginPage() {
                   pendingEmail={pendingEmail}
                   onSelect={(user) => mutation.mutate(user.email)}
                 />
-                <FieldSeparator>ou informe um e-mail</FieldSeparator>
+                <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
+                  ou informe um e-mail
+                </FieldSeparator>
                 <DevEmailForm
                   disabled={mutation.isPending}
                   onSubmit={(email) => mutation.mutate(email)}
