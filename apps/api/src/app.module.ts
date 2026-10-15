@@ -5,6 +5,7 @@ import { LoggingModule } from './common/logging/logging.module.js';
 import { validateEnv } from './config/env.js';
 import { HealthModule } from './health/health.module.js';
 import { CompaniesModule } from './modules/companies/companies.module.js';
+import { ProductsModule } from './modules/products/products.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { TenancyModule } from './tenancy/tenancy.module.js';
 
@@ -16,6 +17,7 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     TenancyModule,
     AuthModule,
     CompaniesModule,
+    ProductsModule,
     HealthModule,
   ],
 })

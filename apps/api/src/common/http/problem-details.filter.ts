@@ -118,14 +118,40 @@ function fromPrismaError(exception: unknown): ProblemDetails | undefined {
 
 /** Campos em conflito, sem o `companyId` (detalhe interno do isolamento). */
 function uniqueFields(meta: Record<string, unknown> | undefined): Pick<ProblemDetails, 'errors'> {
-  const target = meta?.['target'];
-  const fields = Array.isArray(target)
-    ? target.filter((field): field is string => typeof field === 'string' && field !== 'companyId')
-    : [];
+  const fields = conflictingFields(meta).filter((field) => field !== 'companyId');
   return fields.length
     ? { errors: fields.map((field) => ({ field, messages: ['must be unique'] })) }
     : {};
 }
+
+/**
+ * Sem driver adapter o Prisma informa `meta.target`; com `@prisma/adapter-pg` informa só o nome da
+ * constraint (`products_company_id_sku_key`), seguindo a convenção `<tabela>_<colunas>_key`.
+ */
+export function conflictingFields(meta: Record<string, unknown> | undefined): string[] {
+  const target = meta?.['target'];
+  if (Array.isArray(target)) {
+    return target.filter((field): field is string => typeof field === 'string');
+  }
+
+  const cause = (meta?.['driverAdapterError'] as { cause?: Record<string, unknown> } | undefined)
+    ?.cause;
+  const table = cause?.['table'];
+  const constraint = cause?.['constraint'] as { fields?: unknown; index?: unknown } | undefined;
+  if (Array.isArray(constraint?.fields)) {
+    return constraint.fields.filter((f): f is string => typeof f === 'string').map(camelCase);
+  }
+  if (typeof constraint?.index !== 'string' || typeof table !== 'string') return [];
+
+  const columns = constraint.index
+    .replace(new RegExp(`^${table}_`), '')
+    .replace(/_key$/, '')
+    .replace(/^company_id_/, '');
+  return columns ? [camelCase(columns)] : [];
+}
+
+const camelCase = (column: string): string =>
+  column.replace(/_([a-z0-9])/g, (_match, char: string) => char.toUpperCase());
 
 function extractDetail(response: string | object): string | undefined {
   if (typeof response === 'string') return response;
