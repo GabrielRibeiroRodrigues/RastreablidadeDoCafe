@@ -10,6 +10,7 @@ export default tseslint.config(
   {
     ignores: [
       '**/dist/**',
+      '**/dist-lambda/**',
       '**/coverage/**',
       '**/node_modules/**',
       '**/*.generated.ts',

@@ -26,6 +26,7 @@ lerna-debug.log*
 # Monorepo
 node_modules
 dist
+dist-lambda
 coverage
 *.tsbuildinfo
 .env.local
