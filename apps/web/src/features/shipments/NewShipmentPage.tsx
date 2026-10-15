@@ -1,13 +1,7 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeftIcon,
-  InfoIcon,
-  Loader2Icon,
-  PlusIcon,
-  Trash2Icon,
-  TruckIcon,
-} from 'lucide-react';
+import { InfoIcon, Loader2Icon, PlusIcon, Trash2Icon, TruckIcon } from 'lucide-react';
 import { useId, useMemo } from 'react';
 import { Controller, useFieldArray, useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
@@ -23,7 +17,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import type { Customer } from '@/features/customers/api';
-import { PageHeader } from '@/features/inventory/components';
 import { useIdempotencyKey, useInvalidateInventory } from '@/features/inventory/hooks';
 import { StockLotPicker } from '@/features/inventory/StockLotPicker';
 import type { StockOption } from '@/features/inventory/stock-options';
@@ -38,6 +31,8 @@ import {
   toMilli,
 } from '@/lib/quantity';
 import { searchActiveCustomers, shipmentsApi, type ShipmentInput } from './api';
+import { maskDecimal } from '@/lib/masks';
+import { UnsavedChangesGuard } from '@/components/form/UnsavedChangesGuard';
 
 const QUANTITY_HINT = 'Informe uma quantidade positiva (até 3 casas decimais).';
 
@@ -102,6 +97,8 @@ function toDto(values: FormValues): ShipmentInput {
   };
 }
 
+const CRUMBS = [{ label: 'Expedição', to: '/expedicao' }, { label: 'Nova expedição' }];
+
 /** Nova expedição: cliente, itens (lote × local) e quantidades. Envia `Idempotency-Key`. */
 export function NewShipmentPage() {
   const { canOperate } = useInventoryPermissions();
@@ -158,7 +155,7 @@ export function NewShipmentPage() {
   if (!canOperate) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Nova expedição" />
+        <PageHeader title="Nova expedição" breadcrumbs={CRUMBS} />
         <Alert>
           <InfoIcon />
           <AlertDescription>
@@ -175,14 +172,12 @@ export function NewShipmentPage() {
 
   return (
     <div className="space-y-6">
-      <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-        <Link to="/expedicao">
-          <ArrowLeftIcon />
-          Expedição
-        </Link>
-      </Button>
+      <UnsavedChangesGuard
+        when={form.formState.isDirty && !create.isPending && !create.isSuccess}
+      />
       <PageHeader
         title="Nova expedição"
+        breadcrumbs={CRUMBS}
         description="Cada item gera uma saída no estoque do lote, no local escolhido. Tudo ou nada: se um item falhar, nada é gravado."
       />
 
@@ -304,6 +299,7 @@ export function NewShipmentPage() {
                           <Input
                             id={`${formId}-item-qty-${index}`}
                             {...field}
+                            onChange={(event) => field.onChange(maskDecimal(event.target.value))}
                             inputMode="decimal"
                             placeholder="Quantidade"
                             aria-invalid={fieldState.invalid}
@@ -367,7 +363,7 @@ export function NewShipmentPage() {
             ) : (
               <TruckIcon />
             )}
-            Registrar expedição
+            {create.isPending ? 'Registrando…' : 'Registrar expedição'}
           </Button>
         </div>
       </form>

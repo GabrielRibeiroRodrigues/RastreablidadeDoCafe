@@ -1,8 +1,18 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Loader2Icon, PencilIcon, PlusIcon, PowerIcon, PowerOffIcon } from 'lucide-react';
+import {
+  EyeIcon,
+  Loader2Icon,
+  PencilIcon,
+  PlusIcon,
+  PowerIcon,
+  PowerOffIcon,
+  SearchXIcon,
+} from 'lucide-react';
 import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { useCatalogPermissions } from '@/auth/permissions';
+import { EmptyState } from '@/components/EmptyState';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -14,6 +24,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { getErrorMessage } from '@/lib/api';
+import { CatalogDetailSheet } from './CatalogDetailSheet';
 import { ConfirmDialog } from './ConfirmDialog';
 import { DataTable, type Column } from './DataTable';
 import { FilterSelect } from './FilterSelect';
@@ -47,6 +58,7 @@ export function CatalogPage<T extends CatalogEntity, Input>({
 
   const [formState, setFormState] = useState<FormState<T>>(null);
   const [confirming, setConfirming] = useState<T | null>(null);
+  const [viewing, setViewing] = useState<T | null>(null);
 
   const query = useQuery({
     queryKey: [key, 'list', params],
@@ -109,11 +121,19 @@ export function CatalogPage<T extends CatalogEntity, Input>({
       ),
   };
 
-  const hasRowActions = canWrite || canToggleActive;
   const rowActions = (row: T) => {
     const name = resource.describe(row);
     return (
       <>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={`Ver detalhes de ${name}`}
+          title="Ver detalhes"
+          onClick={() => setViewing(row)}
+        >
+          <EyeIcon />
+        </Button>
         {canWrite && (
           <Button
             variant="ghost"
@@ -162,50 +182,53 @@ export function CatalogPage<T extends CatalogEntity, Input>({
   };
 
   const empty = list.hasFilters ? (
-    <div className="flex flex-col items-center gap-3 text-center">
-      <p className="text-sm text-muted-foreground">Nenhum resultado para os filtros aplicados.</p>
-      <Button variant="outline" size="sm" onClick={list.clearFilters}>
-        Limpar filtros
-      </Button>
-    </div>
-  ) : (
-    <div className="flex flex-col items-center gap-3 text-center">
-      <div className="flex size-11 items-center justify-center rounded-full bg-accent text-accent-foreground">
-        <Icon className="size-5" aria-hidden />
-      </div>
-      <div className="space-y-1">
-        <p className="font-medium">Nenhum {singular} cadastrado</p>
-        <p className="text-sm text-muted-foreground">
-          {canWrite
-            ? `Cadastre o primeiro para começar a usar ${plural} nas operações.`
-            : `Quando houver ${plural} cadastrados, eles aparecerão aqui.`}
-        </p>
-      </div>
-      {canWrite && (
-        <Button size="sm" onClick={openCreate}>
-          <PlusIcon />
-          {nav.newLabel}
+    <EmptyState
+      icon={SearchXIcon}
+      title="Nenhum resultado"
+      description="Nenhum cadastro corresponde à busca e aos filtros aplicados."
+      action={
+        <Button variant="outline" size="sm" onClick={list.clearFilters}>
+          Limpar filtros
         </Button>
-      )}
-    </div>
+      }
+    />
+  ) : (
+    <EmptyState
+      icon={Icon}
+      title={`Nenhum ${singular} cadastrado`}
+      description={
+        canWrite
+          ? `Cadastre o primeiro para começar a usar ${plural} nas operações.`
+          : `Quando houver ${plural} cadastrados, eles aparecerão aqui.`
+      }
+      action={
+        canWrite && (
+          <Button size="sm" onClick={openCreate}>
+            <PlusIcon />
+            {nav.newLabel}
+          </Button>
+        )
+      }
+    />
   );
 
   const editing = formState?.mode === 'edit' ? formState.entity : null;
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight">{nav.label}</h1>
-          <p className="max-w-2xl text-sm text-muted-foreground">{nav.description}</p>
-        </div>
-        {canWrite && (
-          <Button onClick={openCreate}>
-            <PlusIcon />
-            {nav.newLabel}
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        title={nav.label}
+        description={nav.description}
+        breadcrumbs={[{ label: 'Cadastros' }, { label: nav.label }]}
+        actions={
+          canWrite && (
+            <Button onClick={openCreate}>
+              <PlusIcon />
+              {nav.newLabel}
+            </Button>
+          )
+        }
+      />
 
       <div className="space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
@@ -246,7 +269,7 @@ export function CatalogPage<T extends CatalogEntity, Input>({
           onSortChange={list.setSort}
           empty={empty}
           isMuted={(row) => !row.isActive}
-          {...(hasRowActions && { rowActions })}
+          rowActions={rowActions}
         />
 
         {query.data && query.data.meta.total > 0 && (
@@ -295,6 +318,24 @@ export function CatalogPage<T extends CatalogEntity, Input>({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <CatalogDetailSheet
+        entity={viewing}
+        title={viewing ? resource.describe(viewing) : ''}
+        kind={capitalize(singular)}
+        fields={viewing ? resource.details(viewing) : []}
+        onClose={() => setViewing(null)}
+        onEdit={
+          canWrite && viewing
+            ? () => {
+                const entity = viewing;
+                setViewing(null);
+                save.reset();
+                setFormState({ mode: 'edit', entity });
+              }
+            : undefined
+        }
+      />
 
       <ConfirmDialog
         open={confirming !== null}

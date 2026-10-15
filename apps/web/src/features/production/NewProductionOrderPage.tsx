@@ -1,8 +1,8 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangleIcon,
-  ArrowLeftIcon,
   FactoryIcon,
   InfoIcon,
   Loader2Icon,
@@ -24,7 +24,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Field, FieldError, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { PageHeader } from '@/features/inventory/components';
 import {
   useIdempotencyKey,
   useInvalidateInventory,
@@ -55,6 +54,10 @@ import { productionApi, type ProductionOrderInput, type ProductionStage } from '
 import { ProductTypeBadge } from './components';
 import { ROASTING_YIELD_RANGE, STAGES, STAGE_HINTS, STAGE_LABELS, STAGE_RULES } from './labels';
 import { massPreview, type MassPreview } from './mass';
+import { maskDecimal } from '@/lib/masks';
+import { UnsavedChangesGuard } from '@/components/form/UnsavedChangesGuard';
+
+const CRUMBS = [{ label: 'Produção', to: '/producao' }, { label: 'Nova ordem' }];
 
 const QUANTITY_HINT = 'Informe uma quantidade positiva (até 3 casas decimais).';
 
@@ -363,7 +366,7 @@ export function NewProductionOrderPage() {
   if (!canOperate) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Nova ordem de produção" />
+        <PageHeader title="Nova ordem de produção" breadcrumbs={CRUMBS} />
         <Alert>
           <InfoIcon />
           <AlertDescription>
@@ -392,14 +395,12 @@ export function NewProductionOrderPage() {
 
   return (
     <div className="space-y-6">
-      <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-        <Link to="/producao">
-          <ArrowLeftIcon />
-          Produção
-        </Link>
-      </Button>
+      <UnsavedChangesGuard
+        when={form.formState.isDirty && !create.isPending && !create.isSuccess}
+      />
       <PageHeader
         title="Nova ordem de produção"
+        breadcrumbs={CRUMBS}
         description="Os insumos são consumidos e o lote gerado nasce ligado a eles, numa única operação. Correções são feitas por estorno."
       />
 
@@ -506,6 +507,7 @@ export function NewProductionOrderPage() {
                             <Input
                               id={`${formId}-input-qty-${index}`}
                               {...field}
+                              onChange={(event) => field.onChange(maskDecimal(event.target.value))}
                               inputMode="decimal"
                               placeholder="Quantidade"
                               aria-invalid={fieldState.invalid}
@@ -615,6 +617,8 @@ export function NewProductionOrderPage() {
                     outputUnit ? `Quantidade produzida (${outputUnit})` : 'Quantidade produzida'
                   }
                   required
+                  mask={maskDecimal}
+                  suffix={outputUnit}
                   inputMode="decimal"
                   placeholder="98"
                   description={
@@ -646,6 +650,7 @@ export function NewProductionOrderPage() {
                     control={form.control}
                     name="cuppingScore"
                     label="Pontuação SCA"
+                    mask={(value) => maskDecimal(value, 2)}
                     inputMode="decimal"
                     placeholder="86,5"
                   />
@@ -700,7 +705,7 @@ export function NewProductionOrderPage() {
             ) : (
               <FactoryIcon />
             )}
-            Registrar ordem
+            {create.isPending ? 'Registrando…' : 'Registrar ordem'}
           </Button>
         </div>
       </form>

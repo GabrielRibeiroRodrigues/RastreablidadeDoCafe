@@ -61,5 +61,10 @@ export function createMockStrategy(): AuthStrategy {
       sessionStore.clear();
       return Promise.resolve();
     },
+
+    clearSession() {
+      sessionStore.clear();
+      return Promise.resolve();
+    },
   };
 }

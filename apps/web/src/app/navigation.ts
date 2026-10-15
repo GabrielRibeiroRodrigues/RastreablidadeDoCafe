@@ -1,10 +1,14 @@
 import {
   ArrowLeftRightIcon,
   BoxesIcon,
+  ClipboardCheckIcon,
   FactoryIcon,
   GitForkIcon,
+  LayoutDashboardIcon,
   LayersIcon,
   PackageIcon,
+  PackagePlusIcon,
+  ScrollTextIcon,
   SirenIcon,
   SproutIcon,
   TruckIcon,
@@ -18,6 +22,10 @@ export interface NavLinkItem {
   label: string;
   description: string;
   icon: LucideIcon;
+  /** Só aparece para quem opera o estoque (admin e operador). */
+  requiresOperate?: boolean;
+  /** Módulo ainda não entregue: aparece com o selo "Em breve". */
+  soon?: boolean;
 }
 
 export interface NavItem extends NavLinkItem {
@@ -25,8 +33,43 @@ export interface NavItem extends NavLinkItem {
   newLabel: string;
 }
 
-/** Operação de estoque (Semana 2). */
+export interface NavSection {
+  title: string;
+  items: NavLinkItem[];
+}
+
+export const DASHBOARD_ITEM: NavLinkItem = {
+  path: '/',
+  label: 'Painel',
+  description: 'Visão geral do estoque, da produção e das expedições.',
+  icon: LayoutDashboardIcon,
+};
+
+/** Fluxo operacional: entrada, transformação e saída. */
 export const OPERATION_ITEMS: NavLinkItem[] = [
+  {
+    path: '/recebimento',
+    label: 'Recebimento',
+    description: 'Entrada de café de um fornecedor: cria o lote e o saldo inicial.',
+    icon: PackagePlusIcon,
+    requiresOperate: true,
+  },
+  {
+    path: '/producao',
+    label: 'Produção',
+    description: 'Ordens de beneficiamento, torra, blend e embalagem.',
+    icon: FactoryIcon,
+  },
+  {
+    path: '/expedicao',
+    label: 'Expedição',
+    description: 'Saídas de lotes para clientes.',
+    icon: TruckIcon,
+  },
+];
+
+/** Estoque e rastreabilidade. */
+export const STOCK_ITEMS: NavLinkItem[] = [
   {
     path: '/lotes',
     label: 'Lotes',
@@ -45,22 +88,6 @@ export const OPERATION_ITEMS: NavLinkItem[] = [
     description: 'Razão de estoque: entradas, saídas, transferências e estornos.',
     icon: ArrowLeftRightIcon,
   },
-];
-
-/** Produção, expedição e rastreabilidade (Semana 3). */
-export const PRODUCTION_ITEMS: NavLinkItem[] = [
-  {
-    path: '/producao',
-    label: 'Produção',
-    description: 'Ordens de beneficiamento, torra, blend e embalagem.',
-    icon: FactoryIcon,
-  },
-  {
-    path: '/expedicao',
-    label: 'Expedição',
-    description: 'Saídas de lotes para clientes.',
-    icon: TruckIcon,
-  },
   {
     path: '/rastreabilidade',
     label: 'Rastreabilidade',
@@ -69,7 +96,32 @@ export const PRODUCTION_ITEMS: NavLinkItem[] = [
   },
 ];
 
-/** Cadastros da Semana 1. */
+/** Qualidade e conformidade (módulos em construção). */
+export const QUALITY_ITEMS: NavLinkItem[] = [
+  {
+    path: '/recall',
+    label: 'Recall',
+    description: 'Simulação de recall: quais clientes receberam um lote e seus derivados.',
+    icon: SirenIcon,
+    soon: true,
+  },
+  {
+    path: '/qualidade',
+    label: 'Qualidade',
+    description: 'Não conformidades: registro, análise e tratamento.',
+    icon: ClipboardCheckIcon,
+    soon: true,
+  },
+  {
+    path: '/auditoria',
+    label: 'Auditoria',
+    description: 'Trilha de auditoria: quem fez o quê e quando.',
+    icon: ScrollTextIcon,
+    soon: true,
+  },
+];
+
+/** Cadastros. */
 export const NAV_ITEMS: NavItem[] = [
   {
     path: '/produtos',
@@ -101,6 +153,15 @@ export const NAV_ITEMS: NavItem[] = [
   },
 ];
 
+/** Seções da barra lateral, na ordem de exibição. */
+export const NAV_SECTIONS: NavSection[] = [
+  { title: 'Visão geral', items: [DASHBOARD_ITEM] },
+  { title: 'Operação', items: OPERATION_ITEMS },
+  { title: 'Estoque', items: STOCK_ITEMS },
+  { title: 'Qualidade', items: QUALITY_ITEMS },
+  { title: 'Cadastros', items: NAV_ITEMS },
+];
+
 /** Item de navegação de uma rota (falha cedo se a rota não existir). */
 export function navItem(path: string): NavItem {
   const item = NAV_ITEMS.find((candidate) => candidate.path === path);
@@ -108,7 +169,7 @@ export function navItem(path: string): NavItem {
   return item;
 }
 
-/** Módulos do roadmap, exibidos desabilitados na barra lateral. */
-export const UPCOMING_ITEMS: Array<{ label: string; icon: LucideIcon }> = [
-  { label: 'Recall', icon: SirenIcon },
-];
+/** Item de qualquer seção (para páginas "Em breve"). */
+export function findNavLink(path: string): NavLinkItem | undefined {
+  return NAV_SECTIONS.flatMap((section) => section.items).find((item) => item.path === path);
+}

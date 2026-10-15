@@ -1,10 +1,9 @@
+import { EmptyState } from '@/components/EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import {
-  ArrowLeftIcon,
   ArrowLeftRightIcon,
   GitForkIcon,
   PencilIcon,
-  RefreshCwIcon,
   ShieldAlertIcon,
   Undo2Icon,
 } from 'lucide-react';
@@ -14,7 +13,6 @@ import { useInventoryPermissions } from '@/auth/permissions';
 import { DataTable } from '@/components/catalog/DataTable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
   TableBody,
@@ -25,16 +23,17 @@ import {
 } from '@/components/ui/table';
 import { LOCATION_TYPE_LABELS } from '@/features/locations/api';
 import { ROAST_LEVEL_LABELS } from '@/features/products/labels';
-import { ApiError, getErrorMessage } from '@/lib/api';
 import { daysUntil, formatDate, formatDateTime, formatQuantity } from '@/lib/quantity';
 import { inventoryApi, type LotDetail, type Movement } from './api';
 import { AttachmentsCard } from './AttachmentsCard';
-import { EmptyState, ExpiryText, LotStatusBadge, Quantity } from './components';
+import { ExpiryText, LotStatusBadge, Quantity } from './components';
 import { EditLotDialog } from './EditLotDialog';
 import { LabelButton } from './LabelDialog';
 import { MoveLotDialog } from './MoveLotDialog';
 import { movementColumns } from './movement-columns';
 import { ChangeStatusDialog, ReverseMovementDialog } from './ReasonDialogs';
+import { DetailPageError, DetailPageSkeleton } from '@/components/layout/DetailStates';
+import { PageHeader } from '@/components/layout/PageHeader';
 
 /** O histórico mostra as 100 movimentações mais recentes do lote. */
 const HISTORY_SIZE = 100;
@@ -75,47 +74,20 @@ export function LotDetailPage() {
       inventoryApi.listMovements({ lotId: id, pageSize: HISTORY_SIZE }, signal),
   });
 
-  const back = (
-    <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-      <Link to="/lotes">
-        <ArrowLeftIcon />
-        Lotes
-      </Link>
-    </Button>
-  );
+  const crumbs = [{ label: 'Lotes', to: '/lotes' }, { label: lotQuery.data?.code ?? 'Lote' }];
 
-  if (lotQuery.isPending) {
-    return (
-      <div className="space-y-6">
-        {back}
-        <Skeleton className="h-9 w-72" />
-        <div className="grid gap-4 md:grid-cols-3">
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-        </div>
-      </div>
-    );
-  }
+  if (lotQuery.isPending) return <DetailPageSkeleton breadcrumbs={crumbs} />;
 
   if (lotQuery.isError) {
-    const notFound = lotQuery.error instanceof ApiError && lotQuery.error.status === 404;
     return (
-      <div className="space-y-6">
-        {back}
-        <EmptyState>
-          <p className="font-medium text-foreground">
-            {notFound ? 'Lote não encontrado' : 'Não foi possível carregar o lote'}
-          </p>
-          {!notFound && <p>{getErrorMessage(lotQuery.error)}</p>}
-          {!notFound && (
-            <Button variant="outline" size="sm" onClick={() => void lotQuery.refetch()}>
-              <RefreshCwIcon />
-              Tentar novamente
-            </Button>
-          )}
-        </EmptyState>
-      </div>
+      <DetailPageError
+        breadcrumbs={crumbs}
+        error={lotQuery.error}
+        onRetry={() => void lotQuery.refetch()}
+        entity="Lote"
+        backTo="/lotes"
+        backLabel="Ver lotes"
+      />
     );
   }
 
@@ -143,15 +115,14 @@ export function LotDetailPage() {
 
   return (
     <div className="space-y-6">
-      {back}
-
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1.5">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-mono text-2xl font-semibold tracking-tight">{lot.code}</h1>
-            <LotStatusBadge status={lot.status} className="h-6 px-2.5 text-sm" />
-          </div>
-          <p className="text-sm text-muted-foreground">
+      <PageHeader
+        mono
+        title={lot.code}
+        documentTitle={`Lote ${lot.code}`}
+        breadcrumbs={crumbs}
+        badges={<LotStatusBadge status={lot.status} className="h-6 px-2.5 text-sm" />}
+        description={
+          <>
             <span className="font-medium text-foreground">{lot.product.name}</span> ·{' '}
             {lot.product.sku}
             {lot.supplier && (
@@ -161,39 +132,41 @@ export function LotDetailPage() {
                 {lot.supplier.farmName && ` (${lot.supplier.farmName})`}
               </>
             )}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" asChild>
-            <Link to={`/lotes/${lot.id}/rastreabilidade`}>
-              <GitForkIcon />
-              Rastreabilidade
-            </Link>
-          </Button>
-          {permissions.canOperate && <LabelButton lot={lot} />}
-          {permissions.canOperate && (
-            <Button variant="outline" onClick={() => setDialog({ kind: 'edit' })}>
-              <PencilIcon />
-              Editar dados
+          </>
+        }
+        actions={
+          <>
+            <Button variant="outline" asChild>
+              <Link to={`/lotes/${lot.id}/rastreabilidade`}>
+                <GitForkIcon />
+                Rastreabilidade
+              </Link>
             </Button>
-          )}
-          {canChangeStatus && (
-            <Button variant="outline" onClick={() => setDialog({ kind: 'status' })}>
-              <ShieldAlertIcon />
-              Alterar status
-            </Button>
-          )}
-          {permissions.canOperate && (
-            <Button
-              onClick={() => setDialog({ kind: 'move' })}
-              disabled={consumed && !permissions.canAdjust}
-            >
-              <ArrowLeftRightIcon />
-              Movimentar
-            </Button>
-          )}
-        </div>
-      </div>
+            {permissions.canOperate && <LabelButton lot={lot} />}
+            {permissions.canOperate && (
+              <Button variant="outline" onClick={() => setDialog({ kind: 'edit' })}>
+                <PencilIcon />
+                Editar dados
+              </Button>
+            )}
+            {canChangeStatus && (
+              <Button variant="outline" onClick={() => setDialog({ kind: 'status' })}>
+                <ShieldAlertIcon />
+                Alterar status
+              </Button>
+            )}
+            {permissions.canOperate && (
+              <Button
+                onClick={() => setDialog({ kind: 'move' })}
+                disabled={consumed && !permissions.canAdjust}
+              >
+                <ArrowLeftRightIcon />
+                Movimentar
+              </Button>
+            )}
+          </>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>

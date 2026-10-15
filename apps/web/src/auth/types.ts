@@ -29,6 +29,11 @@ export interface AuthStrategy {
   /** Conclui o login após o redirect para `/auth/callback`. */
   handleCallback: () => Promise<AuthSession | null>;
   logout: () => Promise<void>;
+  /**
+   * Descarta a sessão local sem sair do app (token expirado): permite voltar ao login e depois
+   * à mesma página. Sem ela, usa-se `logout`.
+   */
+  clearSession?: () => Promise<void>;
 }
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -39,6 +44,8 @@ export interface AuthContextValue {
   user: AuthUser | null;
   accessToken: string | null;
   isAuthenticated: boolean;
+  /** A última sessão terminou por expiração (401), não por logout. */
+  sessionExpired: boolean;
   login: (email?: string) => Promise<void>;
   logout: () => Promise<void>;
   completeLogin: () => Promise<void>;

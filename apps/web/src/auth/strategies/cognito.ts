@@ -51,6 +51,10 @@ export function createCognitoStrategy(config: CognitoConfig): AuthStrategy {
       return toSession(await manager.signinRedirectCallback());
     },
 
+    async clearSession() {
+      await manager.removeUser();
+    },
+
     async logout() {
       await manager.removeUser();
       // O Cognito não publica `end_session_endpoint`; o logout é pelo endpoint do domínio.

@@ -46,4 +46,10 @@ export const locationsResource = defineCatalogResource<Location, LocationInput>(
   api: locationsApi,
   Form: LocationForm,
   describe: (location) => `${location.code} · ${location.name}`,
+  details: (location) => [
+    { label: 'Código', value: <span className="font-mono">{location.code}</span> },
+    { label: 'Tipo', value: LOCATION_TYPE_LABELS[location.type] },
+    { label: 'Nome', value: location.name, wide: true },
+    { label: 'Descrição', value: location.description, wide: true },
+  ],
 });

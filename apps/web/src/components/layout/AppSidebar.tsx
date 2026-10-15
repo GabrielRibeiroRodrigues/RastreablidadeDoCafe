@@ -1,110 +1,56 @@
-import { NavLink } from 'react-router';
+import { PanelLeftCloseIcon, PanelLeftOpenIcon } from 'lucide-react';
+import { Link } from 'react-router';
 import { cn } from 'cn';
-import {
-  NAV_ITEMS,
-  OPERATION_ITEMS,
-  PRODUCTION_ITEMS,
-  UPCOMING_ITEMS,
-  type NavLinkItem,
-} from '@/app/navigation';
 import { BrandMark } from '@/components/BrandMark';
-import { useAuth } from '@/auth/auth-context';
+import { SidebarNav } from './SidebarNav';
 
-function NavSection({
-  title,
-  items,
-  className,
+/** Barra lateral do desktop (md+): recolhível para só ícones; a escolha fica salva. */
+export function AppSidebar({
+  collapsed,
+  onToggleCollapsed,
 }: {
-  title: string;
-  items: NavLinkItem[];
-  className?: string;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
 }) {
+  const ToggleIcon = collapsed ? PanelLeftOpenIcon : PanelLeftCloseIcon;
   return (
-    <>
-      <p
+    <aside
+      className={cn(
+        'sticky top-0 hidden h-svh shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-[width] duration-200 md:flex',
+        collapsed ? 'w-16' : 'w-60',
+      )}
+    >
+      <div
         className={cn(
-          'px-2 pb-2 text-[0.7rem] font-medium tracking-wider text-sidebar-muted uppercase',
-          className,
+          'flex h-14 shrink-0 items-center border-b border-sidebar-border',
+          collapsed ? 'justify-center' : 'px-4',
         )}
       >
-        {title}
-      </p>
-      <ul className="space-y-0.5">
-        {items.map(({ path, label, icon: Icon }) => (
-          <li key={path}>
-            <NavLink
-              to={path}
-              className={({ isActive }) =>
-                cn(
-                  'group relative flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors',
-                  'focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none',
-                  isActive
-                    ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground'
-                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground',
-                )
-              }
-            >
-              {({ isActive }) => (
-                <>
-                  <span
-                    aria-hidden
-                    className={cn(
-                      'absolute top-1.5 bottom-1.5 left-0 w-0.5 rounded-full bg-sidebar-primary transition-opacity',
-                      isActive ? 'opacity-100' : 'opacity-0',
-                    )}
-                  />
-                  <Icon
-                    className={cn('size-4', isActive ? 'text-sidebar-primary' : 'opacity-70')}
-                    aria-hidden
-                  />
-                  {label}
-                </>
-              )}
-            </NavLink>
-          </li>
-        ))}
-      </ul>
-    </>
-  );
-}
-
-export function AppSidebar() {
-  const { mode } = useAuth();
-
-  return (
-    <aside className="sticky top-0 hidden h-svh w-64 shrink-0 flex-col bg-sidebar text-sidebar-foreground md:flex">
-      <div className="flex h-14 items-center border-b border-sidebar-border px-5">
-        <BrandMark inverted />
+        <Link to="/" aria-label="TraceFlow — Painel" className="rounded-md">
+          <BrandMark inverted compact={collapsed} />
+        </Link>
       </div>
 
-      <nav aria-label="Navegação principal" className="flex-1 overflow-y-auto px-3 py-5">
-        <NavSection title="Estoque" items={OPERATION_ITEMS} />
-        <NavSection title="Operação" items={PRODUCTION_ITEMS} className="pt-6" />
-        <NavSection title="Cadastros" items={NAV_ITEMS} className="pt-6" />
+      <div className={cn('flex-1 overflow-y-auto py-4', collapsed ? 'px-2' : 'px-3')}>
+        <SidebarNav collapsed={collapsed} />
+      </div>
 
-        <p className="px-2 pt-6 pb-2 text-[0.7rem] font-medium tracking-wider text-sidebar-muted uppercase">
-          Em breve
-        </p>
-        <ul className="space-y-0.5" aria-label="Módulos em desenvolvimento">
-          {UPCOMING_ITEMS.map(({ label, icon: Icon }) => (
-            <li
-              key={label}
-              aria-disabled
-              className="flex cursor-default items-center gap-3 px-2.5 py-2 text-sm text-sidebar-muted/80"
-            >
-              <Icon className="size-4 opacity-60" aria-hidden />
-              {label}
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      {mode === 'mock' && (
-        <div className="border-t border-sidebar-border px-5 py-3 text-xs text-sidebar-muted">
-          <span className="mr-1.5 inline-block size-1.5 rounded-full bg-sidebar-primary align-middle" />
-          Ambiente de desenvolvimento
-        </div>
-      )}
+      <div className={cn('border-t border-sidebar-border p-2', !collapsed && 'px-3')}>
+        <button
+          type="button"
+          onClick={onToggleCollapsed}
+          aria-label={collapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
+          aria-expanded={!collapsed}
+          title={collapsed ? 'Expandir barra lateral' : 'Recolher barra lateral'}
+          className={cn(
+            'flex h-9 w-full items-center gap-3 rounded-md px-2.5 text-sm text-sidebar-muted transition-colors hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground focus-visible:ring-2 focus-visible:ring-sidebar-ring focus-visible:outline-none',
+            collapsed && 'justify-center px-0',
+          )}
+        >
+          <ToggleIcon className="size-4" aria-hidden />
+          {!collapsed && 'Recolher'}
+        </button>
+      </div>
     </aside>
   );
 }

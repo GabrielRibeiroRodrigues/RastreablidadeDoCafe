@@ -100,7 +100,7 @@ describe('authentication flow', () => {
     );
     const user = userEvent.setup();
 
-    const { router } = renderApp({ path: '/' });
+    const { router } = renderApp({ path: '/produtos' });
 
     expect(await screen.findByRole('heading', { name: 'Produtos' })).toBeInTheDocument();
 

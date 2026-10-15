@@ -1,6 +1,7 @@
+import { PageHeader } from '@/components/layout/PageHeader';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
-import { ArrowLeftIcon, InfoIcon, Loader2Icon, PackagePlusIcon } from 'lucide-react';
+import { InfoIcon, Loader2Icon, PackagePlusIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router';
@@ -21,10 +22,11 @@ import { getApiClient, unwrap } from '@/lib/api-client';
 import { UNIT_SHORT, parseQuantityInput, toDateTimeLocal } from '@/lib/quantity';
 import type { ApiSchema } from '@traceflow/shared';
 import { inventoryApi, type ReceiptInput } from './api';
-import { PageHeader } from './components';
 import { useIdempotencyKey, useInvalidateInventory, useLocations } from './hooks';
 import { QUALITY_FIELDS, qualityShape, toQualityDto } from './quality';
 import { QualityFields } from './QualityFields';
+import { maskDecimal } from '@/lib/masks';
+import { UnsavedChangesGuard } from '@/components/form/UnsavedChangesGuard';
 
 type Product = ApiSchema<'ProductResponse'>;
 type Supplier = ApiSchema<'SupplierResponse'>;
@@ -83,6 +85,8 @@ const searchSuppliers = (q: string, signal: AbortSignal) =>
       signal,
     }),
   ).then((page) => page.data);
+
+const CRUMBS = [{ label: 'Operação' }, { label: 'Recebimento' }];
 
 /** Recebimento de café: cria o lote (código automático) e a entrada no estoque. */
 export function ReceiptPage() {
@@ -149,7 +153,7 @@ export function ReceiptPage() {
   if (!canOperate) {
     return (
       <div className="space-y-6">
-        <PageHeader title="Novo recebimento" />
+        <PageHeader title="Novo recebimento" breadcrumbs={CRUMBS} />
         <Alert>
           <InfoIcon />
           <AlertDescription>
@@ -164,14 +168,12 @@ export function ReceiptPage() {
 
   return (
     <div className="space-y-6">
-      <Button variant="ghost" size="sm" asChild className="-ml-2 text-muted-foreground">
-        <Link to="/lotes">
-          <ArrowLeftIcon />
-          Lotes
-        </Link>
-      </Button>
+      <UnsavedChangesGuard
+        when={form.formState.isDirty && !receive.isPending && !receive.isSuccess}
+      />
       <PageHeader
         title="Novo recebimento"
+        breadcrumbs={CRUMBS}
         description="Entrada de café de um fornecedor. O lote recebe um código automático (CAF-AAAA-NNNNNN) e o saldo entra no local escolhido."
       />
 
@@ -272,6 +274,8 @@ export function ReceiptPage() {
               name="quantity"
               label={unit ? `Quantidade (${unit})` : 'Quantidade'}
               required
+              mask={maskDecimal}
+              suffix={unit}
               inputMode="decimal"
               placeholder="60"
               description={
@@ -319,7 +323,7 @@ export function ReceiptPage() {
             ) : (
               <PackagePlusIcon />
             )}
-            Registrar recebimento
+            {receive.isPending ? 'Registrando…' : 'Registrar recebimento'}
           </Button>
         </div>
       </form>
