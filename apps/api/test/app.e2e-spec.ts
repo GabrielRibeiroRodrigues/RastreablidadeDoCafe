@@ -1,6 +1,7 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { IsInt, IsString, Min, MinLength } from 'class-validator';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { Public } from '../src/auth/decorators.js';
 import type { ProblemDetails } from '../src/common/http/problem-details.filter.js';
 import { createTestApp, type TestApp } from './support/test-app.js';
 
@@ -15,6 +16,7 @@ class ProbeDto {
 }
 
 /** Controller só de teste para exercitar validação e erros inesperados. */
+@Public()
 @Controller('probe')
 class ProbeController {
   @Post()

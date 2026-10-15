@@ -8,8 +8,8 @@
 | 2   | Esqueleto da API (config, logs, Swagger, erros, Docker)    | ✅ concluída    |
 | 3   | Prisma: schema, migration, seed de café                    | ✅ concluída    |
 | 4   | Infra de testes (Vitest + Testcontainers)                  | ✅ concluída    |
-| 5   | Autenticação (JWT/JWKS, emissor simulado, perfis)          | ⏳ próxima      |
-| 6   | Multi-tenancy + módulo de empresas + testes de isolamento  | ⬜              |
+| 5   | Autenticação (JWT/JWKS, emissor simulado, perfis)          | ✅ concluída    |
+| 6   | Multi-tenancy + módulo de empresas + testes de isolamento  | ⏳ próxima      |
 | 7   | CRUDs: produto, fornecedor, cliente, local                 | ⬜              |
 | 8   | CI (GitHub Actions) e geração do cliente OpenAPI           | 🟡 CI básica    |
 | 9   | Front: login e telas de cadastro                           | 🟡 em andamento |
@@ -50,6 +50,15 @@
 - Helpers: `createTestApp`, `resetDatabase` (TRUNCATE), fábricas de dados.
 - Primeiros testes com banco: readiness, migrations aplicadas, banco limpo entre testes, SKU único **por empresa**, empresa com dados não pode ser apagada.
 - 16 testes na API; ~15 s localmente.
+
+### Etapa 5 — Autenticação
+
+- Guard global (tudo protegido por padrão, `@Public()` para exceções) + `RolesGuard` com `@Roles()`.
+- Uma estratégia `passport-jwt` para Cognito (JWKS via `jwks-rsa`) e para o emissor simulado (chave em memória).
+- Emissor simulado: `/v1/dev/users`, `/v1/dev/token`, JWKS — só em `AUTH_MODE=mock`, proibido em produção pelo env.
+- `GET /v1/me` com usuário, perfis e empresa.
+- 33 testes novos: claims, env, token forjado/expirado/ID token/outro client/usuário inativo, matriz de perfis. Total na API: 49.
+- Documentação: [autenticacao.md](autenticacao.md).
 
 ### Trabalho em paralelo (agentes)
 

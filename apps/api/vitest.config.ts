@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     restoreMocks: true,
-    env: { NODE_ENV: 'test', LOG_LEVEL: 'silent' },
+    env: { NODE_ENV: 'test', LOG_LEVEL: 'silent', AUTH_MODE: 'mock' },
     projects: [
       {
         extends: true,
