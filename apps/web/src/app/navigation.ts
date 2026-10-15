@@ -20,7 +20,7 @@ export interface NavItem {
   icon: LucideIcon;
 }
 
-/** Cadastros da Semana 1. As telas reais chegam com o cliente OpenAPI. */
+/** Cadastros da Semana 1. */
 export const NAV_ITEMS: NavItem[] = [
   {
     path: '/produtos',
@@ -51,6 +51,13 @@ export const NAV_ITEMS: NavItem[] = [
     icon: WarehouseIcon,
   },
 ];
+
+/** Item de navegação de uma rota (falha cedo se a rota não existir). */
+export function navItem(path: string): NavItem {
+  const item = NAV_ITEMS.find((candidate) => candidate.path === path);
+  if (!item) throw new Error(`Rota de cadastro desconhecida: ${path}`);
+  return item;
+}
 
 /** Módulos do roadmap, exibidos desabilitados na barra lateral. */
 export const UPCOMING_ITEMS: Array<{ label: string; icon: LucideIcon }> = [
