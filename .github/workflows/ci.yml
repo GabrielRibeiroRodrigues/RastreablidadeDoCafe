@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Lint, typecheck, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Testcontainers (apps/api integration tests) will use the Docker daemon that
+    # ships with ubuntu-latest runners; no extra service or setup is needed here.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # pnpm version is read from "packageManager" in package.json.
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      # Consumers resolve @traceflow/shared types from its dist/, so it must be
+      # built before lint and typecheck.
+      - name: Build shared package
+        run: pnpm --filter @traceflow/shared build
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      # O contrato OpenAPI e os tipos do front são gerados da API: falha se alguém mudou a API
+      # sem regenerar (`pnpm openapi`) e commitar.
+      - name: Check OpenAPI contract is up to date
+        run: pnpm openapi:check

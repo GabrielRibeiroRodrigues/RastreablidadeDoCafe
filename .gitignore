@@ -22,3 +22,27 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+
+# Monorepo
+node_modules
+dist
+coverage
+*.tsbuildinfo
+.env.local
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# Editors / OS
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+# Prisma Client gerado (prisma generate)
+apps/api/src/generated/

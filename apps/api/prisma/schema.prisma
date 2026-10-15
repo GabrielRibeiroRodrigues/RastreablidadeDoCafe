@@ -1,0 +1,197 @@
+// Schema do TraceFlow. Convenções:
+// - Modelos/campos em inglês e camelCase; tabelas/colunas em snake_case (@@map/@map).
+// - Toda tabela de negócio tem company_id, e únicos/índices começam por ele (ADR 0004).
+// - IDs UUID v7 (ordenáveis por tempo).
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  importFileExtension    = "js"
+  generatedFileExtension = "ts"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  AUDITOR
+
+  @@map("role")
+}
+
+enum ProductType {
+  GREEN // café verde
+  ROASTED // café torrado
+  BLEND
+  PACKAGING // embalagem
+
+  @@map("product_type")
+}
+
+enum Unit {
+  KG
+  BAG_60KG // saca de 60 kg
+  UNIT
+
+  @@map("unit")
+}
+
+enum RoastLevel {
+  LIGHT
+  MEDIUM_LIGHT
+  MEDIUM
+  MEDIUM_DARK
+  DARK
+
+  @@map("roast_level")
+}
+
+enum SupplierType {
+  PRODUCER // produtor rural (pessoa física)
+  FARM // fazenda
+  COOPERATIVE
+  TRADER
+
+  @@map("supplier_type")
+}
+
+enum LocationType {
+  WAREHOUSE // armazém
+  SILO
+  ROASTERY // torrefação
+  QUARANTINE // área de quarentena
+  SHIPPING // expedição
+
+  @@map("location_type")
+}
+
+model Company {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  name      String
+  /// CNPJ (somente dígitos)
+  taxId     String   @unique @map("tax_id") @db.VarChar(14)
+  /// Prefixo dos códigos de lote, ex.: CAF -> CAF-2026-000123
+  lotPrefix String   @map("lot_prefix") @db.VarChar(5)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  users     User[]
+  products  Product[]
+  suppliers Supplier[]
+  customers Customer[]
+  locations Location[]
+
+  @@map("companies")
+}
+
+/// Usuário pertence a uma única empresa. A autorização usa os grupos do token (Cognito);
+/// `role` é o perfil provisionado, usado pelo emissor simulado e para sincronizar grupos.
+model User {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  /// `sub` do Cognito (ou do emissor simulado)
+  cognitoSub String   @unique @map("cognito_sub")
+  email      String   @unique
+  name       String
+  role       Role
+  isActive   Boolean  @default(true) @map("is_active")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@index([companyId])
+  @@map("users")
+}
+
+model Product {
+  id                String      @id @default(uuid(7)) @db.Uuid
+  companyId         String      @map("company_id") @db.Uuid
+  sku               String      @db.VarChar(40)
+  name              String
+  type              ProductType
+  unit              Unit
+  /// Grau de torra padrão (apenas torrados/blends); o grau real fica no lote.
+  defaultRoastLevel RoastLevel? @map("default_roast_level")
+  description       String?
+  isActive          Boolean     @default(true) @map("is_active")
+  createdAt         DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, sku])
+  @@index([companyId, name])
+  @@map("products")
+}
+
+model Supplier {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  companyId      String       @map("company_id") @db.Uuid
+  name           String
+  type           SupplierType
+  /// CPF ou CNPJ (somente dígitos)
+  document       String?      @db.VarChar(14)
+  farmName       String?      @map("farm_name")
+  /// Região produtora, ex.: Sul de Minas, Cerrado Mineiro, Mantiqueira de Minas
+  region         String?
+  city           String?
+  /// UF
+  state          String?      @db.Char(2)
+  altitudeMeters Int?         @map("altitude_meters")
+  /// Variedades cultivadas, ex.: Bourbon Amarelo, Catuaí Vermelho
+  varieties      String[]     @default([])
+  email          String?
+  phone          String?
+  isActive       Boolean      @default(true) @map("is_active")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, document])
+  @@index([companyId, name])
+  @@map("suppliers")
+}
+
+model Customer {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  name      String
+  /// CPF ou CNPJ (somente dígitos)
+  document  String?  @db.VarChar(14)
+  email     String?
+  phone     String?
+  city      String?
+  state     String?  @db.Char(2)
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, document])
+  @@index([companyId, name])
+  @@map("customers")
+}
+
+model Location {
+  id          String       @id @default(uuid(7)) @db.Uuid
+  companyId   String       @map("company_id") @db.Uuid
+  code        String       @db.VarChar(20)
+  name        String
+  type        LocationType
+  description String?
+  isActive    Boolean      @default(true) @map("is_active")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+
+  @@unique([companyId, code])
+  @@map("locations")
+}

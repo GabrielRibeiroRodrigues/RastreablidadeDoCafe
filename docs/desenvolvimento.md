@@ -1,0 +1,150 @@
+# Guia de desenvolvimento
+
+## Pré-requisitos
+
+| Ferramenta | Versão  | Observação                                         |
+| ---------- | ------- | -------------------------------------------------- |
+| Node.js    | 24 LTS  | ver `.nvmrc`                                       |
+| pnpm       | 10.x    | versão exata em `packageManager` no `package.json` |
+| Docker     | recente | Postgres local e Testcontainers                    |
+| Git        | —       | os hooks do Husky são instalados no `pnpm install` |
+
+### Instalando o pnpm no Windows
+
+`corepack enable` falha com `EPERM` quando o Node está em `C:\Program Files` (precisa de admin). Alternativa sem admin:
+
+```bash
+npm install -g pnpm@10
+```
+
+## Scripts da raiz
+
+| Script              | O que faz                                        |
+| ------------------- | ------------------------------------------------ |
+| `pnpm lint`         | ESLint em todo o monorepo (com type-check)       |
+| `pnpm format`       | Prettier em todos os arquivos                    |
+| `pnpm format:check` | Verifica formatação (usado na CI)                |
+| `pnpm typecheck`    | `tsc --noEmit` em cada pacote                    |
+| `pnpm test`         | Testes de cada pacote                            |
+| `pnpm build`        | Build de cada pacote                             |
+| `pnpm db:up`        | Sobe só o Postgres (docker compose)              |
+| `pnpm db:down`      | Derruba os contêineres                           |
+| `pnpm dev:api`      | API com hot reload no host                       |
+| `pnpm stack:up`     | Postgres + API em contêiner (imagem de produção) |
+
+Para rodar só um pacote: `pnpm --filter @traceflow/shared build`.
+
+### Banco (rodar com `pnpm --filter @traceflow/api <script>`)
+
+| Script        | O que faz                                                          |
+| ------------- | ------------------------------------------------------------------ |
+| `db:migrate`  | `prisma migrate dev`: cria uma migration a partir do schema        |
+| `db:deploy`   | `prisma migrate deploy`: aplica migrations pendentes (CI/produção) |
+| `db:seed`     | Seed idempotente com dados de café                                 |
+| `db:reset`    | Apaga o banco local, reaplica migrations e roda o seed             |
+| `db:generate` | Regenera o Prisma Client (`src/generated/prisma`, fora do git)     |
+
+Modelo e convenções: [modelo-de-dados.md](modelo-de-dados.md).
+
+## Rodando a API
+
+```bash
+pnpm install                              # também roda `prisma generate` (postinstall)
+pnpm --filter @traceflow/shared build
+cp apps/api/.env.example apps/api/.env   # ajuste se quiser
+pnpm db:up
+pnpm --filter @traceflow/api db:deploy   # aplica as migrations
+pnpm --filter @traceflow/api db:seed     # dados de exemplo de café
+pnpm dev:api
+```
+
+| URL                             | O quê                    |
+| ------------------------------- | ------------------------ |
+| http://localhost:3000/v1/health | Health check             |
+| http://localhost:3000/docs      | Swagger UI               |
+| http://localhost:3000/docs-json | Documento OpenAPI (JSON) |
+
+As variáveis são validadas com Zod no boot (`apps/api/src/config/env.ts`). Valor inválido = a API não sobe e mostra quais variáveis estão erradas.
+
+### API em contêiner
+
+`pnpm stack:up` constrói `apps/api/Dockerfile` (multi-stage: `pnpm fetch` → build → `pnpm deploy --prod`) e sobe API + Postgres. Roda como usuário `node`, com `HEALTHCHECK` em `/v1/health` e logs em JSON (em desenvolvimento, `pino-pretty`).
+
+### Erros e correlação
+
+- Todo erro sai como `application/problem+json` (RFC 9457): `type`, `title`, `status`, `detail`, `instance`, `requestId` e, em validação, `errors: [{ field, messages }]`.
+- Envie `x-request-id` (8–128 caracteres `[A-Za-z0-9_-]`) para correlacionar logs; se ausente ou inválido, a API gera um UUID. O ID volta no header de resposta e em cada linha de log (`requestId`).
+
+### Testes da API
+
+Vitest com dois projetos:
+
+| Projeto       | Arquivos                | Banco                                   | Comando                                         |
+| ------------- | ----------------------- | --------------------------------------- | ----------------------------------------------- |
+| `unit`        | `src/**/*.spec.ts`      | nenhum                                  | `pnpm --filter @traceflow/api test:unit`        |
+| `integration` | `test/**/*.e2e-spec.ts` | Postgres 17 real via **Testcontainers** | `pnpm --filter @traceflow/api test:integration` |
+
+`pnpm --filter @traceflow/api test` roda os dois. **O Docker precisa estar rodando.**
+
+Como funciona a integração (`apps/api/test/support/`):
+
+1. `global-setup.ts` sobe **um** contêiner Postgres por execução e aplica as migrations reais (`prisma migrate deploy`) — testa também as migrations.
+2. `setup-env.ts` injeta a `DATABASE_URL` do contêiner antes de cada arquivo.
+3. `test-app.ts` (`createTestApp`) sobe a aplicação completa com a mesma configuração HTTP de produção; requisições via supertest.
+4. `database.ts` (`resetDatabase`) faz `TRUNCATE` de todas as tabelas — use em `beforeEach`.
+5. `factories.ts` cria empresas, usuários e produtos com valores únicos.
+
+Os arquivos de integração rodam em série (compartilham o banco). Execução completa local: ~15 s.
+
+## Convenções
+
+- **Commits**: [Conventional Commits](https://www.conventionalcommits.org/pt-br/) validados pelo commitlint. Escopos sugeridos: `api`, `web`, `shared`, `infra`, `docs`, `ci`, `deps`, `repo`. Ex.: `feat(api): add supplier CRUD`.
+- **Pre-commit**: lint-staged roda ESLint + Prettier nos arquivos alterados.
+- **Branches**: um por tarefa (`chore/monorepo-setup`, `feat/api-auth`...), PR para `main`.
+- **Fim de linha**: LF em tudo (`.gitattributes` + `.editorconfig`), mesmo no Windows.
+- **TypeScript**: `strict` + `noUncheckedIndexedAccess`. Configuração base em `tsconfig.base.json`.
+
+## CI
+
+Workflow em `.github/workflows/ci.yml` (GitHub Actions, `ubuntu-latest`). Roda em push para
+qualquer branch e em pull request para `main`; execuções antigas do mesmo ref são canceladas.
+
+Etapas, em ordem:
+
+1. `pnpm install --frozen-lockfile` (Node da `.nvmrc`, pnpm do `packageManager`, cache do pnpm)
+2. `pnpm format:check`
+3. `pnpm --filter @traceflow/shared build` — lint e typecheck dos consumidores leem os tipos do
+   `dist/` do shared, então ele é compilado antes
+4. `pnpm lint`
+5. `pnpm typecheck`
+6. `pnpm test` — os testes de integração com Testcontainers usam o Docker do runner
+7. `pnpm build`
+
+Os scripts da raiz usam `pnpm -r --if-present`, então novos pacotes (`apps/api`, `apps/web`)
+entram na CI sem editar o workflow. Para reproduzir localmente:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm format:check
+pnpm --filter @traceflow/shared build
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
+```
+
+Outros arquivos em `.github/`:
+
+- `dependabot.yml`: atualizações semanais de GitHub Actions e npm (minor/patch agrupados). Majors
+  do `typescript` são ignorados (ver [ADR 0002](adr/0002-node-24-typescript-6.md)).
+- `pull_request_template.md`: modelo de descrição de PR.
+
+As actions estão fixadas por tag de major (`@v7`). Fixar por SHA de commit é um passo de
+hardening futuro.
+
+## Solução de problemas
+
+- **`unmet peer typescript`**: o `latest` do npm é o TypeScript 7 (nativo), ainda não suportado pelo typescript-eslint. O repo fixa `typescript@~6.0`.
+- **`Ignored build scripts`**: o pnpm 10 bloqueia scripts de instalação; dependências liberadas ficam em `onlyBuiltDependencies` no `pnpm-workspace.yaml`.
+- **`ERR_SWC_NATIVE_CACHE` / "DACL grants replacement rights"**: o addon nativo do SWC recusa cache em pastas onde outro usuário do Windows tem controle total. Por isso o projeto não usa SWC nos testes (ver [ADR 0006](adr/0006-nestjs-12-esm-vitest.md)).
+- **`failed to connect to the docker API ... dockerDesktopLinuxEngine`**: o Docker Desktop não está aberto. Abra-o e espere o engine iniciar (`docker info`).
