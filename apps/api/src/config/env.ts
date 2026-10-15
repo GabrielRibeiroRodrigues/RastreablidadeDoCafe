@@ -7,6 +7,8 @@ export const envSchema = z
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     PORT: z.coerce.number().int().min(1).max(65535).default(3000),
     LOG_LEVEL: z.enum(LOG_LEVELS).default('info'),
+    /** Logs legíveis (pino-pretty, dependência de dev). Em contêiner/AWS: JSON. */
+    LOG_PRETTY: z.stringbool().default(false),
     /** Origens permitidas no CORS, separadas por vírgula. */
     CORS_ORIGINS: z
       .string()

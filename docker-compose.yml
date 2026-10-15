@@ -24,6 +24,9 @@ services:
       context: .
       dockerfile: apps/api/Dockerfile
     environment:
+      # Stack local: modo mock exige NODE_ENV != production (ver docs/autenticacao.md).
+      NODE_ENV: development
+      AUTH_MODE: mock
       PORT: 3000
       LOG_LEVEL: info
       CORS_ORIGINS: http://localhost:5173
