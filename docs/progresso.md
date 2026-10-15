@@ -30,6 +30,21 @@
 
 **Testes pendentes (Semana 2):** saídas simultâneas no mesmo lote (só passam as que cabem no saldo), corrida de `Idempotency-Key`, trigger de imutabilidade, códigos de lote sob concorrência, regras de status/direção por tipo, isolamento entre empresas nos novos recursos, anexos.
 
+## Semana 3 — Produção, expedição e rastreabilidade (MVP v0.1)
+
+| #   | Etapa                                                                | Status       |
+| --- | -------------------------------------------------------------------- | ------------ |
+| 1   | Schema: ordens de produção, genealogia, expedição, sequências, token | ✅ concluída |
+| 2   | Produção em transação (beneficiamento, torra, blend, embalagem)      | ✅ concluída |
+| 3   | Rastreabilidade para trás e para frente (`WITH RECURSIVE`)           | ✅ concluída |
+| 4   | Expedição com baixa no razão (agente)                                | ✅ concluída |
+| 5   | Etiqueta PDF com QR code e página pública de rastreio (agente)       | ✅ concluída |
+| 6   | Telas de produção, expedição e árvore de rastreabilidade (agente)    | ✅ concluída |
+| 7   | Teste de ponta a ponta do fluxo completo                             | ✅ concluída |
+| 8   | Publicação: PR #2 (CI verde), tag `v0.1`                             | ✅ concluída |
+
+**Testes pendentes (Semana 3):** produção concorrente sobre o mesmo insumo, grafo em diamante e limite de profundidade, isolamento por empresa nas consultas recursivas, expedição concorrente, página pública (nenhum dado sensível, rate limit), etiqueta.
+
 ## Registro
 
 ### Etapa 1 — Base do monorepo
@@ -139,7 +154,23 @@
 
 **Semana 2 concluída (2026-10-15), sem testes automatizados novos (a pedido).**
 
+### Semana 3 — Produção, genealogia e rastreabilidade
+
+- `POST /production-orders` executa a etapa numa transação: consome os insumos travando-os em ordem fixa, cria o lote (código automático), registra `PRODUCTION` e grava `lot_origins`. Rendimento e perda em kg (1 saca = 60 kg); saída maior que a entrada é recusada; safra/variedade herdadas quando todos os insumos coincidem. Ver [producao-rastreabilidade.md](producao-rastreabilidade.md) e [ADR 0008](adr/0008-genealogia-e-rastreio-recursivo.md).
+- Rastreio `GET /lots/:id/trace/backward|forward` com `WITH RECURSIVE` (proteção contra ciclos, limite de profundidade, `truncated`); para frente inclui expedições e clientes — base do recall.
+- Expedição (agente): cada item é uma saída do razão, tudo numa transação, travas em ordem fixa, idempotência. Ver [expedicao.md](expedicao.md).
+- Etiqueta e página pública (agente): PDF 100×150 mm com QR para `/rastreio/{token}`; token aleatório gerado na primeira etiqueta; a página pública não expõe nome pessoal do produtor, documentos, quantidades nem clientes; rate limit de 30 req/min. Ver [etiqueta-pagina-publica.md](etiqueta-pagina-publica.md).
+- Telas (agente): produção com prévia de rendimento, expedição, árvore visual de rastreabilidade (para trás até as fazendas, para frente até os clientes).
+- Lacunas da API fechadas: busca de lotes por produto/fornecedor, ordenação e filtro por usuário nas movimentações, ordenação e `id` de linha no estoque.
+- Bug encontrado na verificação manual: lotes produzidos perdiam safra/variedade herdadas (campos `undefined` do DTO sobrescreviam a herança) — corrigido.
+- Teste de ponta a ponta (`apps/api/test/full-flow.e2e-spec.ts`): fazenda → torra → blend → expedição → rastreio nos dois sentidos → invisível a outra empresa → razão e genealogia imutáveis.
+- Publicação: PR #1 (Semana 1) e PR #2 (Semanas 2 e 3) com CI verde; tag `v0.1`.
+
+**Semana 3 concluída (2026-10-15) — MVP v0.1.**
+
 ## Próximos passos
 
-- Publicar no GitHub (push + PRs) e ver a CI rodar de verdade.
-- Pendências conhecidas: mensagens de erro da API em inglês (o front traduz as comuns); sem tela de detalhe só-leitura para auditor; máscara de CPF/CNPJ durante a digitação.
+- Gravar o vídeo curto do MVP (recebimento → torra → blend → expedição → rastreio → página pública pelo QR).
+- Rodada de testes adiada (Semanas 2 e 3), quando for pedida.
+- Semana 4: recall (simulação e execução com Step Functions/SNS), não conformidade e quarentena, alerta de validade, auditoria.
+- Pendências conhecidas: mensagens de erro da API em inglês (o front traduz as comuns); sem tela de detalhe só-leitura para auditor; máscara de CPF/CNPJ durante a digitação; `/stock` sem filtro por tipo de produto; listas de produção/expedição sem ordenação e filtro por usuário.
