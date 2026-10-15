@@ -519,6 +519,70 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/production-orders': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ProductionController_list'];
+    put?: never;
+    post: operations['ProductionController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/production-orders/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ProductionController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{id}/trace/backward': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TraceController_backward'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{id}/trace/forward': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TraceController_forward'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/health': {
     parameters: {
       query?: never;
@@ -1313,6 +1377,215 @@ export interface components {
       url: string;
       /** Format: date-time */
       expiresAt: string;
+    };
+    /** @enum {string} */
+    ProductionStage: 'PROCESSING' | 'ROASTING' | 'BLENDING' | 'PACKAGING';
+    ProductionLot: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      /** @example 492.000 */
+      quantity: string;
+      unit: components['schemas']['Unit'];
+    };
+    ProductionOrderResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example OP-2026-000001 */
+      number: string;
+      stage: components['schemas']['ProductionStage'];
+      /** Format: date-time */
+      performedAt: string;
+      /** @description Lote gerado */
+      output: components['schemas']['ProductionLot'];
+      /** @description Lotes consumidos */
+      inputs: components['schemas']['ProductionLot'][];
+      /**
+       * @description Massa de entrada em kg
+       * @example 600.000
+       */
+      inputMassKg: string;
+      /** @example 492.000 */
+      outputMassKg: string | null;
+      /** @example 82 */
+      yieldPercent: number | null;
+      /** @example 108.000 */
+      lossKg: string | null;
+      notes: string | null;
+      user: components['schemas']['UserSummary'];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ProductionInputDto: {
+      /** Format: uuid */
+      lotId: string;
+      /**
+       * Format: uuid
+       * @description Local de onde o insumo sai
+       */
+      locationId: string;
+      /**
+       * @description Quantidade na unidade do lote de insumo
+       * @example 10
+       */
+      quantity: string;
+    };
+    LotQualityDto: {
+      /**
+       * Format: date
+       * @description Validade (AAAA-MM-DD)
+       * @example 2027-06-30
+       */
+      expiresAt?: string | null;
+      /**
+       * @description Safra
+       * @example 2025/26
+       */
+      harvest?: string | null;
+      /** @example Bourbon Amarelo */
+      variety?: string | null;
+      /** @example 1250 */
+      altitudeMeters?: number | null;
+      /** @example 17 */
+      screenSize?: number | null;
+      /** @example 11.5 */
+      moisturePercent?: number | null;
+      roastLevel?: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore?: number | null;
+      notes?: string | null;
+    };
+    CreateProductionOrderDto: {
+      stage: components['schemas']['ProductionStage'];
+      /** @description Lotes consumidos (1 a 20) */
+      inputs: components['schemas']['ProductionInputDto'][];
+      /**
+       * Format: uuid
+       * @description Produto do lote gerado
+       */
+      outputProductId: string;
+      /**
+       * Format: uuid
+       * @description Local onde o lote gerado entra
+       */
+      outputLocationId: string;
+      /**
+       * @description Quantidade produzida na unidade do produto
+       * @example 492.000
+       */
+      outputQuantity: string;
+      /** @description Quando foi produzido (padrão: agora) */
+      performedAt?: string;
+      /** @description Dados do lote gerado. Safra e variedade são herdadas dos insumos quando todos coincidem; o grau de torra padrão do produto é usado se não informado. */
+      lot?: components['schemas']['LotQualityDto'];
+      /** @example Torrador 2, perfil 12 min */
+      notes?: string | null;
+    };
+    TraceSupplier: {
+      /** Format: uuid */
+      id: string;
+      /** @example José Aparecido da Silva */
+      name: string;
+      /** @example Sítio Santa Inês */
+      farmName: string | null;
+      /** @example Mantiqueira de Minas */
+      region: string | null;
+      /** @example Carmo de Minas */
+      city: string | null;
+      /** @example MG */
+      state: string | null;
+      /** @example 1250 */
+      altitudeMeters: number | null;
+    };
+    TraceNode: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      unit: components['schemas']['Unit'];
+      /** @example 60.000 */
+      initialQuantity: string;
+      /** @example 2025/26 */
+      harvest: string | null;
+      /** @example Bourbon Amarelo */
+      variety: string | null;
+      /** Format: date-time */
+      receivedAt: string;
+      supplier: components['schemas']['TraceSupplier'] | null;
+      /** @example 1 */
+      depth: number;
+    };
+    TraceProductionOrder: {
+      /** Format: uuid */
+      id: string;
+      /** @example OP-2026-000001 */
+      number: string;
+      stage: components['schemas']['ProductionStage'];
+      /** Format: date-time */
+      performedAt: string;
+    };
+    TraceEdge: {
+      /** Format: uuid */
+      parentLotId: string;
+      /** Format: uuid */
+      childLotId: string;
+      /** @example 10.000 */
+      quantity: string;
+      productionOrder: components['schemas']['TraceProductionOrder'];
+    };
+    BackwardTraceResponse: {
+      /** Format: uuid */
+      rootLotId: string;
+      /** @description Inclui o próprio lote (depth 0) */
+      nodes: components['schemas']['TraceNode'][];
+      edges: components['schemas']['TraceEdge'][];
+      /** @description true se o limite de profundidade cortou o grafo */
+      truncated: boolean;
+      /** @description Fornecedores/fazendas de origem (distintos) */
+      origins: components['schemas']['TraceSupplier'][];
+    };
+    TraceCustomer: {
+      /** Format: uuid */
+      id: string;
+      /** @example Cafeteria Grão Fino */
+      name: string;
+      city: string | null;
+      state: string | null;
+    };
+    TraceShipment: {
+      /** Format: uuid */
+      shipmentId: string;
+      /** @example EXP-2026-000001 */
+      number: string;
+      /** Format: date-time */
+      shippedAt: string;
+      orderRef: string | null;
+      customer: components['schemas']['TraceCustomer'];
+      /** Format: uuid */
+      lotId: string;
+      /** @example CAF-2026-000130 */
+      lotCode: string;
+      /** @example 12.000 */
+      quantity: string;
+      unit: components['schemas']['Unit'];
+    };
+    ForwardTraceResponse: {
+      /** Format: uuid */
+      rootLotId: string;
+      /** @description Inclui o próprio lote (depth 0) */
+      nodes: components['schemas']['TraceNode'][];
+      edges: components['schemas']['TraceEdge'][];
+      /** @description true se o limite de profundidade cortou o grafo */
+      truncated: boolean;
+      /** @description Expedições do lote e de todos os derivados */
+      shipments: components['schemas']['TraceShipment'][];
+      /** @description Clientes afetados (distintos) */
+      customers: components['schemas']['TraceCustomer'][];
     };
     HealthResponse: {
       /** @example ok */
@@ -2604,6 +2877,159 @@ export interface operations {
       };
       /** @description Armazenamento não configurado (S3_BUCKET) */
       503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ProductionController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        stage?: components['schemas']['ProductionStage'];
+        /** @description Número da ordem ou código do lote gerado */
+        q?: string;
+        /** @description A partir de (inclusive) */
+        from?: string;
+        /** @description Até (exclusive) */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ProductionOrderResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  ProductionController_create: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateProductionOrderDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductionOrderResponse'];
+        };
+      };
+      /** @description Etapa incompatível com os produtos, saída > entrada */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Saldo insuficiente ou insumo bloqueado/em quarentena */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ProductionController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductionOrderResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TraceController_backward: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BackwardTraceResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TraceController_forward: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ForwardTraceResponse'];
+        };
+      };
+      404: {
         headers: {
           [name: string]: unknown;
         };

@@ -133,8 +133,11 @@ export class LotsService {
 /** DTO de qualidade → colunas do lote (datas só-dia em UTC). */
 export function qualityData(dto: LotQualityDto): Prisma.LotUncheckedUpdateInput {
   const { expiresAt, ...rest } = dto;
+  // Só campos enviados: a instância do DTO tem as propriedades ausentes como `undefined`, e
+  // espalhá-las apagaria valores herdados (ex.: safra/variedade herdadas dos insumos na produção).
+  const sent = Object.fromEntries(Object.entries(rest).filter(([, value]) => value !== undefined));
   return {
-    ...rest,
+    ...sent,
     ...(expiresAt !== undefined && {
       expiresAt: expiresAt === null ? null : fromDateOnly(expiresAt),
     }),
