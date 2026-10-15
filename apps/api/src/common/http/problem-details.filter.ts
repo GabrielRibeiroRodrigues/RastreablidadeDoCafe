@@ -107,6 +107,9 @@ export function toProblem(exception: unknown): ProblemDetails {
   const prismaProblem = fromPrismaError(exception);
   if (prismaProblem) return prismaProblem;
 
+  const clientError = fromHttpError(exception);
+  if (clientError) return clientError;
+
   // Nunca vaza detalhes internos de erros inesperados.
   return {
     type: 'about:blank',
@@ -149,6 +152,34 @@ function fromPrismaError(exception: unknown): ProblemDetails | undefined {
     default:
       return undefined;
   }
+}
+
+/**
+ * Erros 4xx do Express/body-parser (`http-errors`), ex.: JSON malformado (400) ou corpo acima do
+ * limite (413). Chegam ao filtro como erros comuns, não como HttpException.
+ */
+function fromHttpError(exception: unknown): ProblemDetails | undefined {
+  if (typeof exception !== 'object' || exception === null) return undefined;
+  const { status, expose, type } = exception as {
+    status?: unknown;
+    expose?: unknown;
+    type?: unknown;
+  };
+  if (typeof status !== 'number' || status < 400 || status > 499 || expose !== true)
+    return undefined;
+
+  const detail =
+    type === 'entity.too.large'
+      ? 'The request body is too large.'
+      : type === 'entity.parse.failed'
+        ? 'The request body is not valid JSON.'
+        : undefined;
+  return {
+    type: 'about:blank',
+    title: STATUS_CODES[status] ?? 'Error',
+    status,
+    ...(detail && { detail }),
+  };
 }
 
 /** Campos em conflito, sem o `companyId` (detalhe interno do isolamento). */
