@@ -23,7 +23,9 @@
     "test:unit": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "openapi": "nest build && node dist/openapi.js",
-    "bundle:lambda": "nest build && node scripts/bundle-lambda.mjs"
+    "bundle:lambda": "nest build && node scripts/bundle-lambda.mjs",
+    "smoke:lambda": "node scripts/smoke-lambda.mjs",
+    "tenant:bootstrap": "tsx scripts/bootstrap-tenant.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1152.0",
