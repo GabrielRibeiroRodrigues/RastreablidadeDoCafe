@@ -77,7 +77,24 @@ As variáveis são validadas com Zod no boot (`apps/api/src/config/env.ts`). Val
 
 ### Testes da API
 
-`pnpm --filter @traceflow/api test` roda Vitest: unitários em `src/**/*.spec.ts` e e2e em `test/*.e2e-spec.ts` (supertest sobre a app completa).
+Vitest com dois projetos:
+
+| Projeto       | Arquivos                | Banco                                   | Comando                                         |
+| ------------- | ----------------------- | --------------------------------------- | ----------------------------------------------- |
+| `unit`        | `src/**/*.spec.ts`      | nenhum                                  | `pnpm --filter @traceflow/api test:unit`        |
+| `integration` | `test/**/*.e2e-spec.ts` | Postgres 17 real via **Testcontainers** | `pnpm --filter @traceflow/api test:integration` |
+
+`pnpm --filter @traceflow/api test` roda os dois. **O Docker precisa estar rodando.**
+
+Como funciona a integração (`apps/api/test/support/`):
+
+1. `global-setup.ts` sobe **um** contêiner Postgres por execução e aplica as migrations reais (`prisma migrate deploy`) — testa também as migrations.
+2. `setup-env.ts` injeta a `DATABASE_URL` do contêiner antes de cada arquivo.
+3. `test-app.ts` (`createTestApp`) sobe a aplicação completa com a mesma configuração HTTP de produção; requisições via supertest.
+4. `database.ts` (`resetDatabase`) faz `TRUNCATE` de todas as tabelas — use em `beforeEach`.
+5. `factories.ts` cria empresas, usuários e produtos com valores únicos.
+
+Os arquivos de integração rodam em série (compartilham o banco). Execução completa local: ~15 s.
 
 ## Convenções
 

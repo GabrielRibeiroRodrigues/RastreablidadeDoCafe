@@ -6,14 +6,32 @@ export default defineConfig({
     decorator: { legacy: true, emitDecoratorMetadata: true },
   },
   test: {
-    include: ['src/**/*.spec.ts', 'test/**/*.e2e-spec.ts'],
     environment: 'node',
     restoreMocks: true,
-    // DATABASE_URL fictícia: o Prisma só conecta na primeira consulta. Testes com banco usam Testcontainers.
-    env: {
-      NODE_ENV: 'test',
-      LOG_LEVEL: 'silent',
-      DATABASE_URL: 'postgresql://unused:unused@localhost:1/unused',
-    },
+    env: { NODE_ENV: 'test', LOG_LEVEL: 'silent' },
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'unit',
+          include: ['src/**/*.spec.ts'],
+          // URL fictícia: testes unitários nunca abrem conexão.
+          env: { DATABASE_URL: 'postgresql://unused:unused@localhost:1/unused' },
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'integration',
+          include: ['test/**/*.e2e-spec.ts'],
+          // Um Postgres real (Testcontainers) por execução, compartilhado pelos arquivos.
+          globalSetup: ['./test/support/global-setup.ts'],
+          setupFiles: ['./test/support/setup-env.ts'],
+          // Os arquivos compartilham o banco e limpam as tabelas: rodar em série evita interferência.
+          fileParallelism: false,
+          hookTimeout: 120_000,
+        },
+      },
+    ],
   },
 });

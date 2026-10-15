@@ -1,12 +1,8 @@
-import { Body, Controller, Get, Post, type INestApplication } from '@nestjs/common';
-import { Test } from '@nestjs/testing';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { IsInt, IsString, Min, MinLength } from 'class-validator';
-import request from 'supertest';
-import type { Server } from 'node:http';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { AppModule } from '../src/app.module.js';
-import { configureApp } from '../src/bootstrap.js';
 import type { ProblemDetails } from '../src/common/http/problem-details.filter.js';
+import { createTestApp, type TestApp } from './support/test-app.js';
 
 class ProbeDto {
   @IsString()
@@ -33,22 +29,15 @@ class ProbeController {
 }
 
 describe('HTTP foundation (e2e)', () => {
-  let app: INestApplication<Server>;
-  const http = () => request(app.getHttpServer());
+  let testApp: TestApp;
+  const http = () => testApp.http();
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-      controllers: [ProbeController],
-    }).compile();
-
-    app = moduleRef.createNestApplication({ bufferLogs: true });
-    configureApp(app);
-    await app.init();
+    testApp = await createTestApp({ controllers: [ProbeController] });
   });
 
   afterAll(async () => {
-    await app.close();
+    await testApp.close();
   });
 
   it('GET /v1/health returns ok and a generated request id', async () => {
