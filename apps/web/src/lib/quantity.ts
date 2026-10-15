@@ -99,3 +99,23 @@ export function startOfLocalDayIso(dateOnly: string, days = 0): string {
 }
 
 export const isDateOnly = (value: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(value);
+
+// ---------------------------------------------------------------------------------------------
+// Massa (rendimento da produção)
+// ---------------------------------------------------------------------------------------------
+
+/** `12500n` (milésimos) → `"12.5"` (string decimal da API, sem zeros à direita). */
+export function fromMilli(milli: bigint): string {
+  const negative = milli < 0n;
+  const abs = negative ? -milli : milli;
+  const int = abs / 1000n;
+  const frac = (abs % 1000n).toString().padStart(3, '0').replace(/0+$/, '');
+  return `${negative ? '-' : ''}${int}${frac ? `.${frac}` : ''}`;
+}
+
+/** Massa em kg (milésimos): 1 saca = 60 kg; quantidades em unidades não têm massa (`null`). */
+export function toKgMilli(value: string, unit: UnitCode): bigint | null {
+  if (unit === 'KG') return toMilli(value);
+  if (unit === 'BAG_60KG') return toMilli(value) * 60n;
+  return null;
+}

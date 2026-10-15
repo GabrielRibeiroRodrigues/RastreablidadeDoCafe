@@ -133,7 +133,53 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
   '/problems/lot-consumed': () => 'Lote consumido (sem saldo): o status não pode ser alterado.',
   '/problems/inactive-product': () => 'O produto está inativo.',
   '/problems/inactive-location': () => 'O local de destino está inativo.',
+  '/problems/invalid-production': ({ detail }) => translateProductionDetail(detail ?? ''),
+  '/problems/invalid-shipment': ({ detail }) =>
+    /only once/i.test(detail ?? '')
+      ? 'Cada par (lote, local) só pode aparecer uma vez na expedição: some as quantidades.'
+      : `Expedição inválida: ${detail ?? 'confira os itens.'}`,
+  '/problems/inactive-customer': () => 'O cliente está inativo e não pode receber expedições.',
 };
+
+const STAGE_TEXT: Record<string, string> = {
+  PROCESSING: 'Beneficiamento',
+  ROASTING: 'Torra',
+  BLENDING: 'Blend',
+  PACKAGING: 'Embalagem',
+};
+const TYPE_TEXT: Record<string, string> = {
+  GREEN: 'café verde',
+  ROASTED: 'torrado',
+  BLEND: 'blend',
+  PACKAGING: 'embalagem',
+};
+const typeList = (text: string): string =>
+  text
+    .split(/,\s*|\s+or\s+/)
+    .map((type) => TYPE_TEXT[type.trim()] ?? type.trim())
+    .join(', ');
+
+/** `detail` de `/problems/invalid-production` (em inglês) → pt-BR; desconhecido sai como veio. */
+function translateProductionDetail(detail: string): string {
+  let m = /Output \(([\d.,]+) kg\) cannot exceed the input mass \(([\d.,]+) kg\)/i.exec(detail);
+  if (m) {
+    return `A massa de saída (${formatQuantityRaw(m[1] ?? '')} kg) não pode exceder a de entrada (${formatQuantityRaw(m[2] ?? '')} kg).`;
+  }
+  m = /^(\w+) must produce (.+), not (\w+)\.?$/.exec(detail);
+  if (m) {
+    return `${STAGE_TEXT[m[1] ?? ''] ?? m[1]} deve gerar ${typeList(m[2] ?? '')}, não ${TYPE_TEXT[m[3] ?? ''] ?? m[3]}.`;
+  }
+  m = /^(\w+) consumes (.+); lot (\S+) is (\w+)\.?$/.exec(detail);
+  if (m) {
+    return `${STAGE_TEXT[m[1] ?? ''] ?? m[1]} consome ${typeList(m[2] ?? '')}; o lote ${m[3]} é ${TYPE_TEXT[m[4] ?? ''] ?? m[4]}.`;
+  }
+  m = /^Product (\S+) is inactive/.exec(detail);
+  if (m) return `O produto ${m[1]} está inativo.`;
+  if (/only once in inputs/i.test(detail)) {
+    return 'Cada par (lote, local) só pode aparecer uma vez nos insumos.';
+  }
+  return detail || 'Ordem de produção inválida.';
+}
 
 /** Mensagem amigável (pt-BR) para exibir em toasts e alertas. */
 export function getErrorMessage(error: unknown): string {

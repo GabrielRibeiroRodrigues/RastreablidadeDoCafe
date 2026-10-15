@@ -15,6 +15,11 @@ interface EntityComboboxProps<T extends { id: string }> {
   /** Raiz da query key do TanStack Query (ex.: `products`). */
   queryKey: string;
   getLabel: (item: T) => string;
+  /**
+   * Filtro aplicado no cliente sobre o resultado da busca (ex.: tipos de produto aceitos, itens já
+   * escolhidos). O cache da query não depende dele.
+   */
+  filter?: (item: T) => boolean;
   renderOption?: (item: T) => ReactNode;
   placeholder?: string;
   invalid?: boolean;
@@ -44,6 +49,7 @@ export function EntityCombobox<T extends { id: string }>({
   search,
   queryKey,
   getLabel,
+  filter,
   renderOption,
   placeholder = 'Buscar…',
   invalid,
@@ -65,7 +71,8 @@ export function EntityCombobox<T extends { id: string }>({
     enabled: open,
     staleTime: 30_000,
   });
-  const items = query.data ?? [];
+  const all = query.data ?? [];
+  const items = filter ? all.filter(filter) : all;
 
   const choose = (item: T) => {
     onChange(item);
