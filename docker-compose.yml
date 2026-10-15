@@ -33,11 +33,58 @@ services:
       SWAGGER_ENABLED: 'true'
       DATABASE_URL: postgresql://${POSTGRES_USER:-traceflow}:${POSTGRES_PASSWORD:-traceflow}@postgres:5432/${POSTGRES_DB:-traceflow}
       DATABASE_POOL_MAX: 5
+      # Anexos: a API fala com o MinIO pela rede interna; o navegador, por localhost.
+      S3_BUCKET: ${S3_BUCKET:-traceflow-attachments}
+      S3_REGION: us-east-1
+      S3_ENDPOINT: http://minio:9000
+      S3_PUBLIC_ENDPOINT: http://localhost:${MINIO_API_PORT:-9000}
+      S3_FORCE_PATH_STYLE: 'true'
+      S3_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-traceflow}
+      S3_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-traceflow-secret}
     ports:
       - '3000:3000'
     depends_on:
       postgres:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+
+  # Armazenamento de anexos compatível com S3 (substitui o S3 da AWS localmente). A MinIO parou de
+  # publicar imagens oficiais; pgsty/* são builds da comunidade do mesmo código (AGPL).
+  minio:
+    image: pgsty/minio:RELEASE.2026-08-04T00-00-00Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-traceflow}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-traceflow-secret}
+    ports:
+      - '${MINIO_API_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Execução única: cria o bucket privado (idempotente) e termina.
+  minio-init:
+    image: pgsty/mc:RELEASE.2026-09-16T00-00-00Z
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-traceflow}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-traceflow-secret}
+      S3_BUCKET: ${S3_BUCKET:-traceflow-attachments}
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 \"$$MINIO_ROOT_USER\" \"$$MINIO_ROOT_PASSWORD\" &&
+      mc mb --ignore-existing \"local/$$S3_BUCKET\" &&
+      mc anonymous set none \"local/$$S3_BUCKET\"
+      "
 
 volumes:
   pgdata:
+  miniodata:

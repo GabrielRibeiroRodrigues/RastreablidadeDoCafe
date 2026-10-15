@@ -4,7 +4,31 @@
  */
 
 /** Modelos com coluna `company_id`. */
-export const TENANT_MODELS = new Set(['User', 'Product', 'Supplier', 'Customer', 'Location']);
+export const TENANT_MODELS = new Set([
+  'User',
+  'Product',
+  'Supplier',
+  'Customer',
+  'Location',
+  'Lot',
+  'StockMovement',
+  'Attachment',
+  'ProductionOrder',
+  'LotOrigin',
+  'Shipment',
+  'ShipmentItem',
+]);
+
+/** Razão de estoque: só inclusão (o banco também bloqueia por trigger — ADR 0007). */
+export const APPEND_ONLY_MODELS = new Set(['StockMovement', 'LotOrigin', 'ShipmentItem']);
+const MUTATIONS = new Set([
+  'update',
+  'updateMany',
+  'updateManyAndReturn',
+  'upsert',
+  'delete',
+  'deleteMany',
+]);
 
 /** O próprio tenant: só pode ler/alterar a empresa do contexto, nunca criar ou apagar. */
 export const COMPANY_MODEL = 'Company';
@@ -45,6 +69,11 @@ export function scopeArgs(
   }
   if (!TENANT_MODELS.has(model)) {
     throw new TenantScopeError(`Model ${model} is not tenant-aware; use an explicit client`);
+  }
+  if (APPEND_ONLY_MODELS.has(model) && MUTATIONS.has(operation)) {
+    throw new TenantScopeError(
+      `${model} is append-only: ${operation} is not allowed (use a reversal)`,
+    );
   }
 
   const scoped: Args = { ...args };

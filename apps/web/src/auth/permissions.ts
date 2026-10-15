@@ -24,3 +24,29 @@ export function useCatalogPermissions(): CatalogPermissions {
   const { user } = useAuth();
   return catalogPermissions(user?.roles ?? []);
 }
+
+export interface InventoryPermissions {
+  /** Receber, movimentar, editar dados do lote e anexar arquivos (admin e operador). */
+  canOperate: boolean;
+  /** Ajuste de inventário (só admin). */
+  canAdjust: boolean;
+  /** Estorno de movimentação (só admin). */
+  canReverse: boolean;
+  /** Status que o perfil pode definir: operador só põe em quarentena. */
+  settableStatuses: Array<'AVAILABLE' | 'QUARANTINE' | 'BLOCKED'>;
+}
+
+/** Regras de estoque na UI (a API aplica as mesmas). Auditor: somente leitura. */
+export function inventoryPermissions(roles: readonly Role[]): InventoryPermissions {
+  const isAdmin = roles.includes('admin');
+  const canOperate = isAdmin || roles.includes('operator');
+  let settableStatuses: InventoryPermissions['settableStatuses'] = [];
+  if (isAdmin) settableStatuses = ['AVAILABLE', 'QUARANTINE', 'BLOCKED'];
+  else if (canOperate) settableStatuses = ['QUARANTINE'];
+  return { canOperate, canAdjust: isAdmin, canReverse: isAdmin, settableStatuses };
+}
+
+export function useInventoryPermissions(): InventoryPermissions {
+  const { user } = useAuth();
+  return inventoryPermissions(user?.roles ?? []);
+}

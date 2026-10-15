@@ -343,6 +343,310 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/lots': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['LotsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['LotsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['LotsController_update'];
+    trace?: never;
+  };
+  '/v1/lots/{id}/status': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['LotsController_changeStatus'];
+    trace?: never;
+  };
+  '/v1/receipts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ReceiptsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/movements': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MovementsController_list'];
+    put?: never;
+    post: operations['MovementsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/movements/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MovementsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/movements/{id}/reverse': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['MovementsController_reverse'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/stock': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['StockController_position'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/shipments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ShipmentsController_list'];
+    put?: never;
+    post: operations['ShipmentsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/shipments/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ShipmentsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{lotId}/attachments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AttachmentsController_list'];
+    put?: never;
+    post: operations['AttachmentsController_requestUpload'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{lotId}/attachments/{id}/confirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AttachmentsController_confirm'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{lotId}/attachments/{id}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AttachmentsController_download'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/production-orders': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ProductionController_list'];
+    put?: never;
+    post: operations['ProductionController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/production-orders/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ProductionController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{id}/trace/backward': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TraceController_backward'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{id}/trace/forward': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['TraceController_forward'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{id}/label': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['LabelsController_generate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/public/trace/{token}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['PublicTraceController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/health': {
     parameters: {
       query?: never;
@@ -797,6 +1101,735 @@ export interface components {
       name?: string;
       type?: components['schemas']['LocationType'];
       description?: string | null;
+    };
+    /** @enum {string} */
+    LotStatus: 'AVAILABLE' | 'QUARANTINE' | 'BLOCKED' | 'CONSUMED';
+    ProductSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example VRD-BOURBON-AM */
+      sku: string;
+      /** @example Café verde Bourbon Amarelo */
+      name: string;
+      type: components['schemas']['ProductType'];
+    };
+    SupplierSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example José Aparecido da Silva */
+      name: string;
+      /** @example Sítio Santa Inês */
+      farmName: string | null;
+    };
+    LotResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      supplier: components['schemas']['SupplierSummary'] | null;
+      unit: components['schemas']['Unit'];
+      /**
+       * @description Quantidade recebida/produzida
+       * @example 60.000
+       */
+      initialQuantity: string;
+      /**
+       * @description Saldo atual (soma de todos os locais)
+       * @example 42.500
+       */
+      balance: string;
+      /**
+       * Format: date
+       * @example 2027-06-30
+       */
+      expiresAt: string | null;
+      /** Format: date-time */
+      receivedAt: string;
+      /** @example 2025/26 */
+      harvest: string | null;
+      /** @example Bourbon Amarelo */
+      variety: string | null;
+      /** @example 1250 */
+      altitudeMeters: number | null;
+      /** @example 17 */
+      screenSize: number | null;
+      /** @example 11.5 */
+      moisturePercent: number | null;
+      roastLevel: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore: number | null;
+      notes: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    LocationSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example ARM-01 */
+      code: string;
+      /** @example Armazém de café verde */
+      name: string;
+      type: components['schemas']['LocationType'];
+    };
+    LocationBalance: {
+      location: components['schemas']['LocationSummary'];
+      /** @example 42.500 */
+      quantity: string;
+    };
+    LotDetailResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      supplier: components['schemas']['SupplierSummary'] | null;
+      unit: components['schemas']['Unit'];
+      /**
+       * @description Quantidade recebida/produzida
+       * @example 60.000
+       */
+      initialQuantity: string;
+      /**
+       * @description Saldo atual (soma de todos os locais)
+       * @example 42.500
+       */
+      balance: string;
+      /**
+       * Format: date
+       * @example 2027-06-30
+       */
+      expiresAt: string | null;
+      /** Format: date-time */
+      receivedAt: string;
+      /** @example 2025/26 */
+      harvest: string | null;
+      /** @example Bourbon Amarelo */
+      variety: string | null;
+      /** @example 1250 */
+      altitudeMeters: number | null;
+      /** @example 17 */
+      screenSize: number | null;
+      /** @example 11.5 */
+      moisturePercent: number | null;
+      roastLevel: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore: number | null;
+      notes: string | null;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** @description Saldo por local (só locais com saldo) */
+      stock: components['schemas']['LocationBalance'][];
+    };
+    UpdateLotDto: {
+      /**
+       * Format: date
+       * @description Validade (AAAA-MM-DD)
+       * @example 2027-06-30
+       */
+      expiresAt?: string | null;
+      /**
+       * @description Safra
+       * @example 2025/26
+       */
+      harvest?: string | null;
+      /** @example Bourbon Amarelo */
+      variety?: string | null;
+      /** @example 1250 */
+      altitudeMeters?: number | null;
+      /** @example 17 */
+      screenSize?: number | null;
+      /** @example 11.5 */
+      moisturePercent?: number | null;
+      roastLevel?: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore?: number | null;
+      notes?: string | null;
+    };
+    /** @enum {string} */
+    SettableLotStatus: 'AVAILABLE' | 'QUARANTINE' | 'BLOCKED';
+    ChangeLotStatusDto: {
+      status: components['schemas']['SettableLotStatus'];
+      /** @example Umidade acima de 12,5% na análise de recebimento */
+      reason: string;
+    };
+    CreateReceiptDto: {
+      /**
+       * Format: date
+       * @description Validade (AAAA-MM-DD)
+       * @example 2027-06-30
+       */
+      expiresAt?: string | null;
+      /**
+       * @description Safra
+       * @example 2025/26
+       */
+      harvest?: string | null;
+      /** @example Bourbon Amarelo */
+      variety?: string | null;
+      /** @example 1250 */
+      altitudeMeters?: number | null;
+      /** @example 17 */
+      screenSize?: number | null;
+      /** @example 11.5 */
+      moisturePercent?: number | null;
+      roastLevel?: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore?: number | null;
+      notes?: string | null;
+      /** Format: uuid */
+      productId: string;
+      /** Format: uuid */
+      supplierId?: string | null;
+      /**
+       * Format: uuid
+       * @description Local de destino (quarentena → lote em quarentena)
+       */
+      locationId: string;
+      /**
+       * @description Quantidade na unidade do produto
+       * @example 60.000
+       */
+      quantity: string;
+      /** @description Data/hora do recebimento (padrão: agora) */
+      receivedAt?: string;
+      /** @example NF 004512 */
+      documentRef?: string | null;
+    };
+    /** @enum {string} */
+    MovementType:
+      'RECEIPT' | 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT' | 'CONSUMPTION' | 'PRODUCTION' | 'REVERSAL';
+    LotSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+    };
+    UserSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example Bruno Costa */
+      name: string;
+    };
+    MovementResponse: {
+      /** Format: uuid */
+      id: string;
+      type: components['schemas']['MovementType'];
+      lot: components['schemas']['LotSummary'];
+      fromLocation: components['schemas']['LocationSummary'] | null;
+      toLocation: components['schemas']['LocationSummary'] | null;
+      /** @example 10.000 */
+      quantity: string;
+      /** @description Unidade do lote */
+      unit: components['schemas']['Unit'];
+      user: components['schemas']['UserSummary'];
+      /** Format: date-time */
+      occurredAt: string;
+      /** @example NF 12345 */
+      documentRef: string | null;
+      reason: string | null;
+      /** Format: uuid */
+      reversalOfId: string | null;
+      /**
+       * Format: uuid
+       * @description Estorno desta
+       */
+      reversedById: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    /** @enum {string} */
+    ManualMovementType: 'ISSUE' | 'TRANSFER' | 'ADJUSTMENT' | 'CONSUMPTION';
+    CreateMovementDto: {
+      type: components['schemas']['ManualMovementType'];
+      /** Format: uuid */
+      lotId: string;
+      /**
+       * Format: uuid
+       * @description Origem: ISSUE, TRANSFER, CONSUMPTION e ajuste de perda
+       */
+      fromLocationId?: string;
+      /**
+       * Format: uuid
+       * @description Destino: TRANSFER e ajuste de sobra
+       */
+      toLocationId?: string;
+      /** @example 10.000 */
+      quantity: string;
+      /** @description Quando aconteceu (padrão: agora) */
+      occurredAt?: string;
+      /** @example Pedido 2026-0457 */
+      documentRef?: string | null;
+      /**
+       * @description Obrigatório em ajustes
+       * @example Quebra no inventário mensal
+       */
+      reason?: string | null;
+    };
+    ReverseMovementDto: {
+      /** @example Lançado no lote errado */
+      reason: string;
+    };
+    StockRow: {
+      /**
+       * @description Identificador da linha: lote:local
+       * @example 0190…:0190…
+       */
+      id: string;
+      lot: components['schemas']['LotSummary'];
+      /** Format: date */
+      expiresAt: string | null;
+      product: components['schemas']['ProductSummary'];
+      location: components['schemas']['LocationSummary'];
+      unit: components['schemas']['Unit'];
+      /** @example 42.500 */
+      quantity: string;
+    };
+    CustomerSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example Cafeteria Grão Fino */
+      name: string;
+    };
+    ShipmentResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example EXP-2026-000001 */
+      number: string;
+      customer: components['schemas']['CustomerSummary'];
+      /** @example Pedido 2026-0457 */
+      orderRef: string | null;
+      /** Format: date-time */
+      shippedAt: string;
+      /** @example 2 */
+      itemsCount: number;
+      user: components['schemas']['UserSummary'];
+    };
+    CustomerDetailSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example Cafeteria Grão Fino */
+      name: string;
+      /** @example 12345678000190 */
+      document: string | null;
+      /** @example Belo Horizonte */
+      city: string | null;
+      /** @example MG */
+      state: string | null;
+    };
+    ShipmentItemResponse: {
+      lot: components['schemas']['LotSummary'];
+      product: components['schemas']['ProductSummary'];
+      location: components['schemas']['LocationSummary'];
+      /** @example 10.000 */
+      quantity: string;
+      /** @description Unidade do lote */
+      unit: components['schemas']['Unit'];
+      /**
+       * Format: uuid
+       * @description Saída (ISSUE) no razão; estorne-a para corrigir
+       */
+      movementId: string;
+    };
+    ShipmentDetailResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example EXP-2026-000001 */
+      number: string;
+      customer: components['schemas']['CustomerDetailSummary'];
+      /** @example Pedido 2026-0457 */
+      orderRef: string | null;
+      /** Format: date-time */
+      shippedAt: string;
+      notes: string | null;
+      items: components['schemas']['ShipmentItemResponse'][];
+      user: components['schemas']['UserSummary'];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreateShipmentItemDto: {
+      /** Format: uuid */
+      lotId: string;
+      /**
+       * Format: uuid
+       * @description Local de onde o lote sai
+       */
+      locationId: string;
+      /**
+       * @description Quantidade na unidade do lote
+       * @example 10.000
+       */
+      quantity: string;
+    };
+    CreateShipmentDto: {
+      /** Format: uuid */
+      customerId: string;
+      /** @example Pedido 2026-0457 / NF 7781 */
+      orderRef?: string | null;
+      /** @description Data/hora da expedição (padrão: agora) */
+      shippedAt?: string;
+      notes?: string | null;
+      /** @description Um item por par (lote, local); pares repetidos são rejeitados */
+      items: components['schemas']['CreateShipmentItemDto'][];
+    };
+    CreateAttachmentDto: {
+      /** @example laudo-classificacao.pdf */
+      fileName: string;
+      /**
+       * @example application/pdf
+       * @enum {string}
+       */
+      contentType: 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp';
+      /**
+       * @description Tamanho do arquivo em bytes
+       * @example 184320
+       */
+      sizeBytes: number;
+    };
+    /** @enum {string} */
+    AttachmentStatus: 'PENDING' | 'UPLOADED';
+    AttachmentResponse: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      lotId: string;
+      /** @example laudo-classificacao.pdf */
+      fileName: string;
+      /** @example application/pdf */
+      contentType: string;
+      /** @example 184320 */
+      sizeBytes: number;
+      status: components['schemas']['AttachmentStatus'];
+      /** Format: uuid */
+      uploadedById: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      uploadedAt: string | null;
+    };
+    UploadInstructions: {
+      /** @description URL do formulário (POST multipart/form-data) */
+      url: string;
+      /** @description Campos a enviar antes do campo `file`, na mesma ordem */
+      fields: {
+        [key: string]: string;
+      };
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    CreateAttachmentResponse: {
+      attachment: components['schemas']['AttachmentResponse'];
+      upload: components['schemas']['UploadInstructions'];
+    };
+    DownloadUrlResponse: {
+      /** @description URL pré-assinada (GET), de curta duração */
+      url: string;
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    /** @enum {string} */
+    ProductionStage: 'PROCESSING' | 'ROASTING' | 'BLENDING' | 'PACKAGING';
+    ProductionLot: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      /** @example 492.000 */
+      quantity: string;
+      unit: components['schemas']['Unit'];
+    };
+    ProductionOrderResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example OP-2026-000001 */
+      number: string;
+      stage: components['schemas']['ProductionStage'];
+      /** Format: date-time */
+      performedAt: string;
+      /** @description Lote gerado */
+      output: components['schemas']['ProductionLot'];
+      /** @description Lotes consumidos */
+      inputs: components['schemas']['ProductionLot'][];
+      /**
+       * @description Massa de entrada em kg
+       * @example 600.000
+       */
+      inputMassKg: string;
+      /** @example 492.000 */
+      outputMassKg: string | null;
+      /** @example 82 */
+      yieldPercent: number | null;
+      /** @example 108.000 */
+      lossKg: string | null;
+      notes: string | null;
+      user: components['schemas']['UserSummary'];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ProductionInputDto: {
+      /** Format: uuid */
+      lotId: string;
+      /**
+       * Format: uuid
+       * @description Local de onde o insumo sai
+       */
+      locationId: string;
+      /**
+       * @description Quantidade na unidade do lote de insumo
+       * @example 10
+       */
+      quantity: string;
+    };
+    LotQualityDto: {
+      /**
+       * Format: date
+       * @description Validade (AAAA-MM-DD)
+       * @example 2027-06-30
+       */
+      expiresAt?: string | null;
+      /**
+       * @description Safra
+       * @example 2025/26
+       */
+      harvest?: string | null;
+      /** @example Bourbon Amarelo */
+      variety?: string | null;
+      /** @example 1250 */
+      altitudeMeters?: number | null;
+      /** @example 17 */
+      screenSize?: number | null;
+      /** @example 11.5 */
+      moisturePercent?: number | null;
+      roastLevel?: components['schemas']['RoastLevel'] | null;
+      /** @example 86.25 */
+      cuppingScore?: number | null;
+      notes?: string | null;
+    };
+    CreateProductionOrderDto: {
+      stage: components['schemas']['ProductionStage'];
+      /** @description Lotes consumidos (1 a 20) */
+      inputs: components['schemas']['ProductionInputDto'][];
+      /**
+       * Format: uuid
+       * @description Produto do lote gerado
+       */
+      outputProductId: string;
+      /**
+       * Format: uuid
+       * @description Local onde o lote gerado entra
+       */
+      outputLocationId: string;
+      /**
+       * @description Quantidade produzida na unidade do produto
+       * @example 492.000
+       */
+      outputQuantity: string;
+      /** @description Quando foi produzido (padrão: agora) */
+      performedAt?: string;
+      /** @description Dados do lote gerado. Safra e variedade são herdadas dos insumos quando todos coincidem; o grau de torra padrão do produto é usado se não informado. */
+      lot?: components['schemas']['LotQualityDto'];
+      /** @example Torrador 2, perfil 12 min */
+      notes?: string | null;
+    };
+    TraceSupplier: {
+      /** Format: uuid */
+      id: string;
+      /** @example José Aparecido da Silva */
+      name: string;
+      type: components['schemas']['SupplierType'];
+      /** @example Sítio Santa Inês */
+      farmName: string | null;
+      /** @example Mantiqueira de Minas */
+      region: string | null;
+      /** @example Carmo de Minas */
+      city: string | null;
+      /** @example MG */
+      state: string | null;
+      /** @example 1250 */
+      altitudeMeters: number | null;
+    };
+    TraceNode: {
+      /** Format: uuid */
+      id: string;
+      /** @example CAF-2026-000123 */
+      code: string;
+      status: components['schemas']['LotStatus'];
+      product: components['schemas']['ProductSummary'];
+      unit: components['schemas']['Unit'];
+      /** @example 60.000 */
+      initialQuantity: string;
+      /** @example 2025/26 */
+      harvest: string | null;
+      /** @example Bourbon Amarelo */
+      variety: string | null;
+      /** Format: date-time */
+      receivedAt: string;
+      supplier: components['schemas']['TraceSupplier'] | null;
+      /** @example 1 */
+      depth: number;
+    };
+    TraceProductionOrder: {
+      /** Format: uuid */
+      id: string;
+      /** @example OP-2026-000001 */
+      number: string;
+      stage: components['schemas']['ProductionStage'];
+      /** Format: date-time */
+      performedAt: string;
+    };
+    TraceEdge: {
+      /** Format: uuid */
+      parentLotId: string;
+      /** Format: uuid */
+      childLotId: string;
+      /** @example 10.000 */
+      quantity: string;
+      productionOrder: components['schemas']['TraceProductionOrder'];
+    };
+    BackwardTraceResponse: {
+      /** Format: uuid */
+      rootLotId: string;
+      /** @description Inclui o próprio lote (depth 0) */
+      nodes: components['schemas']['TraceNode'][];
+      edges: components['schemas']['TraceEdge'][];
+      /** @description true se o limite de profundidade cortou o grafo */
+      truncated: boolean;
+      /** @description Fornecedores/fazendas de origem (distintos) */
+      origins: components['schemas']['TraceSupplier'][];
+    };
+    TraceCustomer: {
+      /** Format: uuid */
+      id: string;
+      /** @example Cafeteria Grão Fino */
+      name: string;
+      city: string | null;
+      state: string | null;
+    };
+    TraceShipment: {
+      /** Format: uuid */
+      shipmentId: string;
+      /** @example EXP-2026-000001 */
+      number: string;
+      /** Format: date-time */
+      shippedAt: string;
+      orderRef: string | null;
+      customer: components['schemas']['TraceCustomer'];
+      /** Format: uuid */
+      lotId: string;
+      /** @example CAF-2026-000130 */
+      lotCode: string;
+      /** @example 12.000 */
+      quantity: string;
+      unit: components['schemas']['Unit'];
+    };
+    ForwardTraceResponse: {
+      /** Format: uuid */
+      rootLotId: string;
+      /** @description Inclui o próprio lote (depth 0) */
+      nodes: components['schemas']['TraceNode'][];
+      edges: components['schemas']['TraceEdge'][];
+      /** @description true se o limite de profundidade cortou o grafo */
+      truncated: boolean;
+      /** @description Expedições do lote e de todos os derivados */
+      shipments: components['schemas']['TraceShipment'][];
+      /** @description Clientes afetados (distintos) */
+      customers: components['schemas']['TraceCustomer'][];
+    };
+    LabelResponse: {
+      /** @description URL pré-assinada (GET) do PDF da etiqueta, de curta duração */
+      url: string;
+      /** Format: date-time */
+      expiresAt: string;
+      /**
+       * @description Página pública de rastreio (conteúdo do QR code)
+       * @example https://traceflow.example.com/rastreio/3q2-7wH1y0mXl4bJp9cS8g
+       */
+      publicUrl: string;
+    };
+    PublicLotResponse: {
+      /** @example CAF-2026-000013 */
+      code: string;
+      /** @example Blend da Casa */
+      productName: string;
+      productType: components['schemas']['ProductType'];
+      /** @example 2025/26 */
+      harvest: string | null;
+      /** @example Bourbon Amarelo */
+      variety: string | null;
+      roastLevel: components['schemas']['RoastLevel'] | null;
+      /**
+       * Format: date-time
+       * @description Data de recebimento (café verde) ou de produção/torra
+       */
+      producedAt: string;
+      /**
+       * Format: date
+       * @example 2027-06-30
+       */
+      expiresAt: string | null;
+      /** @example 86.5 */
+      cuppingScore: number | null;
+      /** @description true = disponível. Motivos de indisponibilidade (ex.: recall) não são expostos */
+      available: boolean;
+    };
+    PublicOriginResponse: {
+      /**
+       * @description Fazenda/cooperativa. Nulo quando a origem é um produtor sem fazenda cadastrada
+       * @example Sítio Santa Inês
+       */
+      name: string | null;
+      /** @example Mantiqueira de Minas */
+      region: string | null;
+      /** @example Carmo de Minas */
+      city: string | null;
+      /** @example MG */
+      state: string | null;
+      /** @example 1250 */
+      altitudeMeters: number | null;
+    };
+    PublicTraceStep: {
+      /** @example CAF-2026-000003 */
+      code: string;
+      /** @example Café verde Bourbon Amarelo */
+      productName: string;
+      productType: components['schemas']['ProductType'];
+      /** @description Etapa que gerou o lote; nulo para lotes recebidos (colheita/recebimento) */
+      stage: components['schemas']['ProductionStage'] | null;
+      /**
+       * Format: date-time
+       * @description Recebimento ou produção
+       */
+      date: string;
+      harvest: string | null;
+      variety: string | null;
+      /**
+       * @description Distância até o lote consultado (0 = ele mesmo)
+       * @example 2
+       */
+      depth: number;
+      /** @description Códigos dos lotes usados para produzir este */
+      inputs: string[];
+      origin: components['schemas']['PublicOriginResponse'] | null;
+    };
+    PublicTraceResponse: {
+      /** @example Torrefação Serra Azul */
+      companyName: string;
+      lot: components['schemas']['PublicLotResponse'];
+      /** @description Fazendas/regiões de origem */
+      origins: components['schemas']['PublicOriginResponse'][];
+      /** @description Cadeia da origem até o lote (mais antigos primeiro) */
+      chain: components['schemas']['PublicTraceStep'][];
+      /** @description true se a cadeia foi cortada pelo limite de profundidade */
+      truncated: boolean;
     };
     HealthResponse: {
       /** @example ok */
@@ -1634,6 +2667,806 @@ export interface operations {
         content: {
           'application/json': components['schemas']['LocationResponse'];
         };
+      };
+    };
+  };
+  LotsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda) */
+        q?: string;
+        productId?: string;
+        supplierId?: string;
+        status?: components['schemas']['LotStatus'];
+        /** @description Só lotes que vencem nos próximos N dias (inclui vencidos) */
+        expiresWithinDays?: number;
+        sort?: '-receivedAt' | 'receivedAt' | 'code' | '-code' | 'expiresAt' | '-expiresAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['LotResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  LotsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotDetailResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LotsController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateLotDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotDetailResponse'];
+        };
+      };
+    };
+  };
+  LotsController_changeStatus: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ChangeLotStatusDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotDetailResponse'];
+        };
+      };
+    };
+  };
+  ReceiptsController_create: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateReceiptDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LotDetailResponse'];
+        };
+      };
+      /** @description Produto inativo ou local inativo */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Idempotency-Key reutilizada com outro corpo */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  MovementsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        lotId?: string;
+        /** @description Origem ou destino */
+        locationId?: string;
+        type?: components['schemas']['MovementType'];
+        /** @description A partir de (inclusive) */
+        from?: string;
+        /** @description Até (exclusive) */
+        to?: string;
+        /** @description Autor da movimentação */
+        userId?: string;
+        sort?: '-occurredAt' | 'occurredAt' | '-quantity' | 'quantity';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['MovementResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  MovementsController_create: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateMovementDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MovementResponse'];
+        };
+      };
+      /** @description Saldo insuficiente ou lote bloqueado/em quarentena */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  MovementsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MovementResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  MovementsController_reverse: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ReverseMovementDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['MovementResponse'];
+        };
+      };
+      /** @description Já estornada, é um estorno, ou o saldo não comporta */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  StockController_position: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        productId?: string;
+        locationId?: string;
+        lotStatus?: components['schemas']['LotStatus'];
+        /** @description Busca pelo código do lote */
+        q?: string;
+        sort?: 'product' | 'lot' | 'location' | '-quantity' | 'quantity' | 'expiresAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['StockRow'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  ShipmentsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        customerId?: string;
+        /** @description Expedições que contêm o lote */
+        lotId?: string;
+        /** @description Expedidas a partir de (inclusive) */
+        from?: string;
+        /** @description Expedidas até (exclusive) */
+        to?: string;
+        /** @description Busca por número ou referência do pedido */
+        q?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ShipmentResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  ShipmentsController_create: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateShipmentDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShipmentDetailResponse'];
+        };
+      };
+      /** @description Corpo inválido ou par (lote, local) repetido */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Cliente, lote ou local não encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Cliente inativo, saldo insuficiente ou lote bloqueado/em quarentena */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Idempotency-Key reutilizada com outro corpo */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ShipmentsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShipmentDetailResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttachmentResponse'][];
+        };
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_requestUpload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateAttachmentDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreateAttachmentResponse'];
+        };
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_confirm: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttachmentResponse'];
+        };
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Arquivo ausente no bucket ou diferente do declarado */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_download: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DownloadUrlResponse'];
+        };
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ProductionController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        stage?: components['schemas']['ProductionStage'];
+        /** @description Número da ordem ou código do lote gerado */
+        q?: string;
+        /** @description A partir de (inclusive) */
+        from?: string;
+        /** @description Até (exclusive) */
+        to?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ProductionOrderResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  ProductionController_create: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateProductionOrderDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductionOrderResponse'];
+        };
+      };
+      /** @description Etapa incompatível com os produtos, saída > entrada */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Saldo insuficiente ou insumo bloqueado/em quarentena */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ProductionController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductionOrderResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TraceController_backward: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['BackwardTraceResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  TraceController_forward: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ForwardTraceResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LabelsController_generate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LabelResponse'];
+        };
+      };
+      /** @description Lote não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  PublicTraceController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        token: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PublicTraceResponse'];
+        };
+      };
+      /** @description Código de rastreio não encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Limite de requisições por IP excedido */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

@@ -1,11 +1,13 @@
 import { z } from 'zod';
+import { formatQuantityRaw } from './quantity';
 
 /**
  * Modelo de erro da API: RFC 9457 (`application/problem+json`). As chamadas em si
  * ficam em `api-client.ts` (openapi-fetch tipado pelo contrato gerado).
  */
 
-const problemSchema = z.object({
+// `looseObject`: os campos extras (extensões do RFC 9457, ex.: `available`) são mantidos.
+const problemSchema = z.looseObject({
   type: z.string().default('about:blank'),
   title: z.string(),
   status: z.number().int(),
@@ -29,6 +31,8 @@ export class ApiError extends Error {
   readonly errors: ProblemFieldError[];
   /** ID de correlação: o devolvido pela API ou, na falta dele, o enviado pelo cliente. */
   readonly requestId: string;
+  /** Campos extras do problema (ex.: `{ available: '40.000', location: 'ARM-01' }`). */
+  readonly extensions: Record<string, unknown>;
 
   constructor(problem: ProblemDetails, requestId: string, options?: ErrorOptions) {
     super(problem.detail ?? problem.title, options);
@@ -39,6 +43,17 @@ export class ApiError extends Error {
     this.detail = problem.detail;
     this.errors = problem.errors ?? [];
     this.requestId = problem.requestId ?? requestId;
+    const {
+      type: _t,
+      title: _ti,
+      status: _s,
+      detail: _d,
+      instance: _i,
+      errors: _e,
+      ...rest
+    } = problem;
+    const { requestId: _r, ...extensions } = rest;
+    this.extensions = extensions;
   }
 
   get isNetworkError(): boolean {
@@ -84,9 +99,93 @@ export function networkError(apiUrl: string, requestId: string, cause: unknown):
   );
 }
 
+const text = (value: unknown): string => (typeof value === 'string' ? value : '');
+
+/** Problemas de domínio (campo `type` do RFC 9457) com mensagem própria em pt-BR. */
+const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
+  '/problems/insufficient-stock': ({ extensions: ext }) =>
+    `Saldo insuficiente em ${text(ext.location) || 'origem'}: disponível ${formatQuantityRaw(
+      text(ext.available) || '0',
+    )}`,
+  '/problems/lot-not-movable': ({ extensions: ext, detail }) => {
+    // A extensão `status` da API colide com o status HTTP do RFC 9457 e se perde; o status do
+    // lote é lido de `lotStatus` (se vier) ou do `detail` ("Lot X is BLOCKED and ...").
+    const lotStatus = text(ext.lotStatus) || /\bis (QUARANTINE|BLOCKED)\b/.exec(detail ?? '')?.[1];
+    if (lotStatus === 'BLOCKED') return 'Lote bloqueado não pode ser movimentado.';
+    if (lotStatus === 'QUARANTINE') {
+      return 'Lote em quarentena não pode ser movimentado (só para um local de quarentena).';
+    }
+    return 'Lote em quarentena/bloqueado não pode ser movimentado.';
+  },
+  '/problems/already-reversed': () => 'Esta movimentação já foi estornada.',
+  '/problems/invalid-reversal': () =>
+    'Um estorno não pode ser estornado; lance uma nova movimentação.',
+  '/problems/idempotency-key-reused': () =>
+    'Esta operação já foi enviada com outros dados. Recarregue a página e tente de novo.',
+  '/problems/invalid-movement': ({ detail }) =>
+    /adjustment requires a reason/i.test(detail ?? '')
+      ? 'Informe o motivo do ajuste.'
+      : /different locations/i.test(detail ?? '')
+        ? 'Origem e destino devem ser locais diferentes.'
+        : /exactly one/i.test(detail ?? '')
+          ? 'O ajuste deve ter só origem (perda) ou só destino (sobra).'
+          : 'Movimentação inválida: confira origem, destino e quantidade.',
+  '/problems/lot-consumed': () => 'Lote consumido (sem saldo): o status não pode ser alterado.',
+  '/problems/inactive-product': () => 'O produto está inativo.',
+  '/problems/inactive-location': () => 'O local de destino está inativo.',
+  '/problems/invalid-production': ({ detail }) => translateProductionDetail(detail ?? ''),
+  '/problems/invalid-shipment': ({ detail }) =>
+    /only once/i.test(detail ?? '')
+      ? 'Cada par (lote, local) só pode aparecer uma vez na expedição: some as quantidades.'
+      : `Expedição inválida: ${detail ?? 'confira os itens.'}`,
+  '/problems/inactive-customer': () => 'O cliente está inativo e não pode receber expedições.',
+};
+
+const STAGE_TEXT: Record<string, string> = {
+  PROCESSING: 'Beneficiamento',
+  ROASTING: 'Torra',
+  BLENDING: 'Blend',
+  PACKAGING: 'Embalagem',
+};
+const TYPE_TEXT: Record<string, string> = {
+  GREEN: 'café verde',
+  ROASTED: 'torrado',
+  BLEND: 'blend',
+  PACKAGING: 'embalagem',
+};
+const typeList = (text: string): string =>
+  text
+    .split(/,\s*|\s+or\s+/)
+    .map((type) => TYPE_TEXT[type.trim()] ?? type.trim())
+    .join(', ');
+
+/** `detail` de `/problems/invalid-production` (em inglês) → pt-BR; desconhecido sai como veio. */
+function translateProductionDetail(detail: string): string {
+  let m = /Output \(([\d.,]+) kg\) cannot exceed the input mass \(([\d.,]+) kg\)/i.exec(detail);
+  if (m) {
+    return `A massa de saída (${formatQuantityRaw(m[1] ?? '')} kg) não pode exceder a de entrada (${formatQuantityRaw(m[2] ?? '')} kg).`;
+  }
+  m = /^(\w+) must produce (.+), not (\w+)\.?$/.exec(detail);
+  if (m) {
+    return `${STAGE_TEXT[m[1] ?? ''] ?? m[1]} deve gerar ${typeList(m[2] ?? '')}, não ${TYPE_TEXT[m[3] ?? ''] ?? m[3]}.`;
+  }
+  m = /^(\w+) consumes (.+); lot (\S+) is (\w+)\.?$/.exec(detail);
+  if (m) {
+    return `${STAGE_TEXT[m[1] ?? ''] ?? m[1]} consome ${typeList(m[2] ?? '')}; o lote ${m[3]} é ${TYPE_TEXT[m[4] ?? ''] ?? m[4]}.`;
+  }
+  m = /^Product (\S+) is inactive/.exec(detail);
+  if (m) return `O produto ${m[1]} está inativo.`;
+  if (/only once in inputs/i.test(detail)) {
+    return 'Cada par (lote, local) só pode aparecer uma vez nos insumos.';
+  }
+  return detail || 'Ordem de produção inválida.';
+}
+
 /** Mensagem amigável (pt-BR) para exibir em toasts e alertas. */
 export function getErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
+    const byType = PROBLEM_MESSAGES[error.type];
+    if (byType) return byType(error);
     switch (error.status) {
       case 0:
         return error.detail ?? error.title;

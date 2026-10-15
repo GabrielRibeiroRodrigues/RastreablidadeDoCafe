@@ -3,9 +3,23 @@ import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { CatalogPage } from '@/components/catalog/CatalogPage';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { customersResource } from '@/features/customers/resource';
+import { LotDetailPage } from '@/features/inventory/LotDetailPage';
+import { LotsPage } from '@/features/inventory/LotsPage';
+import { MovementsPage } from '@/features/inventory/MovementsPage';
+import { ReceiptPage } from '@/features/inventory/ReceiptPage';
+import { StockPage } from '@/features/inventory/StockPage';
 import { locationsResource } from '@/features/locations/resource';
+import { NewProductionOrderPage } from '@/features/production/NewProductionOrderPage';
+import { ProductionOrderDetailPage } from '@/features/production/ProductionOrderDetailPage';
+import { ProductionOrdersPage } from '@/features/production/ProductionOrdersPage';
+import { PublicTracePage } from '@/features/public-trace/PublicTracePage';
 import { productsResource } from '@/features/products/resource';
+import { NewShipmentPage } from '@/features/shipments/NewShipmentPage';
+import { ShipmentDetailPage } from '@/features/shipments/ShipmentDetailPage';
+import { ShipmentsPage } from '@/features/shipments/ShipmentsPage';
 import { suppliersResource } from '@/features/suppliers/resource';
+import { LotTracePage } from '@/features/trace/LotTracePage';
+import { TraceSearchPage } from '@/features/trace/TraceSearchPage';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
 import { LoginPage } from '@/pages/login/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
@@ -14,6 +28,8 @@ import { NAV_ITEMS } from './navigation';
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },
   { path: '/auth/callback', element: <AuthCallbackPage /> },
+  // Página pública do QR code da etiqueta: fora do layout autenticado, sem login.
+  { path: '/rastreio/:token', element: <PublicTracePage /> },
   {
     element: <ProtectedRoute />,
     children: [
@@ -38,6 +54,19 @@ export const routes: RouteObject[] = [
             path: locationsResource.nav.path,
             element: <CatalogPage key="locations" resource={locationsResource} />,
           },
+          { path: '/lotes', element: <LotsPage /> },
+          { path: '/lotes/:id', element: <LotDetailPage /> },
+          { path: '/recebimento', element: <ReceiptPage /> },
+          { path: '/estoque', element: <StockPage /> },
+          { path: '/movimentacoes', element: <MovementsPage /> },
+          { path: '/lotes/:id/rastreabilidade', element: <LotTracePage /> },
+          { path: '/rastreabilidade', element: <TraceSearchPage /> },
+          { path: '/producao', element: <ProductionOrdersPage /> },
+          { path: '/producao/nova', element: <NewProductionOrderPage /> },
+          { path: '/producao/:id', element: <ProductionOrderDetailPage /> },
+          { path: '/expedicao', element: <ShipmentsPage /> },
+          { path: '/expedicao/nova', element: <NewShipmentPage /> },
+          { path: '/expedicao/:id', element: <ShipmentDetailPage /> },
         ],
       },
     ],

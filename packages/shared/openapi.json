@@ -1318,6 +1318,1346 @@
         "tags": ["locations"]
       }
     },
+    "/v1/lots": {
+      "get": {
+        "operationId": "LotsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda)",
+            "schema": {
+              "example": "bourbon",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "supplierId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LotStatus"
+            }
+          },
+          {
+            "name": "expiresWithinDays",
+            "required": false,
+            "in": "query",
+            "description": "Só lotes que vencem nos próximos N dias (inclui vencidos)",
+            "schema": {
+              "minimum": 0,
+              "maximum": 3650,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "-receivedAt",
+              "type": "string",
+              "enum": ["-receivedAt", "receivedAt", "code", "-code", "expiresAt", "-expiresAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/LotResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["lots"]
+      }
+    },
+    "/v1/lots/{id}": {
+      "get": {
+        "operationId": "LotsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["lots"]
+      },
+      "patch": {
+        "operationId": "LotsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateLotDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotDetailResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["lots"]
+      }
+    },
+    "/v1/lots/{id}/status": {
+      "patch": {
+        "operationId": "LotsController_changeStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeLotStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotDetailResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["lots"]
+      }
+    },
+    "/v1/receipts": {
+      "post": {
+        "operationId": "ReceiptsController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReceiptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LotDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Produto inativo ou local inativo"
+          },
+          "422": {
+            "description": "Idempotency-Key reutilizada com outro corpo"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["receipts"]
+      }
+    },
+    "/v1/movements": {
+      "get": {
+        "operationId": "MovementsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "lotId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "locationId",
+            "required": false,
+            "in": "query",
+            "description": "Origem ou destino",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/MovementType"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "A partir de (inclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Até (exclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "userId",
+            "required": false,
+            "in": "query",
+            "description": "Autor da movimentação",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "-occurredAt",
+              "type": "string",
+              "enum": ["-occurredAt", "occurredAt", "-quantity", "quantity"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/MovementResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["movements"]
+      },
+      "post": {
+        "operationId": "MovementsController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMovementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovementResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Saldo insuficiente ou lote bloqueado/em quarentena"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["movements"]
+      }
+    },
+    "/v1/movements/{id}": {
+      "get": {
+        "operationId": "MovementsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovementResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["movements"]
+      }
+    },
+    "/v1/movements/{id}/reverse": {
+      "post": {
+        "operationId": "MovementsController_reverse",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReverseMovementDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovementResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Já estornada, é um estorno, ou o saldo não comporta"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["movements"]
+      }
+    },
+    "/v1/stock": {
+      "get": {
+        "operationId": "StockController_position",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "locationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lotStatus",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LotStatus"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca pelo código do lote",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "product",
+              "type": "string",
+              "enum": ["product", "lot", "location", "-quantity", "quantity", "expiresAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StockRow"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["stock"]
+      }
+    },
+    "/v1/shipments": {
+      "get": {
+        "operationId": "ShipmentsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "customerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lotId",
+            "required": false,
+            "in": "query",
+            "description": "Expedições que contêm o lote",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Expedidas a partir de (inclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Expedidas até (exclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca por número ou referência do pedido",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ShipmentResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["shipments"]
+      },
+      "post": {
+        "operationId": "ShipmentsController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShipmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo inválido ou par (lote, local) repetido"
+          },
+          "404": {
+            "description": "Cliente, lote ou local não encontrado"
+          },
+          "409": {
+            "description": "Cliente inativo, saldo insuficiente ou lote bloqueado/em quarentena"
+          },
+          "422": {
+            "description": "Idempotency-Key reutilizada com outro corpo"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["shipments"]
+      }
+    },
+    "/v1/shipments/{id}": {
+      "get": {
+        "operationId": "ShipmentsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["shipments"]
+      }
+    },
+    "/v1/lots/{lotId}/attachments": {
+      "post": {
+        "operationId": "AttachmentsController_requestUpload",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttachmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAttachmentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      },
+      "get": {
+        "operationId": "AttachmentsController_list",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttachmentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      }
+    },
+    "/v1/lots/{lotId}/attachments/{id}/confirm": {
+      "post": {
+        "operationId": "AttachmentsController_confirm",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "409": {
+            "description": "Arquivo ausente no bucket ou diferente do declarado"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      }
+    },
+    "/v1/lots/{lotId}/attachments/{id}/download": {
+      "get": {
+        "operationId": "AttachmentsController_download",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      }
+    },
+    "/v1/production-orders": {
+      "get": {
+        "operationId": "ProductionController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "stage",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ProductionStage"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Número da ordem ou código do lote gerado",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "A partir de (inclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Até (exclusive)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProductionOrderResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["production"]
+      },
+      "post": {
+        "operationId": "ProductionController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductionOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionOrderResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Etapa incompatível com os produtos, saída > entrada"
+          },
+          "409": {
+            "description": "Saldo insuficiente ou insumo bloqueado/em quarentena"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["production"]
+      }
+    },
+    "/v1/production-orders/{id}": {
+      "get": {
+        "operationId": "ProductionController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionOrderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["production"]
+      }
+    },
+    "/v1/lots/{id}/trace/backward": {
+      "get": {
+        "operationId": "TraceController_backward",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackwardTraceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["trace"]
+      }
+    },
+    "/v1/lots/{id}/trace/forward": {
+      "get": {
+        "operationId": "TraceController_forward",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForwardTraceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["trace"]
+      }
+    },
+    "/v1/lots/{id}/label": {
+      "post": {
+        "operationId": "LabelsController_generate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["labels"]
+      }
+    },
+    "/v1/public/trace/{token}": {
+      "get": {
+        "operationId": "PublicTraceController_get",
+        "parameters": [
+          {
+            "name": "token",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicTraceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Código de rastreio não encontrado"
+          },
+          "429": {
+            "description": "Limite de requisições por IP excedido"
+          }
+        },
+        "tags": ["public"]
+      }
+    },
     "/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -2257,6 +3597,1922 @@
             "nullable": true
           }
         }
+      },
+      "LotStatus": {
+        "type": "string",
+        "enum": ["AVAILABLE", "QUARANTINE", "BLOCKED", "CONSUMED"]
+      },
+      "ProductSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "VRD-BOURBON-AM"
+          },
+          "name": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          }
+        },
+        "required": ["id", "sku", "name", "type"]
+      },
+      "SupplierSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "José Aparecido da Silva"
+          },
+          "farmName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Sítio Santa Inês"
+          }
+        },
+        "required": ["id", "name", "farmName"]
+      },
+      "LotResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000123"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "supplier": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupplierSummary"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "initialQuantity": {
+            "type": "string",
+            "example": "60.000",
+            "description": "Quantidade recebida/produzida"
+          },
+          "balance": {
+            "type": "string",
+            "example": "42.500",
+            "description": "Saldo atual (soma de todos os locais)"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2027-06-30"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true,
+            "example": "2025/26"
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bourbon Amarelo"
+          },
+          "altitudeMeters": {
+            "type": "number",
+            "nullable": true,
+            "example": 1250
+          },
+          "screenSize": {
+            "type": "number",
+            "nullable": true,
+            "example": 17
+          },
+          "moisturePercent": {
+            "type": "number",
+            "nullable": true,
+            "example": 11.5
+          },
+          "roastLevel": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "cuppingScore": {
+            "type": "number",
+            "nullable": true,
+            "example": 86.25
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "product",
+          "supplier",
+          "unit",
+          "initialQuantity",
+          "balance",
+          "expiresAt",
+          "receivedAt",
+          "harvest",
+          "variety",
+          "altitudeMeters",
+          "screenSize",
+          "moisturePercent",
+          "roastLevel",
+          "cuppingScore",
+          "notes",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LocationSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "ARM-01"
+          },
+          "name": {
+            "type": "string",
+            "example": "Armazém de café verde"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocationType"
+              }
+            ]
+          }
+        },
+        "required": ["id", "code", "name", "type"]
+      },
+      "LocationBalance": {
+        "type": "object",
+        "properties": {
+          "location": {
+            "$ref": "#/components/schemas/LocationSummary"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "42.500"
+          }
+        },
+        "required": ["location", "quantity"]
+      },
+      "LotDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000123"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "supplier": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupplierSummary"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "initialQuantity": {
+            "type": "string",
+            "example": "60.000",
+            "description": "Quantidade recebida/produzida"
+          },
+          "balance": {
+            "type": "string",
+            "example": "42.500",
+            "description": "Saldo atual (soma de todos os locais)"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2027-06-30"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true,
+            "example": "2025/26"
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bourbon Amarelo"
+          },
+          "altitudeMeters": {
+            "type": "number",
+            "nullable": true,
+            "example": 1250
+          },
+          "screenSize": {
+            "type": "number",
+            "nullable": true,
+            "example": 17
+          },
+          "moisturePercent": {
+            "type": "number",
+            "nullable": true,
+            "example": 11.5
+          },
+          "roastLevel": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "cuppingScore": {
+            "type": "number",
+            "nullable": true,
+            "example": 86.25
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "stock": {
+            "description": "Saldo por local (só locais com saldo)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LocationBalance"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "product",
+          "supplier",
+          "unit",
+          "initialQuantity",
+          "balance",
+          "expiresAt",
+          "receivedAt",
+          "harvest",
+          "variety",
+          "altitudeMeters",
+          "screenSize",
+          "moisturePercent",
+          "roastLevel",
+          "cuppingScore",
+          "notes",
+          "createdAt",
+          "updatedAt",
+          "stock"
+        ]
+      },
+      "UpdateLotDto": {
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2027-06-30",
+            "description": "Validade (AAAA-MM-DD)"
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true,
+            "example": "2025/26",
+            "description": "Safra"
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bourbon Amarelo"
+          },
+          "altitudeMeters": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 3000,
+            "example": 1250
+          },
+          "screenSize": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 8,
+            "maximum": 20,
+            "example": 17
+          },
+          "moisturePercent": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100,
+            "example": 11.5
+          },
+          "roastLevel": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "cuppingScore": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100,
+            "example": 86.25
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SettableLotStatus": {
+        "type": "string",
+        "enum": ["AVAILABLE", "QUARANTINE", "BLOCKED"]
+      },
+      "ChangeLotStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SettableLotStatus"
+              }
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "example": "Umidade acima de 12,5% na análise de recebimento"
+          }
+        },
+        "required": ["status", "reason"]
+      },
+      "CreateReceiptDto": {
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2027-06-30",
+            "description": "Validade (AAAA-MM-DD)"
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true,
+            "example": "2025/26",
+            "description": "Safra"
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bourbon Amarelo"
+          },
+          "altitudeMeters": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 3000,
+            "example": 1250
+          },
+          "screenSize": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 8,
+            "maximum": 20,
+            "example": 17
+          },
+          "moisturePercent": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100,
+            "example": 11.5
+          },
+          "roastLevel": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "cuppingScore": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100,
+            "example": 86.25
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "supplierId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Local de destino (quarentena → lote em quarentena)"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "60.000",
+            "description": "Quantidade na unidade do produto"
+          },
+          "receivedAt": {
+            "type": "string",
+            "description": "Data/hora do recebimento (padrão: agora)"
+          },
+          "documentRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "NF 004512"
+          }
+        },
+        "required": ["productId", "locationId", "quantity"]
+      },
+      "MovementType": {
+        "type": "string",
+        "enum": [
+          "RECEIPT",
+          "ISSUE",
+          "TRANSFER",
+          "ADJUSTMENT",
+          "CONSUMPTION",
+          "PRODUCTION",
+          "REVERSAL"
+        ]
+      },
+      "LotSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000123"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          }
+        },
+        "required": ["id", "code", "status"]
+      },
+      "UserSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bruno Costa"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "MovementResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MovementType"
+              }
+            ]
+          },
+          "lot": {
+            "$ref": "#/components/schemas/LotSummary"
+          },
+          "fromLocation": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocationSummary"
+              }
+            ]
+          },
+          "toLocation": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocationSummary"
+              }
+            ]
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10.000"
+          },
+          "unit": {
+            "description": "Unidade do lote",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "documentRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "NF 12345"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true
+          },
+          "reversalOfId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "reversedById": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Estorno desta"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "lot",
+          "fromLocation",
+          "toLocation",
+          "quantity",
+          "unit",
+          "user",
+          "occurredAt",
+          "documentRef",
+          "reason",
+          "reversalOfId",
+          "reversedById",
+          "createdAt"
+        ]
+      },
+      "ManualMovementType": {
+        "type": "string",
+        "enum": ["ISSUE", "TRANSFER", "ADJUSTMENT", "CONSUMPTION"]
+      },
+      "CreateMovementDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ManualMovementType"
+              }
+            ]
+          },
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fromLocationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Origem: ISSUE, TRANSFER, CONSUMPTION e ajuste de perda"
+          },
+          "toLocationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Destino: TRANSFER e ajuste de sobra"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10.000"
+          },
+          "occurredAt": {
+            "type": "string",
+            "description": "Quando aconteceu (padrão: agora)"
+          },
+          "documentRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pedido 2026-0457"
+          },
+          "reason": {
+            "type": "string",
+            "nullable": true,
+            "description": "Obrigatório em ajustes",
+            "example": "Quebra no inventário mensal"
+          }
+        },
+        "required": ["type", "lotId", "quantity"]
+      },
+      "ReverseMovementDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Lançado no lote errado"
+          }
+        },
+        "required": ["reason"]
+      },
+      "StockRow": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "0190…:0190…",
+            "description": "Identificador da linha: lote:local"
+          },
+          "lot": {
+            "$ref": "#/components/schemas/LotSummary"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationSummary"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "quantity": {
+            "type": "string",
+            "example": "42.500"
+          }
+        },
+        "required": ["id", "lot", "expiresAt", "product", "location", "unit", "quantity"]
+      },
+      "CustomerSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Cafeteria Grão Fino"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "ShipmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "EXP-2026-000001"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerSummary"
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pedido 2026-0457"
+          },
+          "shippedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "itemsCount": {
+            "type": "number",
+            "example": 2
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          }
+        },
+        "required": ["id", "number", "customer", "orderRef", "shippedAt", "itemsCount", "user"]
+      },
+      "CustomerDetailSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Cafeteria Grão Fino"
+          },
+          "document": {
+            "type": "string",
+            "nullable": true,
+            "example": "12345678000190"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "example": "Belo Horizonte"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "example": "MG"
+          }
+        },
+        "required": ["id", "name", "document", "city", "state"]
+      },
+      "ShipmentItemResponse": {
+        "type": "object",
+        "properties": {
+          "lot": {
+            "$ref": "#/components/schemas/LotSummary"
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationSummary"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10.000"
+          },
+          "unit": {
+            "description": "Unidade do lote",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "movementId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Saída (ISSUE) no razão; estorne-a para corrigir"
+          }
+        },
+        "required": ["lot", "product", "location", "quantity", "unit", "movementId"]
+      },
+      "ShipmentDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "EXP-2026-000001"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerDetailSummary"
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pedido 2026-0457"
+          },
+          "shippedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentItemResponse"
+            }
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "customer",
+          "orderRef",
+          "shippedAt",
+          "notes",
+          "items",
+          "user",
+          "createdAt"
+        ]
+      },
+      "CreateShipmentItemDto": {
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Local de onde o lote sai"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10.000",
+            "description": "Quantidade na unidade do lote"
+          }
+        },
+        "required": ["lotId", "locationId", "quantity"]
+      },
+      "CreateShipmentDto": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pedido 2026-0457 / NF 7781"
+          },
+          "shippedAt": {
+            "type": "string",
+            "description": "Data/hora da expedição (padrão: agora)"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "minItems": 1,
+            "maxItems": 50,
+            "description": "Um item por par (lote, local); pares repetidos são rejeitados",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateShipmentItemDto"
+            }
+          }
+        },
+        "required": ["customerId", "items"]
+      },
+      "CreateAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "example": "laudo-classificacao.pdf",
+            "maxLength": 200
+          },
+          "contentType": {
+            "type": "string",
+            "enum": ["application/pdf", "image/jpeg", "image/png", "image/webp"],
+            "example": "application/pdf"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "description": "Tamanho do arquivo em bytes",
+            "example": 184320,
+            "minimum": 1
+          }
+        },
+        "required": ["fileName", "contentType", "sizeBytes"]
+      },
+      "AttachmentStatus": {
+        "type": "string",
+        "enum": ["PENDING", "UPLOADED"]
+      },
+      "AttachmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileName": {
+            "type": "string",
+            "example": "laudo-classificacao.pdf"
+          },
+          "contentType": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "example": 184320
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttachmentStatus"
+              }
+            ]
+          },
+          "uploadedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "lotId",
+          "fileName",
+          "contentType",
+          "sizeBytes",
+          "status",
+          "uploadedById",
+          "createdAt",
+          "uploadedAt"
+        ]
+      },
+      "UploadInstructions": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL do formulário (POST multipart/form-data)"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Campos a enviar antes do campo `file`, na mesma ordem"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["url", "fields", "expiresAt"]
+      },
+      "CreateAttachmentResponse": {
+        "type": "object",
+        "properties": {
+          "attachment": {
+            "$ref": "#/components/schemas/AttachmentResponse"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/UploadInstructions"
+          }
+        },
+        "required": ["attachment", "upload"]
+      },
+      "DownloadUrlResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL pré-assinada (GET), de curta duração"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["url", "expiresAt"]
+      },
+      "ProductionStage": {
+        "type": "string",
+        "enum": ["PROCESSING", "ROASTING", "BLENDING", "PACKAGING"]
+      },
+      "ProductionLot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000123"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "492.000"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          }
+        },
+        "required": ["id", "code", "status", "product", "quantity", "unit"]
+      },
+      "ProductionOrderResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "OP-2026-000001"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionStage"
+              }
+            ]
+          },
+          "performedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "output": {
+            "description": "Lote gerado",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionLot"
+              }
+            ]
+          },
+          "inputs": {
+            "description": "Lotes consumidos",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductionLot"
+            }
+          },
+          "inputMassKg": {
+            "type": "string",
+            "example": "600.000",
+            "description": "Massa de entrada em kg"
+          },
+          "outputMassKg": {
+            "type": "string",
+            "nullable": true,
+            "example": "492.000"
+          },
+          "yieldPercent": {
+            "type": "number",
+            "nullable": true,
+            "example": 82
+          },
+          "lossKg": {
+            "type": "string",
+            "nullable": true,
+            "example": "108.000"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "stage",
+          "performedAt",
+          "output",
+          "inputs",
+          "inputMassKg",
+          "outputMassKg",
+          "yieldPercent",
+          "lossKg",
+          "notes",
+          "user",
+          "createdAt"
+        ]
+      },
+      "ProductionInputDto": {
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Local de onde o insumo sai"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10",
+            "description": "Quantidade na unidade do lote de insumo"
+          }
+        },
+        "required": ["lotId", "locationId", "quantity"]
+      },
+      "LotQualityDto": {
+        "type": "object",
+        "properties": {
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2027-06-30",
+            "description": "Validade (AAAA-MM-DD)"
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true,
+            "example": "2025/26",
+            "description": "Safra"
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bourbon Amarelo"
+          },
+          "altitudeMeters": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 3000,
+            "example": 1250
+          },
+          "screenSize": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 8,
+            "maximum": 20,
+            "example": 17
+          },
+          "moisturePercent": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100,
+            "example": 11.5
+          },
+          "roastLevel": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "cuppingScore": {
+            "type": "number",
+            "nullable": true,
+            "minimum": 0,
+            "maximum": 100,
+            "example": 86.25
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "CreateProductionOrderDto": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionStage"
+              }
+            ]
+          },
+          "inputs": {
+            "description": "Lotes consumidos (1 a 20)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductionInputDto"
+            }
+          },
+          "outputProductId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Produto do lote gerado"
+          },
+          "outputLocationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Local onde o lote gerado entra"
+          },
+          "outputQuantity": {
+            "type": "string",
+            "example": "492.000",
+            "description": "Quantidade produzida na unidade do produto"
+          },
+          "performedAt": {
+            "type": "string",
+            "description": "Quando foi produzido (padrão: agora)"
+          },
+          "lot": {
+            "description": "Dados do lote gerado. Safra e variedade são herdadas dos insumos quando todos coincidem; o grau de torra padrão do produto é usado se não informado.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotQualityDto"
+              }
+            ]
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "example": "Torrador 2, perfil 12 min"
+          }
+        },
+        "required": ["stage", "inputs", "outputProductId", "outputLocationId", "outputQuantity"]
+      },
+      "TraceSupplier": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "José Aparecido da Silva"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupplierType"
+              }
+            ]
+          },
+          "farmName": {
+            "type": "string",
+            "nullable": true,
+            "example": "Sítio Santa Inês"
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "example": "Mantiqueira de Minas"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "example": "Carmo de Minas"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "example": "MG"
+          },
+          "altitudeMeters": {
+            "type": "number",
+            "nullable": true,
+            "example": 1250
+          }
+        },
+        "required": ["id", "name", "type", "farmName", "region", "city", "state", "altitudeMeters"]
+      },
+      "TraceNode": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000123"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LotStatus"
+              }
+            ]
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "initialQuantity": {
+            "type": "string",
+            "example": "60.000"
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true,
+            "example": "2025/26"
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bourbon Amarelo"
+          },
+          "receivedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "supplier": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TraceSupplier"
+              }
+            ]
+          },
+          "depth": {
+            "type": "number",
+            "example": 1
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "status",
+          "product",
+          "unit",
+          "initialQuantity",
+          "harvest",
+          "variety",
+          "receivedAt",
+          "supplier",
+          "depth"
+        ]
+      },
+      "TraceProductionOrder": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "OP-2026-000001"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionStage"
+              }
+            ]
+          },
+          "performedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["id", "number", "stage", "performedAt"]
+      },
+      "TraceEdge": {
+        "type": "object",
+        "properties": {
+          "parentLotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "childLotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10.000"
+          },
+          "productionOrder": {
+            "$ref": "#/components/schemas/TraceProductionOrder"
+          }
+        },
+        "required": ["parentLotId", "childLotId", "quantity", "productionOrder"]
+      },
+      "BackwardTraceResponse": {
+        "type": "object",
+        "properties": {
+          "rootLotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nodes": {
+            "description": "Inclui o próprio lote (depth 0)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceNode"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceEdge"
+            }
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "true se o limite de profundidade cortou o grafo"
+          },
+          "origins": {
+            "description": "Fornecedores/fazendas de origem (distintos)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceSupplier"
+            }
+          }
+        },
+        "required": ["rootLotId", "nodes", "edges", "truncated", "origins"]
+      },
+      "TraceCustomer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Cafeteria Grão Fino"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": ["id", "name", "city", "state"]
+      },
+      "TraceShipment": {
+        "type": "object",
+        "properties": {
+          "shipmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "EXP-2026-000001"
+          },
+          "shippedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true
+          },
+          "customer": {
+            "$ref": "#/components/schemas/TraceCustomer"
+          },
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lotCode": {
+            "type": "string",
+            "example": "CAF-2026-000130"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "12.000"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          }
+        },
+        "required": [
+          "shipmentId",
+          "number",
+          "shippedAt",
+          "orderRef",
+          "customer",
+          "lotId",
+          "lotCode",
+          "quantity",
+          "unit"
+        ]
+      },
+      "ForwardTraceResponse": {
+        "type": "object",
+        "properties": {
+          "rootLotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nodes": {
+            "description": "Inclui o próprio lote (depth 0)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceNode"
+            }
+          },
+          "edges": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceEdge"
+            }
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "true se o limite de profundidade cortou o grafo"
+          },
+          "shipments": {
+            "description": "Expedições do lote e de todos os derivados",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceShipment"
+            }
+          },
+          "customers": {
+            "description": "Clientes afetados (distintos)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TraceCustomer"
+            }
+          }
+        },
+        "required": ["rootLotId", "nodes", "edges", "truncated", "shipments", "customers"]
+      },
+      "LabelResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL pré-assinada (GET) do PDF da etiqueta, de curta duração"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "publicUrl": {
+            "type": "string",
+            "description": "Página pública de rastreio (conteúdo do QR code)",
+            "example": "https://traceflow.example.com/rastreio/3q2-7wH1y0mXl4bJp9cS8g"
+          }
+        },
+        "required": ["url", "expiresAt", "publicUrl"]
+      },
+      "PublicLotResponse": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000013"
+          },
+          "productName": {
+            "type": "string",
+            "example": "Blend da Casa"
+          },
+          "productType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true,
+            "example": "2025/26"
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true,
+            "example": "Bourbon Amarelo"
+          },
+          "roastLevel": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "producedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Data de recebimento (café verde) ou de produção/torra"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "example": "2027-06-30"
+          },
+          "cuppingScore": {
+            "type": "number",
+            "nullable": true,
+            "example": 86.5
+          },
+          "available": {
+            "type": "boolean",
+            "description": "true = disponível. Motivos de indisponibilidade (ex.: recall) não são expostos"
+          }
+        },
+        "required": [
+          "code",
+          "productName",
+          "productType",
+          "harvest",
+          "variety",
+          "roastLevel",
+          "producedAt",
+          "expiresAt",
+          "cuppingScore",
+          "available"
+        ]
+      },
+      "PublicOriginResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fazenda/cooperativa. Nulo quando a origem é um produtor sem fazenda cadastrada",
+            "example": "Sítio Santa Inês"
+          },
+          "region": {
+            "type": "string",
+            "nullable": true,
+            "example": "Mantiqueira de Minas"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "example": "Carmo de Minas"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "example": "MG"
+          },
+          "altitudeMeters": {
+            "type": "number",
+            "nullable": true,
+            "example": 1250
+          }
+        },
+        "required": ["name", "region", "city", "state", "altitudeMeters"]
+      },
+      "PublicTraceStep": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "example": "CAF-2026-000003"
+          },
+          "productName": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "productType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "stage": {
+            "nullable": true,
+            "description": "Etapa que gerou o lote; nulo para lotes recebidos (colheita/recebimento)",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductionStage"
+              }
+            ]
+          },
+          "date": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Recebimento ou produção"
+          },
+          "harvest": {
+            "type": "string",
+            "nullable": true
+          },
+          "variety": {
+            "type": "string",
+            "nullable": true
+          },
+          "depth": {
+            "type": "number",
+            "description": "Distância até o lote consultado (0 = ele mesmo)",
+            "example": 2
+          },
+          "inputs": {
+            "description": "Códigos dos lotes usados para produzir este",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "origin": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicOriginResponse"
+              }
+            ]
+          }
+        },
+        "required": [
+          "code",
+          "productName",
+          "productType",
+          "stage",
+          "date",
+          "harvest",
+          "variety",
+          "depth",
+          "inputs",
+          "origin"
+        ]
+      },
+      "PublicTraceResponse": {
+        "type": "object",
+        "properties": {
+          "companyName": {
+            "type": "string",
+            "example": "Torrefação Serra Azul"
+          },
+          "lot": {
+            "$ref": "#/components/schemas/PublicLotResponse"
+          },
+          "origins": {
+            "description": "Fazendas/regiões de origem",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicOriginResponse"
+            }
+          },
+          "chain": {
+            "description": "Cadeia da origem até o lote (mais antigos primeiro)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PublicTraceStep"
+            }
+          },
+          "truncated": {
+            "type": "boolean",
+            "description": "true se a cadeia foi cortada pelo limite de profundidade"
+          }
+        },
+        "required": ["companyName", "lot", "origins", "chain", "truncated"]
       },
       "HealthResponse": {
         "type": "object",

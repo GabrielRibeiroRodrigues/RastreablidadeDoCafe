@@ -2,6 +2,8 @@ import {
   ArrowLeftRightIcon,
   BoxesIcon,
   FactoryIcon,
+  GitForkIcon,
+  LayersIcon,
   PackageIcon,
   SirenIcon,
   SproutIcon,
@@ -11,14 +13,61 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 
-export interface NavItem {
+export interface NavLinkItem {
   path: string;
   label: string;
-  /** Rótulo do botão de criação (singular). */
-  newLabel: string;
   description: string;
   icon: LucideIcon;
 }
+
+export interface NavItem extends NavLinkItem {
+  /** Rótulo do botão de criação (singular). */
+  newLabel: string;
+}
+
+/** Operação de estoque (Semana 2). */
+export const OPERATION_ITEMS: NavLinkItem[] = [
+  {
+    path: '/lotes',
+    label: 'Lotes',
+    description: 'Lotes recebidos, com qualidade, validade e saldo.',
+    icon: BoxesIcon,
+  },
+  {
+    path: '/estoque',
+    label: 'Estoque',
+    description: 'Saldo por lote e local.',
+    icon: LayersIcon,
+  },
+  {
+    path: '/movimentacoes',
+    label: 'Movimentações',
+    description: 'Razão de estoque: entradas, saídas, transferências e estornos.',
+    icon: ArrowLeftRightIcon,
+  },
+];
+
+/** Produção, expedição e rastreabilidade (Semana 3). */
+export const PRODUCTION_ITEMS: NavLinkItem[] = [
+  {
+    path: '/producao',
+    label: 'Produção',
+    description: 'Ordens de beneficiamento, torra, blend e embalagem.',
+    icon: FactoryIcon,
+  },
+  {
+    path: '/expedicao',
+    label: 'Expedição',
+    description: 'Saídas de lotes para clientes.',
+    icon: TruckIcon,
+  },
+  {
+    path: '/rastreabilidade',
+    label: 'Rastreabilidade',
+    description: 'Origem e destino de cada lote, da fazenda ao cliente.',
+    icon: GitForkIcon,
+  },
+];
 
 /** Cadastros da Semana 1. */
 export const NAV_ITEMS: NavItem[] = [
@@ -61,9 +110,5 @@ export function navItem(path: string): NavItem {
 
 /** Módulos do roadmap, exibidos desabilitados na barra lateral. */
 export const UPCOMING_ITEMS: Array<{ label: string; icon: LucideIcon }> = [
-  { label: 'Lotes', icon: BoxesIcon },
-  { label: 'Movimentações', icon: ArrowLeftRightIcon },
-  { label: 'Produção', icon: FactoryIcon },
-  { label: 'Expedição', icon: TruckIcon },
   { label: 'Recall', icon: SirenIcon },
 ];

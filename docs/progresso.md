@@ -16,6 +16,20 @@
 
 **Semana 1 concluída (2026-10-15).** API com 166 testes, web com 41; fluxo completo verificado no navegador (cadastro pela UI na empresa A, invisível para a empresa B).
 
+## Semana 2 — Lotes, movimentações e estoque
+
+> A pedido, a Semana 2 foca na implementação: **testes ficam para uma etapa posterior** (lista abaixo).
+
+| #   | Etapa                                                              | Status       |
+| --- | ------------------------------------------------------------------ | ------------ |
+| 1   | Schema: lotes, razão, sequência de códigos, trigger, FKs compostas | ✅ concluída |
+| 2   | Recebimento, lotes e status                                        | ✅ concluída |
+| 3   | Movimentações, saldo com FOR UPDATE, estorno, idempotência, /stock | ✅ concluída |
+| 4   | Anexos com S3 (MinIO local)                                        | ✅ concluída |
+| 5   | Telas de lotes, recebimento e movimentações                        | ✅ concluída |
+
+**Testes pendentes (Semana 2):** saídas simultâneas no mesmo lote (só passam as que cabem no saldo), corrida de `Idempotency-Key`, trigger de imutabilidade, códigos de lote sob concorrência, regras de status/direção por tipo, isolamento entre empresas nos novos recursos, anexos.
+
 ## Registro
 
 ### Etapa 1 — Base do monorepo
@@ -100,8 +114,32 @@
 - **Base do front** (`feat/web-skeleton`): Vite + React 19 + Tailwind v4 + shadcn/ui, AuthProvider (mock e Cognito/PKCE), layout e páginas placeholder, 15 testes. Ver [web.md](web.md) após o merge.
 - **Telas de cadastro** (`feat/web-catalog`): feitas em paralelo aos CRUDs de fornecedor/cliente/local, contra o contrato combinado; trocadas para os tipos gerados quando a API ficou pronta.
 
+### Semana 2 — Etapas 1 a 3 (API de estoque)
+
+- Lotes com dados de qualidade (safra, variedade, altitude, peneira, umidade, torra, pontuação SCA) e status.
+- Razão `stock_movements` só de inclusão (trigger + extensão de tenant), estorno por nova linha, `CHECK`s de quantidade e locais.
+- `SELECT ... FOR UPDATE` no lote dentro de `TenantPrismaService.transaction()`, que dá ao `tx` um `sql()` com a empresa do contexto.
+- Código de lote atômico por empresa/ano; idempotência por header com hash do corpo; problemas de domínio com `type` próprio (RFC 9457).
+- Rotas: `/receipts`, `/lots`, `/movements`, `/stock` — ver [estoque.md](estoque.md) e [ADR 0007](adr/0007-razao-de-estoque.md).
+- Verificação manual no banco de desenvolvimento: recebimento, repetição idempotente (e 422 com outro corpo), transferência, saldo insuficiente (409 com disponível), estorno (e 409 ao repetir), quarentena bloqueando saída, trigger recusando UPDATE direto no psql.
+
+### Semana 2 — Etapa 4 (anexos, agente em paralelo)
+
+- Upload por **presigned POST** (limite exato de tamanho e tipo) direto no S3; `confirm` verifica com `HEAD`; download por URL pré-assinada. Ver [anexos.md](anexos.md).
+- Local: MinIO no docker-compose (`pnpm storage:up`), imagens da comunidade `pgsty/minio` (a MinIO parou de publicar imagens oficiais).
+- Sem `S3_BUCKET` a API sobe normalmente e as rotas de anexo respondem 503.
+- `pnpm openapi` agora funciona sem `.env` (`openapi-env.ts` importado primeiro).
+
+### Semana 2 — Etapa 5 (telas, agente em paralelo)
+
+- Recebimento, Lotes (validade vencida/vencendo destacada), detalhe do lote (saldo por local, histórico com estorno, anexos, ações por perfil), Estoque e Movimentações. Ver [web.md](web.md).
+- Idempotency-Key gerada por tentativa de envio; quantidades exibidas em pt-BR e enviadas como decimal com ponto.
+- Verificado no navegador contra a API real: recebimento, transferência, saldo insuficiente (checagem no cliente e 409 da API), saída, estorno, bloqueio, edição, upload de PDF, perfis de operador e auditor.
+- Ajustes na API durante a integração: `lotStatus` no problema `lot-not-movable` (antes `status`, sobrescrito pelo código HTTP) e `unit` em `MovementResponse`.
+
+**Semana 2 concluída (2026-10-15), sem testes automatizados novos (a pedido).**
+
 ## Próximos passos
 
 - Publicar no GitHub (push + PRs) e ver a CI rodar de verdade.
-- Semana 2: lotes, movimentações imutáveis, saldo com `SELECT ... FOR UPDATE`, idempotência, recebimento e anexos.
 - Pendências conhecidas: mensagens de erro da API em inglês (o front traduz as comuns); sem tela de detalhe só-leitura para auditor; máscara de CPF/CNPJ durante a digitação.

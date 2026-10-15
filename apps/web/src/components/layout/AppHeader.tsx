@@ -1,7 +1,7 @@
 import { Building2Icon, ChevronDownIcon, LogOutIcon, MenuIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
-import { NAV_ITEMS } from '@/app/navigation';
+import { NAV_ITEMS, OPERATION_ITEMS, PRODUCTION_ITEMS } from '@/app/navigation';
 import { useAuth } from '@/auth/auth-context';
 import { ROLE_LABELS } from '@/auth/roles';
 import { useMe } from '@/auth/use-me';
@@ -47,14 +47,16 @@ export function AppHeader() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-52">
-          {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
-            <DropdownMenuItem key={path} asChild>
-              <Link to={path}>
-                <Icon />
-                {label}
-              </Link>
-            </DropdownMenuItem>
-          ))}
+          {[...OPERATION_ITEMS, ...PRODUCTION_ITEMS, ...NAV_ITEMS].map(
+            ({ path, label, icon: Icon }) => (
+              <DropdownMenuItem key={path} asChild>
+                <Link to={path}>
+                  <Icon />
+                  {label}
+                </Link>
+              </DropdownMenuItem>
+            ),
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
       <BrandMark className="md:hidden [&_svg]:size-7" />

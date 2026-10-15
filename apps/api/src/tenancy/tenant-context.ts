@@ -34,6 +34,15 @@ export class TenantContext {
     return companyId;
   }
 
+  /** Usuário autor da operação (movimentações, anexos, auditoria). */
+  requireUserId(): string {
+    const userId = this.userId;
+    if (!userId) {
+      throw new Error('Tenant context is missing: no user bound to the current execution');
+    }
+    return userId;
+  }
+
   /** Executa `fn` como se fosse uma requisição da empresa (jobs, seeds e testes). */
   runAs<T>(companyId: string, fn: () => Promise<T>, userId = 'system'): Promise<T> {
     return this.cls.run(async () => {

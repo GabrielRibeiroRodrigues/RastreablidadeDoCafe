@@ -9,6 +9,7 @@ import {
 import type { Request, Response } from 'express';
 import { STATUS_CODES } from 'node:http';
 import { Prisma } from '../../generated/prisma/client.js';
+import { DomainProblemException } from './domain-problem.exception.js';
 import { ValidationProblemException, type FieldError } from './validation.js';
 
 /** Corpo de erro no formato RFC 9457 (Problem Details for HTTP APIs). */
@@ -20,6 +21,8 @@ export interface ProblemDetails {
   instance?: string;
   requestId?: string;
   errors?: FieldError[];
+  /** Membros de extensão (RFC 9457 §3.2), ex.: `available` em falta de estoque. */
+  [extension: string]: unknown;
 }
 
 export const PROBLEM_CONTENT_TYPE = 'application/problem+json';
@@ -55,6 +58,17 @@ export function toProblem(exception: unknown): ProblemDetails {
       status: HttpStatus.BAD_REQUEST,
       detail: 'One or more fields are invalid.',
       errors: exception.errors,
+    };
+  }
+
+  if (exception instanceof DomainProblemException) {
+    const status = exception.getStatus();
+    return {
+      ...exception.extensions,
+      type: exception.problemType,
+      title: STATUS_CODES[status] ?? 'Error',
+      status,
+      detail: exception.detail,
     };
   }
 
