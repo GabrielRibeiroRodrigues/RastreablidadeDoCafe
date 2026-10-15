@@ -23,6 +23,6 @@ import { StockLedgerService } from './stock-ledger.service.js';
     StockService,
   ],
   // Produção e expedição (Semana 3) reutilizam o razão, os códigos e a numeração de documentos.
-  exports: [StockLedgerService, LotCodeService, DocumentNumberService, LotsService],
+  exports: [StockLedgerService, LotCodeService, DocumentNumberService, LotsService, StockService],
 })
 export class InventoryModule {}
