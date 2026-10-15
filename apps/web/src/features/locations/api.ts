@@ -7,14 +7,13 @@ export type Location = ApiSchema<'LocationResponse'>;
 export type LocationType = ApiSchema<'LocationType'>;
 export type LocationInput = ApiSchema<'CreateLocationDto'>;
 
-/** O OpenAPI descreve `page`/`pageSize` como objeto (falta `type: Number` na API). */
 type ListQuery = NonNullable<operations['LocationsController_list']['parameters']['query']>;
 
 export const locationsApi: CatalogApi<Location, LocationInput> = {
   list: (params, signal) =>
     unwrap(
       getApiClient().GET('/v1/locations', {
-        params: { query: toListQuery(params) as unknown as ListQuery },
+        params: { query: toListQuery<ListQuery>(params) },
         ...(signal && { signal }),
       }),
     ),

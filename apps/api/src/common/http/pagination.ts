@@ -17,14 +17,14 @@ export type RecordStatus = (typeof RECORD_STATUSES)[number];
 
 /** Parâmetros comuns de listagem: paginação por página (adequada a tabelas de cadastro). */
 export class PageQueryDto {
-  @ApiPropertyOptional({ minimum: 1, default: 1 })
+  @ApiPropertyOptional({ type: Number, minimum: 1, default: 1 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)
   page = 1;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: MAX_PAGE_SIZE, default: 20 })
+  @ApiPropertyOptional({ type: Number, minimum: 1, maximum: MAX_PAGE_SIZE, default: 20 })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

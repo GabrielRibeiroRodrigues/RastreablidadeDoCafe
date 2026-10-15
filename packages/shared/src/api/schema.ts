@@ -473,7 +473,6 @@ export interface components {
       /** Format: date-time */
       updatedAt: string;
     };
-    Object: Record<string, never>;
     CreateProductDto: {
       /**
        * @description Código interno, único na empresa
@@ -487,7 +486,7 @@ export interface components {
       /** @description Só para torrados e blends */
       defaultRoastLevel?: components['schemas']['RoastLevel'] | null;
       /** @example Notas de caramelo */
-      description?: Record<string, never> | null;
+      description?: string | null;
     };
     UpdateProductDto: {
       /**
@@ -502,7 +501,7 @@ export interface components {
       /** @description Só para torrados e blends */
       defaultRoastLevel?: components['schemas']['RoastLevel'] | null;
       /** @example Notas de caramelo */
-      description?: Record<string, never> | null;
+      description?: string | null;
     };
     /** @enum {string} */
     SupplierType: 'PRODUCER' | 'FARM' | 'COOPERATIVE' | 'TRADER';
@@ -946,8 +945,8 @@ export interface operations {
   ProductsController_list: {
     parameters: {
       query?: {
-        page?: components['schemas']['Object'];
-        pageSize?: components['schemas']['Object'];
+        page?: number;
+        pageSize?: number;
         status?: 'active' | 'inactive' | 'all';
         /** @description Busca por nome ou SKU */
         q?: string;
@@ -1106,8 +1105,8 @@ export interface operations {
   SuppliersController_list: {
     parameters: {
       query?: {
-        page?: components['schemas']['Object'];
-        pageSize?: components['schemas']['Object'];
+        page?: number;
+        pageSize?: number;
         status?: 'active' | 'inactive' | 'all';
         /** @description Busca por nome, fazenda ou documento */
         q?: string;
@@ -1294,8 +1293,8 @@ export interface operations {
   CustomersController_list: {
     parameters: {
       query?: {
-        page?: components['schemas']['Object'];
-        pageSize?: components['schemas']['Object'];
+        page?: number;
+        pageSize?: number;
         status?: 'active' | 'inactive' | 'all';
         /** @description Busca por nome, documento ou e-mail */
         q?: string;
@@ -1481,8 +1480,8 @@ export interface operations {
   LocationsController_list: {
     parameters: {
       query?: {
-        page?: components['schemas']['Object'];
-        pageSize?: components['schemas']['Object'];
+        page?: number;
+        pageSize?: number;
         status?: 'active' | 'inactive' | 'all';
         /** @description Busca por código ou nome */
         q?: string;

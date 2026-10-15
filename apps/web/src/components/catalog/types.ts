@@ -80,8 +80,14 @@ export function defineCatalogResource<T extends CatalogEntity, Input>(
   };
 }
 
-/** `ListParams` → query string da API (busca vazia e filtros ausentes não são enviados). */
-export function toListQuery(params: ListParams) {
+/**
+ * `ListParams` → query string da API (busca vazia e filtros ausentes não são enviados).
+ *
+ * `sort` e filtros vêm da URL como texto livre; o tipo exato de cada endpoint (inferido do
+ * contexto, ex.: `sort: 'name' | '-name'`) é afirmado aqui, num único ponto. A API valida tudo
+ * e responde 400 se um valor da URL não for aceito.
+ */
+export function toListQuery<Query extends object>(params: ListParams): Query {
   return {
     page: params.page,
     pageSize: params.pageSize,
@@ -89,5 +95,5 @@ export function toListQuery(params: ListParams) {
     sort: params.sort,
     ...(params.q && { q: params.q }),
     ...params.filters,
-  };
+  } as Query;
 }

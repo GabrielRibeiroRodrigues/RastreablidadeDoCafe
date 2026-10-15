@@ -39,7 +39,7 @@ export class CreateProductDto {
   @IsEnum(RoastLevel)
   defaultRoastLevel?: RoastLevel | null;
 
-  @ApiPropertyOptional({ example: 'Notas de caramelo', nullable: true })
+  @ApiPropertyOptional({ example: 'Notas de caramelo', nullable: true, type: String })
   @IsOptional()
   @Transform(trim)
   @IsString()

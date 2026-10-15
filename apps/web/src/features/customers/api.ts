@@ -6,14 +6,13 @@ import { getApiClient, unwrap } from '@/lib/api-client';
 export type Customer = ApiSchema<'CustomerResponse'>;
 export type CustomerInput = ApiSchema<'CreateCustomerDto'>;
 
-/** O OpenAPI descreve `page`/`pageSize` como objeto (falta `type: Number` na API). */
 type ListQuery = NonNullable<operations['CustomersController_list']['parameters']['query']>;
 
 export const customersApi: CatalogApi<Customer, CustomerInput> = {
   list: (params, signal) =>
     unwrap(
       getApiClient().GET('/v1/customers', {
-        params: { query: toListQuery(params) as unknown as ListQuery },
+        params: { query: toListQuery<ListQuery>(params) },
         ...(signal && { signal }),
       }),
     ),
