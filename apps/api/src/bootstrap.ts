@@ -31,11 +31,14 @@ export function configureApp(app: INestApplication): void {
 }
 
 export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
-  const options = new DocumentBuilder()
+  return SwaggerModule.createDocument(app, openApiOptions());
+}
+
+export function openApiOptions() {
+  return new DocumentBuilder()
     .setTitle('TraceFlow API')
     .setDescription('Rastreabilidade de lotes de café')
     .setVersion('0.1.0')
     .addBearerAuth()
     .build();
-  return SwaggerModule.createDocument(app, options);
 }

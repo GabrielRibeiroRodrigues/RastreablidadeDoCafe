@@ -56,3 +56,8 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+      # O contrato OpenAPI e os tipos do front são gerados da API: falha se alguém mudou a API
+      # sem regenerar (`pnpm openapi`) e commitar.
+      - name: Check OpenAPI contract is up to date
+        run: pnpm openapi:check

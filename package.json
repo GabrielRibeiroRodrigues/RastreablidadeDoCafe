@@ -19,7 +19,9 @@
     "dev:api": "pnpm --filter @traceflow/api dev",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "stack:up": "docker compose --profile full up -d --build"
+    "stack:up": "docker compose --profile full up -d --build",
+    "openapi": "pnpm --filter @traceflow/api openapi && pnpm --filter @traceflow/shared api:types",
+    "openapi:check": "pnpm openapi && git diff --exit-code -- packages/shared/openapi.json packages/shared/src/api"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",

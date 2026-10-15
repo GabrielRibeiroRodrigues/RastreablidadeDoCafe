@@ -20,14 +20,17 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "openapi.json"
   ],
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "dev": "tsup src/index.ts --format esm,cjs --dts --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "api:types": "openapi-typescript openapi.json -o src/api/schema.ts && prettier --write src/api/schema.ts openapi.json"
   },
   "devDependencies": {
+    "openapi-typescript": "^7.13.0",
     "tsup": "^9.0.0"
   }
 }

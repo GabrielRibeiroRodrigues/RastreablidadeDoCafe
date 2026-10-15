@@ -1,0 +1,843 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/v1/me": {
+      "get": {
+        "operationId": "MeController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["auth"]
+      }
+    },
+    "/v1/dev/users": {
+      "get": {
+        "operationId": "DevAuthController_users",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DevUser"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Lista os usuários ativos para a tela de login de desenvolvimento",
+        "tags": ["dev (somente AUTH_MODE=mock)"]
+      }
+    },
+    "/v1/dev/token": {
+      "post": {
+        "operationId": "DevAuthController_token",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevTokenRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevTokenResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Emite um access token no formato do Cognito para o usuário",
+        "tags": ["dev (somente AUTH_MODE=mock)"]
+      }
+    },
+    "/v1/dev/.well-known/jwks.json": {
+      "get": {
+        "operationId": "DevAuthController_jwks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Chave pública do emissor simulado (formato JWKS, como o Cognito)",
+        "tags": ["dev (somente AUTH_MODE=mock)"]
+      }
+    },
+    "/v1/companies/me": {
+      "get": {
+        "operationId": "CompaniesController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["companies"]
+      },
+      "patch": {
+        "operationId": "CompaniesController_update",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCompanyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["companies"]
+      }
+    },
+    "/v1/products": {
+      "get": {
+        "operationId": "ProductsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "active",
+              "type": "string",
+              "enum": ["active", "inactive", "all"]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca por nome ou SKU",
+            "schema": {
+              "example": "bourbon",
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/ProductType"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "name",
+              "type": "string",
+              "enum": ["name", "-name", "sku", "-sku", "createdAt", "-createdAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ProductResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["products"]
+      },
+      "post": {
+        "operationId": "ProductsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "SKU já usado na empresa"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["products"]
+      }
+    },
+    "/v1/products/{id}": {
+      "get": {
+        "operationId": "ProductsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["products"]
+      },
+      "patch": {
+        "operationId": "ProductsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProductDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["products"]
+      }
+    },
+    "/v1/products/{id}/deactivate": {
+      "post": {
+        "operationId": "ProductsController_deactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["products"]
+      }
+    },
+    "/v1/products/{id}/activate": {
+      "post": {
+        "operationId": "ProductsController_activate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["products"]
+      }
+    },
+    "/v1/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["health"]
+      }
+    },
+    "/v1/health/ready": {
+      "get": {
+        "operationId": "HealthController_ready",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Banco indisponível"
+          }
+        },
+        "tags": ["health"]
+      }
+    }
+  },
+  "info": {
+    "title": "TraceFlow API",
+    "description": "Rastreabilidade de lotes de café",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "MeCompany": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Torrefação Serra Azul"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "MeResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "example": "ana@serraazul.dev"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ana Ribeiro"
+          },
+          "roles": {
+            "type": "array",
+            "example": ["admin"],
+            "items": {
+              "type": "string",
+              "enum": ["admin", "operator", "auditor"]
+            }
+          },
+          "company": {
+            "$ref": "#/components/schemas/MeCompany"
+          }
+        },
+        "required": ["id", "email", "name", "roles", "company"]
+      },
+      "DevUser": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "ana@serraazul.dev"
+          },
+          "name": {
+            "type": "string",
+            "example": "Ana Ribeiro"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["admin", "operator", "auditor"]
+            }
+          },
+          "companyName": {
+            "type": "string",
+            "example": "Torrefação Serra Azul"
+          }
+        },
+        "required": ["email", "name", "roles", "companyName"]
+      },
+      "DevTokenRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "ana@serraazul.dev"
+          }
+        },
+        "required": ["email"]
+      },
+      "DevTokenResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number",
+            "example": 3600
+          }
+        },
+        "required": ["accessToken", "expiresIn"]
+      },
+      "CompanyResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Torrefação Serra Azul"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "CNPJ (somente dígitos)",
+            "example": "12345678000190"
+          },
+          "lotPrefix": {
+            "type": "string",
+            "description": "Prefixo dos códigos de lote",
+            "example": "CAF"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["id", "name", "taxId", "lotPrefix", "createdAt"]
+      },
+      "UpdateCompanyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Torrefação Serra Azul"
+          }
+        },
+        "required": ["name"]
+      },
+      "PageMeta": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "number",
+            "example": 1
+          },
+          "pageSize": {
+            "type": "number",
+            "example": 20
+          },
+          "total": {
+            "type": "number",
+            "example": 42
+          },
+          "totalPages": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": ["page", "pageSize", "total", "totalPages"]
+      },
+      "ProductType": {
+        "type": "string",
+        "enum": ["GREEN", "ROASTED", "BLEND", "PACKAGING"]
+      },
+      "Unit": {
+        "type": "string",
+        "enum": ["KG", "BAG_60KG", "UNIT"]
+      },
+      "RoastLevel": {
+        "type": "string",
+        "enum": ["LIGHT", "MEDIUM_LIGHT", "MEDIUM", "MEDIUM_DARK", "DARK"]
+      },
+      "ProductResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "VRD-BOURBON-AM"
+          },
+          "name": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "defaultRoastLevel": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "sku",
+          "name",
+          "type",
+          "unit",
+          "defaultRoastLevel",
+          "description",
+          "isActive",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "CreateProductDto": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Código interno, único na empresa",
+            "example": "VRD-BOURBON-AM"
+          },
+          "name": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "defaultRoastLevel": {
+            "nullable": true,
+            "description": "Só para torrados e blends",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "description": {
+            "type": "object",
+            "example": "Notas de caramelo",
+            "nullable": true
+          }
+        },
+        "required": ["sku", "name", "type", "unit"]
+      },
+      "UpdateProductDto": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Código interno, único na empresa",
+            "example": "VRD-BOURBON-AM"
+          },
+          "name": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "defaultRoastLevel": {
+            "nullable": true,
+            "description": "Só para torrados e blends",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoastLevel"
+              }
+            ]
+          },
+          "description": {
+            "type": "object",
+            "example": "Notas de caramelo",
+            "nullable": true
+          }
+        }
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "uptime": {
+            "type": "number",
+            "description": "Segundos desde que o processo iniciou",
+            "example": 42.1
+          }
+        },
+        "required": ["status", "uptime"]
+      },
+      "ReadinessResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "ok"
+          },
+          "database": {
+            "type": "string",
+            "example": "up"
+          }
+        },
+        "required": ["status", "database"]
+      }
+    }
+  }
+}
