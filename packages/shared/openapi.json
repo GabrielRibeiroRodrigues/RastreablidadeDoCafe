@@ -1926,6 +1926,192 @@
         "tags": ["stock"]
       }
     },
+    "/v1/lots/{lotId}/attachments": {
+      "post": {
+        "operationId": "AttachmentsController_requestUpload",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttachmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateAttachmentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      },
+      "get": {
+        "operationId": "AttachmentsController_list",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AttachmentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      }
+    },
+    "/v1/lots/{lotId}/attachments/{id}/confirm": {
+      "post": {
+        "operationId": "AttachmentsController_confirm",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttachmentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "409": {
+            "description": "Arquivo ausente no bucket ou diferente do declarado"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      }
+    },
+    "/v1/lots/{lotId}/attachments/{id}/download": {
+      "get": {
+        "operationId": "AttachmentsController_download",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      }
+    },
     "/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -3622,6 +3808,135 @@
           }
         },
         "required": ["lot", "expiresAt", "product", "location", "unit", "quantity"]
+      },
+      "CreateAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "example": "laudo-classificacao.pdf",
+            "maxLength": 200
+          },
+          "contentType": {
+            "type": "string",
+            "enum": ["application/pdf", "image/jpeg", "image/png", "image/webp"],
+            "example": "application/pdf"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "description": "Tamanho do arquivo em bytes",
+            "example": 184320,
+            "minimum": 1
+          }
+        },
+        "required": ["fileName", "contentType", "sizeBytes"]
+      },
+      "AttachmentStatus": {
+        "type": "string",
+        "enum": ["PENDING", "UPLOADED"]
+      },
+      "AttachmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileName": {
+            "type": "string",
+            "example": "laudo-classificacao.pdf"
+          },
+          "contentType": {
+            "type": "string",
+            "example": "application/pdf"
+          },
+          "sizeBytes": {
+            "type": "number",
+            "example": 184320
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AttachmentStatus"
+              }
+            ]
+          },
+          "uploadedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "lotId",
+          "fileName",
+          "contentType",
+          "sizeBytes",
+          "status",
+          "uploadedById",
+          "createdAt",
+          "uploadedAt"
+        ]
+      },
+      "UploadInstructions": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL do formulário (POST multipart/form-data)"
+          },
+          "fields": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Campos a enviar antes do campo `file`, na mesma ordem"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["url", "fields", "expiresAt"]
+      },
+      "CreateAttachmentResponse": {
+        "type": "object",
+        "properties": {
+          "attachment": {
+            "$ref": "#/components/schemas/AttachmentResponse"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/UploadInstructions"
+          }
+        },
+        "required": ["attachment", "upload"]
+      },
+      "DownloadUrlResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL pré-assinada (GET), de curta duração"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["url", "expiresAt"]
       },
       "HealthResponse": {
         "type": "object",

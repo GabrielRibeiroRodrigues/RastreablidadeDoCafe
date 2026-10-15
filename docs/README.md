@@ -9,6 +9,7 @@
 | [multi-tenancy.md](multi-tenancy.md)     | Como o isolamento entre empresas é garantido e testado      |
 | [cadastros.md](cadastros.md)             | Rotas, filtros e regras dos cadastros                       |
 | [estoque.md](estoque.md)                 | Lotes, recebimento, movimentações, estorno e saldo          |
+| [anexos.md](anexos.md)                   | Anexos de lotes: upload pré-assinado no S3/MinIO, segurança |
 | [desenvolvimento.md](desenvolvimento.md) | Como rodar, scripts, convenções, solução de problemas       |
 | [web.md](web.md)                         | Front-end: estrutura, autenticação, variáveis de ambiente   |
 | [adr/](adr/README.md)                    | Registro das decisões de arquitetura                        |

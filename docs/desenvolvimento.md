@@ -19,18 +19,19 @@ npm install -g pnpm@10
 
 ## Scripts da raiz
 
-| Script              | O que faz                                        |
-| ------------------- | ------------------------------------------------ |
-| `pnpm lint`         | ESLint em todo o monorepo (com type-check)       |
-| `pnpm format`       | Prettier em todos os arquivos                    |
-| `pnpm format:check` | Verifica formatação (usado na CI)                |
-| `pnpm typecheck`    | `tsc --noEmit` em cada pacote                    |
-| `pnpm test`         | Testes de cada pacote                            |
-| `pnpm build`        | Build de cada pacote                             |
-| `pnpm db:up`        | Sobe só o Postgres (docker compose)              |
-| `pnpm db:down`      | Derruba os contêineres                           |
-| `pnpm dev:api`      | API com hot reload no host                       |
-| `pnpm stack:up`     | Postgres + API em contêiner (imagem de produção) |
+| Script              | O que faz                                                       |
+| ------------------- | --------------------------------------------------------------- |
+| `pnpm lint`         | ESLint em todo o monorepo (com type-check)                      |
+| `pnpm format`       | Prettier em todos os arquivos                                   |
+| `pnpm format:check` | Verifica formatação (usado na CI)                               |
+| `pnpm typecheck`    | `tsc --noEmit` em cada pacote                                   |
+| `pnpm test`         | Testes de cada pacote                                           |
+| `pnpm build`        | Build de cada pacote                                            |
+| `pnpm db:up`        | Sobe só o Postgres (docker compose)                             |
+| `pnpm db:down`      | Derruba os contêineres                                          |
+| `pnpm storage:up`   | Sobe o MinIO e cria o bucket de anexos ([anexos.md](anexos.md)) |
+| `pnpm dev:api`      | API com hot reload no host                                      |
+| `pnpm stack:up`     | Postgres + API em contêiner (imagem de produção)                |
 
 Para rodar só um pacote: `pnpm --filter @traceflow/shared build`.
 

@@ -471,6 +471,54 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/lots/{lotId}/attachments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AttachmentsController_list'];
+    put?: never;
+    post: operations['AttachmentsController_requestUpload'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{lotId}/attachments/{id}/confirm': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AttachmentsController_confirm'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{lotId}/attachments/{id}/download': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['AttachmentsController_download'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/health': {
     parameters: {
       query?: never;
@@ -1208,6 +1256,61 @@ export interface components {
       unit: components['schemas']['Unit'];
       /** @example 42.500 */
       quantity: string;
+    };
+    CreateAttachmentDto: {
+      /** @example laudo-classificacao.pdf */
+      fileName: string;
+      /**
+       * @example application/pdf
+       * @enum {string}
+       */
+      contentType: 'application/pdf' | 'image/jpeg' | 'image/png' | 'image/webp';
+      /**
+       * @description Tamanho do arquivo em bytes
+       * @example 184320
+       */
+      sizeBytes: number;
+    };
+    /** @enum {string} */
+    AttachmentStatus: 'PENDING' | 'UPLOADED';
+    AttachmentResponse: {
+      /** Format: uuid */
+      id: string;
+      /** Format: uuid */
+      lotId: string;
+      /** @example laudo-classificacao.pdf */
+      fileName: string;
+      /** @example application/pdf */
+      contentType: string;
+      /** @example 184320 */
+      sizeBytes: number;
+      status: components['schemas']['AttachmentStatus'];
+      /** Format: uuid */
+      uploadedById: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      uploadedAt: string | null;
+    };
+    UploadInstructions: {
+      /** @description URL do formulário (POST multipart/form-data) */
+      url: string;
+      /** @description Campos a enviar antes do campo `file`, na mesma ordem */
+      fields: {
+        [key: string]: string;
+      };
+      /** Format: date-time */
+      expiresAt: string;
+    };
+    CreateAttachmentResponse: {
+      attachment: components['schemas']['AttachmentResponse'];
+      upload: components['schemas']['UploadInstructions'];
+    };
+    DownloadUrlResponse: {
+      /** @description URL pré-assinada (GET), de curta duração */
+      url: string;
+      /** Format: date-time */
+      expiresAt: string;
     };
     HealthResponse: {
       /** @example ok */
@@ -2350,6 +2453,159 @@ export interface operations {
             meta: components['schemas']['PageMeta'];
           };
         };
+      };
+    };
+  };
+  AttachmentsController_list: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttachmentResponse'][];
+        };
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_requestUpload: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateAttachmentDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['CreateAttachmentResponse'];
+        };
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_confirm: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['AttachmentResponse'];
+        };
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Arquivo ausente no bucket ou diferente do declarado */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_download: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['DownloadUrlResponse'];
+        };
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };
