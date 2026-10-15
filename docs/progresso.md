@@ -25,7 +25,7 @@
 | 1   | Schema: lotes, razão, sequência de códigos, trigger, FKs compostas | ✅ concluída |
 | 2   | Recebimento, lotes e status                                        | ✅ concluída |
 | 3   | Movimentações, saldo com FOR UPDATE, estorno, idempotência, /stock | ✅ concluída |
-| 4   | Anexos com S3 (MinIO local)                                        | ⏳ agente    |
+| 4   | Anexos com S3 (MinIO local)                                        | ✅ concluída |
 | 5   | Telas de lotes, recebimento e movimentações                        | ⬜           |
 
 **Testes pendentes (Semana 2):** saídas simultâneas no mesmo lote (só passam as que cabem no saldo), corrida de `Idempotency-Key`, trigger de imutabilidade, códigos de lote sob concorrência, regras de status/direção por tipo, isolamento entre empresas nos novos recursos, anexos.
@@ -122,6 +122,13 @@
 - Código de lote atômico por empresa/ano; idempotência por header com hash do corpo; problemas de domínio com `type` próprio (RFC 9457).
 - Rotas: `/receipts`, `/lots`, `/movements`, `/stock` — ver [estoque.md](estoque.md) e [ADR 0007](adr/0007-razao-de-estoque.md).
 - Verificação manual no banco de desenvolvimento: recebimento, repetição idempotente (e 422 com outro corpo), transferência, saldo insuficiente (409 com disponível), estorno (e 409 ao repetir), quarentena bloqueando saída, trigger recusando UPDATE direto no psql.
+
+### Semana 2 — Etapa 4 (anexos, agente em paralelo)
+
+- Upload por **presigned POST** (limite exato de tamanho e tipo) direto no S3; `confirm` verifica com `HEAD`; download por URL pré-assinada. Ver [anexos.md](anexos.md).
+- Local: MinIO no docker-compose (`pnpm storage:up`), imagens da comunidade `pgsty/minio` (a MinIO parou de publicar imagens oficiais).
+- Sem `S3_BUCKET` a API sobe normalmente e as rotas de anexo respondem 503.
+- `pnpm openapi` agora funciona sem `.env` (`openapi-env.ts` importado primeiro).
 
 ## Próximos passos
 
