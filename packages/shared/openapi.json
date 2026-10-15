@@ -1926,6 +1926,200 @@
         "tags": ["stock"]
       }
     },
+    "/v1/shipments": {
+      "get": {
+        "operationId": "ShipmentsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "customerId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "lotId",
+            "required": false,
+            "in": "query",
+            "description": "Expedições que contêm o lote",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "Expedidas a partir de (inclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "Expedidas até (exclusive)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca por número ou referência do pedido",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ShipmentResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["shipments"]
+      },
+      "post": {
+        "operationId": "ShipmentsController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShipmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Corpo inválido ou par (lote, local) repetido"
+          },
+          "404": {
+            "description": "Cliente, lote ou local não encontrado"
+          },
+          "409": {
+            "description": "Cliente inativo, saldo insuficiente ou lote bloqueado/em quarentena"
+          },
+          "422": {
+            "description": "Idempotency-Key reutilizada com outro corpo"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["shipments"]
+      }
+    },
+    "/v1/shipments/{id}": {
+      "get": {
+        "operationId": "ShipmentsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["shipments"]
+      }
+    },
     "/v1/lots/{lotId}/attachments": {
       "post": {
         "operationId": "AttachmentsController_requestUpload",
@@ -4066,6 +4260,219 @@
           }
         },
         "required": ["lot", "expiresAt", "product", "location", "unit", "quantity"]
+      },
+      "CustomerSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Cafeteria Grão Fino"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "ShipmentResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "EXP-2026-000001"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerSummary"
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pedido 2026-0457"
+          },
+          "shippedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "itemsCount": {
+            "type": "number",
+            "example": 2
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          }
+        },
+        "required": ["id", "number", "customer", "orderRef", "shippedAt", "itemsCount", "user"]
+      },
+      "CustomerDetailSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Cafeteria Grão Fino"
+          },
+          "document": {
+            "type": "string",
+            "nullable": true,
+            "example": "12345678000190"
+          },
+          "city": {
+            "type": "string",
+            "nullable": true,
+            "example": "Belo Horizonte"
+          },
+          "state": {
+            "type": "string",
+            "nullable": true,
+            "example": "MG"
+          }
+        },
+        "required": ["id", "name", "document", "city", "state"]
+      },
+      "ShipmentItemResponse": {
+        "type": "object",
+        "properties": {
+          "lot": {
+            "$ref": "#/components/schemas/LotSummary"
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationSummary"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10.000"
+          },
+          "unit": {
+            "description": "Unidade do lote",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "movementId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Saída (ISSUE) no razão; estorne-a para corrigir"
+          }
+        },
+        "required": ["lot", "product", "location", "quantity", "unit", "movementId"]
+      },
+      "ShipmentDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "EXP-2026-000001"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerDetailSummary"
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pedido 2026-0457"
+          },
+          "shippedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShipmentItemResponse"
+            }
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "customer",
+          "orderRef",
+          "shippedAt",
+          "notes",
+          "items",
+          "user",
+          "createdAt"
+        ]
+      },
+      "CreateShipmentItemDto": {
+        "type": "object",
+        "properties": {
+          "lotId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Local de onde o lote sai"
+          },
+          "quantity": {
+            "type": "string",
+            "example": "10.000",
+            "description": "Quantidade na unidade do lote"
+          }
+        },
+        "required": ["lotId", "locationId", "quantity"]
+      },
+      "CreateShipmentDto": {
+        "type": "object",
+        "properties": {
+          "customerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "orderRef": {
+            "type": "string",
+            "nullable": true,
+            "example": "Pedido 2026-0457 / NF 7781"
+          },
+          "shippedAt": {
+            "type": "string",
+            "description": "Data/hora da expedição (padrão: agora)"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "minItems": 1,
+            "maxItems": 50,
+            "description": "Um item por par (lote, local); pares repetidos são rejeitados",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateShipmentItemDto"
+            }
+          }
+        },
+        "required": ["customerId", "items"]
       },
       "CreateAttachmentDto": {
         "type": "object",

@@ -471,6 +471,38 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/shipments': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ShipmentsController_list'];
+    put?: never;
+    post: operations['ShipmentsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/shipments/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ShipmentsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/lots/{lotId}/attachments': {
     parameters: {
       query?: never;
@@ -1322,6 +1354,93 @@ export interface components {
       unit: components['schemas']['Unit'];
       /** @example 42.500 */
       quantity: string;
+    };
+    CustomerSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example Cafeteria Grão Fino */
+      name: string;
+    };
+    ShipmentResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example EXP-2026-000001 */
+      number: string;
+      customer: components['schemas']['CustomerSummary'];
+      /** @example Pedido 2026-0457 */
+      orderRef: string | null;
+      /** Format: date-time */
+      shippedAt: string;
+      /** @example 2 */
+      itemsCount: number;
+      user: components['schemas']['UserSummary'];
+    };
+    CustomerDetailSummary: {
+      /** Format: uuid */
+      id: string;
+      /** @example Cafeteria Grão Fino */
+      name: string;
+      /** @example 12345678000190 */
+      document: string | null;
+      /** @example Belo Horizonte */
+      city: string | null;
+      /** @example MG */
+      state: string | null;
+    };
+    ShipmentItemResponse: {
+      lot: components['schemas']['LotSummary'];
+      product: components['schemas']['ProductSummary'];
+      location: components['schemas']['LocationSummary'];
+      /** @example 10.000 */
+      quantity: string;
+      /** @description Unidade do lote */
+      unit: components['schemas']['Unit'];
+      /**
+       * Format: uuid
+       * @description Saída (ISSUE) no razão; estorne-a para corrigir
+       */
+      movementId: string;
+    };
+    ShipmentDetailResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example EXP-2026-000001 */
+      number: string;
+      customer: components['schemas']['CustomerDetailSummary'];
+      /** @example Pedido 2026-0457 */
+      orderRef: string | null;
+      /** Format: date-time */
+      shippedAt: string;
+      notes: string | null;
+      items: components['schemas']['ShipmentItemResponse'][];
+      user: components['schemas']['UserSummary'];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    CreateShipmentItemDto: {
+      /** Format: uuid */
+      lotId: string;
+      /**
+       * Format: uuid
+       * @description Local de onde o lote sai
+       */
+      locationId: string;
+      /**
+       * @description Quantidade na unidade do lote
+       * @example 10.000
+       */
+      quantity: string;
+    };
+    CreateShipmentDto: {
+      /** Format: uuid */
+      customerId: string;
+      /** @example Pedido 2026-0457 / NF 7781 */
+      orderRef?: string | null;
+      /** @description Data/hora da expedição (padrão: agora) */
+      shippedAt?: string;
+      notes?: string | null;
+      /** @description Um item por par (lote, local); pares repetidos são rejeitados */
+      items: components['schemas']['CreateShipmentItemDto'][];
     };
     CreateAttachmentDto: {
       /** @example laudo-classificacao.pdf */
@@ -2728,6 +2847,121 @@ export interface operations {
             meta: components['schemas']['PageMeta'];
           };
         };
+      };
+    };
+  };
+  ShipmentsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        customerId?: string;
+        /** @description Expedições que contêm o lote */
+        lotId?: string;
+        /** @description Expedidas a partir de (inclusive) */
+        from?: string;
+        /** @description Expedidas até (exclusive) */
+        to?: string;
+        /** @description Busca por número ou referência do pedido */
+        q?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ShipmentResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  ShipmentsController_create: {
+    parameters: {
+      query?: never;
+      header?: {
+        /** @description Chave única do cliente (8–100 caracteres). Repetir a requisição com a mesma chave devolve o resultado original (header `Idempotent-Replayed: true`); com outro corpo, 422. */
+        'Idempotency-Key'?: string;
+      };
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateShipmentDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShipmentDetailResponse'];
+        };
+      };
+      /** @description Corpo inválido ou par (lote, local) repetido */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Cliente, lote ou local não encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Cliente inativo, saldo insuficiente ou lote bloqueado/em quarentena */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Idempotency-Key reutilizada com outro corpo */
+      422: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ShipmentsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShipmentDetailResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

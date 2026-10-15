@@ -11,6 +11,7 @@ import { InventoryModule } from './modules/inventory/inventory.module.js';
 import { LocationsModule } from './modules/locations/locations.module.js';
 import { ProductionModule } from './modules/production/production.module.js';
 import { ProductsModule } from './modules/products/products.module.js';
+import { ShipmentsModule } from './modules/shipments/shipments.module.js';
 import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
 import { TraceModule } from './modules/trace/trace.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
@@ -29,6 +30,7 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     CustomersModule,
     LocationsModule,
     InventoryModule,
+    ShipmentsModule,
     AttachmentsModule,
     ProductionModule,
     TraceModule,
