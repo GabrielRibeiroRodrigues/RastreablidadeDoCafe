@@ -93,6 +93,12 @@ model Company {
   shipmentItems    ShipmentItem[]
   sequences        DocumentSequence[]
   attachments      Attachment[]
+  auditLogs        AuditLog[]
+  nonConformities  NonConformity[]
+  recalls          Recall[]
+  recallSteps      RecallStep[]
+  recallLots       RecallLot[]
+  recallCustomers  RecallCustomer[]
 
   @@map("companies")
 }
@@ -116,6 +122,11 @@ model User {
   attachments      Attachment[]
   productionOrders ProductionOrder[]
   shipments        Shipment[]
+  auditLogs        AuditLog[]
+  openedNcs        NonConformity[]   @relation("NcOpenedBy")
+  resolvedNcs      NonConformity[]   @relation("NcResolvedBy")
+  createdRecalls   Recall[]          @relation("RecallCreatedBy")
+  closedRecalls    Recall[]          @relation("RecallClosedBy")
 
   /// Alvo de FKs compostas: garante no banco que referências são da mesma empresa.
   @@unique([companyId, id])
@@ -190,8 +201,9 @@ model Customer {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company   Company    @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  shipments Shipment[]
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  shipments       Shipment[]
+  recallCustomers RecallCustomer[]
 
   @@unique([companyId, document])
   @@unique([companyId, id])
@@ -279,18 +291,21 @@ model Lot {
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company       Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
   /// FK composta: o produto precisa ser da mesma empresa.
-  product       Product          @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  product         Product          @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
   /// FK simples (opcional): a mesma empresa é validada no serviço.
-  supplier      Supplier?        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
-  movements     StockMovement[]
-  attachments   Attachment[]
+  supplier        Supplier?        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  movements       StockMovement[]
+  attachments     Attachment[]
   /// Genealogia: de quais lotes este veio, e quais lotes vieram dele.
-  origins       LotOrigin[]      @relation("ChildLot")
-  derived       LotOrigin[]      @relation("ParentLot")
-  producedBy    ProductionOrder?
-  shipmentItems ShipmentItem[]
+  origins         LotOrigin[]      @relation("ChildLot")
+  derived         LotOrigin[]      @relation("ParentLot")
+  producedBy      ProductionOrder?
+  shipmentItems   ShipmentItem[]
+  nonConformities NonConformity[]
+  recallsAsOrigin Recall[]
+  recallLots      RecallLot[]
 
   @@unique([companyId, id])
   @@unique([companyId, code])
@@ -508,4 +523,224 @@ model ShipmentItem {
   @@index([companyId, shipmentId])
   @@index([companyId, lotId])
   @@map("shipment_items")
+}
+
+// ───────────────────── Semana 4: auditoria, não conformidade e recall ─────────────────────
+
+/// Trilha de auditoria: quem fez o quê, quando e de onde. Só inclusão (trigger no banco).
+model AuditLog {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  companyId  String   @map("company_id") @db.Uuid
+  /// Null em jobs agendados (sem usuário).
+  userId     String?  @map("user_id") @db.Uuid
+  /// Ex.: lot.status_changed, recall.created, http.post
+  action     String   @db.VarChar(80)
+  /// Ex.: lot, recall, non_conformity, movement
+  entityType String   @map("entity_type") @db.VarChar(60)
+  entityId   String?  @map("entity_id") @db.VarChar(64)
+  before     Json?
+  after      Json?
+  requestId  String?  @map("request_id") @db.VarChar(128)
+  ip         String?  @db.VarChar(64)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user    User?   @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+
+  @@index([companyId, createdAt])
+  @@index([companyId, entityType, entityId])
+  @@index([companyId, userId])
+  @@index([companyId, action])
+  @@map("audit_logs")
+}
+
+enum NonConformityType {
+  MOISTURE // umidade fora do padrão
+  DEFECTS // defeitos (grãos ardidos, quebrados, broca...)
+  CONTAMINATION // contaminação (micotoxina, corpo estranho)
+  PEST // pragas
+  PACKAGING // embalagem danificada
+  OTHER
+
+  @@map("non_conformity_type")
+}
+
+enum NonConformityStatus {
+  OPEN // aberta: lote em quarentena
+  RELEASED // liberada: lote volta a ficar disponível
+  DISCARDED // descartada: saldo baixado por ajuste e lote consumido
+
+  @@map("non_conformity_status")
+}
+
+/// Não conformidade de qualidade sobre um lote (NC-2026-000001).
+model NonConformity {
+  id           String              @id @default(uuid(7)) @db.Uuid
+  companyId    String              @map("company_id") @db.Uuid
+  number       String              @db.VarChar(30)
+  lotId        String              @map("lot_id") @db.Uuid
+  type         NonConformityType
+  description  String
+  status       NonConformityStatus @default(OPEN)
+  openedById   String              @map("opened_by_id") @db.Uuid
+  openedAt     DateTime            @default(now()) @map("opened_at") @db.Timestamptz(3)
+  resolution   String?
+  resolvedById String?             @map("resolved_by_id") @db.Uuid
+  resolvedAt   DateTime?           @map("resolved_at") @db.Timestamptz(3)
+  createdAt    DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  lot        Lot     @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
+  openedBy   User    @relation("NcOpenedBy", fields: [companyId, openedById], references: [companyId, id], onDelete: Restrict)
+  resolvedBy User?   @relation("NcResolvedBy", fields: [companyId, resolvedById], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([companyId, number])
+  @@index([companyId, lotId, status])
+  @@index([companyId, status, openedAt])
+  @@map("non_conformities")
+}
+
+enum RecallSeverity {
+  LOW
+  MEDIUM
+  HIGH
+
+  @@map("recall_severity")
+}
+
+enum RecallStatus {
+  OPEN // criado, workflow ainda não iniciado
+  EXECUTING // etapas em execução
+  COMPLETED // todas as etapas concluídas
+  FAILED // uma etapa falhou (pode ser retomado)
+  CLOSED // encerrado com notas (lotes continuam bloqueados)
+
+  @@map("recall_status")
+}
+
+enum RecallStepName {
+  BLOCK_LOTS
+  REPORT
+  NOTIFY
+
+  @@map("recall_step_name")
+}
+
+enum RecallStepStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
+
+  @@map("recall_step_status")
+}
+
+/// Recall (RC-2026-000001) a partir de um lote de origem; executado por etapas idempotentes.
+model Recall {
+  id           String         @id @default(uuid(7)) @db.Uuid
+  companyId    String         @map("company_id") @db.Uuid
+  number       String         @db.VarChar(30)
+  originLotId  String         @map("origin_lot_id") @db.Uuid
+  reason       String
+  severity     RecallSeverity
+  status       RecallStatus   @default(OPEN)
+  /// Chave do relatório PDF no bucket: {companyId}/recalls/{id}.pdf
+  reportKey    String?        @map("report_key")
+  /// Execução no Step Functions (quando orquestrado na AWS).
+  executionArn String?        @map("execution_arn")
+  lastError    String?        @map("last_error")
+  createdById  String         @map("created_by_id") @db.Uuid
+  startedAt    DateTime?      @map("started_at") @db.Timestamptz(3)
+  completedAt  DateTime?      @map("completed_at") @db.Timestamptz(3)
+  closedById   String?        @map("closed_by_id") @db.Uuid
+  closedAt     DateTime?      @map("closed_at") @db.Timestamptz(3)
+  closingNotes String?        @map("closing_notes")
+  createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company   Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  originLot Lot              @relation(fields: [companyId, originLotId], references: [companyId, id], onDelete: Restrict)
+  createdBy User             @relation("RecallCreatedBy", fields: [companyId, createdById], references: [companyId, id], onDelete: Restrict)
+  closedBy  User?            @relation("RecallClosedBy", fields: [companyId, closedById], references: [companyId, id], onDelete: Restrict)
+  steps     RecallStep[]
+  lots      RecallLot[]
+  customers RecallCustomer[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, number])
+  @@index([companyId, status, createdAt])
+  @@index([companyId, originLotId])
+  @@map("recalls")
+}
+
+/// Etapa do workflow do recall: estado persistido para retomar de onde parou.
+model RecallStep {
+  id         String           @id @default(uuid(7)) @db.Uuid
+  companyId  String           @map("company_id") @db.Uuid
+  recallId   String           @map("recall_id") @db.Uuid
+  name       RecallStepName
+  /// Ordem de execução (1, 2, 3).
+  position   Int
+  status     RecallStepStatus @default(PENDING)
+  attempts   Int              @default(0)
+  startedAt  DateTime?        @map("started_at") @db.Timestamptz(3)
+  finishedAt DateTime?        @map("finished_at") @db.Timestamptz(3)
+  error      String?
+  /// Resultado resumido da etapa (ex.: lotes bloqueados, chave do relatório).
+  output     Json?
+  createdAt  DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  recall  Recall  @relation(fields: [companyId, recallId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([recallId, name])
+  @@index([companyId, recallId])
+  @@map("recall_steps")
+}
+
+/// Lote afetado pelo recall (o de origem e todos os derivados).
+model RecallLot {
+  id             String     @id @default(uuid(7)) @db.Uuid
+  companyId      String     @map("company_id") @db.Uuid
+  recallId       String     @map("recall_id") @db.Uuid
+  lotId          String     @map("lot_id") @db.Uuid
+  /// Distância até o lote de origem (0 = ele mesmo).
+  depth          Int
+  /// Saldo no momento da criação do recall.
+  balance        Decimal    @db.Decimal(14, 3)
+  /// Status antes do bloqueio (preenchido pela etapa BLOCK_LOTS).
+  previousStatus LotStatus? @map("previous_status")
+  blockedAt      DateTime?  @map("blocked_at") @db.Timestamptz(3)
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  recall  Recall  @relation(fields: [companyId, recallId], references: [companyId, id], onDelete: Restrict)
+  lot     Lot     @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([recallId, lotId])
+  @@index([companyId, lotId])
+  @@map("recall_lots")
+}
+
+/// Cliente a contatar no recall, com o resumo do que recebeu dos lotes afetados.
+model RecallCustomer {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  recallId        String   @map("recall_id") @db.Uuid
+  customerId      String   @map("customer_id") @db.Uuid
+  shipmentsCount  Int      @map("shipments_count")
+  shipmentNumbers String[] @map("shipment_numbers")
+  /// Quantidade expedida por unidade: [{ unit: "KG", quantity: "12.000" }]
+  quantities      Json
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  recall   Recall   @relation(fields: [companyId, recallId], references: [companyId, id], onDelete: Restrict)
+  customer Customer @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+
+  @@unique([recallId, customerId])
+  @@map("recall_customers")
 }
