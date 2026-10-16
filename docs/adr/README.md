@@ -12,3 +12,5 @@ Formato curto: contexto, decisão, consequências. Uma decisão nunca é apagada
 | 0007 | [Razão de estoque imutável com trava por lote](0007-razao-de-estoque.md)                       | Aceito |
 | 0008 | [Genealogia em arestas e rastreio com WITH RECURSIVE](0008-genealogia-e-rastreio-recursivo.md) | Aceito |
 | 0006 | [NestJS 12 em ESM com Vitest](0006-nestjs-12-esm-vitest.md)                                    | Aceito |
+| 0010 | [Rede na AWS: Lambdas fora da VPC e RDS público com TLS](0010-rede-e-custos-aws.md)            | Aceito |
+| 0011 | [API na Lambda: esbuild sobre o tsc e job de migrations](0011-lambda-esbuild-migrations.md)    | Aceito |
