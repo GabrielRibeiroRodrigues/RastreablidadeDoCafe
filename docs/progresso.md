@@ -201,7 +201,7 @@ Feito de forma autônoma, em paralelo, a pedido ("aplicação pronta para entrar
 
 - Varredura de 44 visitas (27 rotas em desktop claro, 7 no escuro, 9 no celular + página pública): **sem erros de console, exceções, HTTP 4xx/5xx inesperados nem rolagem horizontal**.
 - Fluxos executados pela interface: cadastros com máscara de CPF e isolamento entre empresas; recebimento, transferência, saldo insuficiente (cliente e API), saída, estorno, bloqueio, edição, anexo; produção (torra) com prévia de rendimento; expedição; rastreio para trás e para frente; etiqueta, relatório do recall e anexo abrindo PDF de verdade; recall simulado → executado → encerrado; não conformidade aberta → liberada; auditoria com diff; CSV; importação com erro; perfis operador e auditor; menu móvel, tema persistente, logout e retorno à página.
-- Corrigido nesta rodada: aviso e bloqueio de em lote bloqueado/quarentena, fonte monoespaçada (Geist Mono), layout do detalhe do recall, plurais ("lote(s)" → concordância real), rótulos da auditoria.
+- Corrigido nesta rodada: aviso de lote bloqueado/em quarentena e "Movimentar" desativado em lote bloqueado, fonte monoespaçada (Geist Mono), layout do detalhe do recall, plurais ("lote(s)" → concordância real), rótulos da auditoria.
 - Limitação: o MCP do Playwright só carrega numa sessão nova do Claude Code; a QA usou o Playwright (playwright-core) diretamente contra a aplicação.
 
 ## Próximos passos
