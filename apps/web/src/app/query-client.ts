@@ -1,8 +1,21 @@
-import { QueryClient } from '@tanstack/react-query';
+import { QueryCache, QueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { ApiError } from '@/lib/api';
 
 export function createQueryClient(): QueryClient {
   return new QueryClient({
+    queryCache: new QueryCache({
+      // Falha de rede (API fora do ar, sem internet): um único toast, mesmo com várias consultas.
+      // Os demais erros são exibidos por cada tela, no lugar dos dados.
+      onError: (error) => {
+        if (error instanceof ApiError && error.isNetworkError) {
+          toast.error('Não foi possível conectar ao servidor', {
+            id: 'network-error',
+            description: 'Verifique sua conexão. Os dados serão recarregados ao tentar de novo.',
+          });
+        }
+      },
+    }),
     defaultOptions: {
       queries: {
         staleTime: 30_000,

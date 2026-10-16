@@ -17,10 +17,21 @@ export const TENANT_MODELS = new Set([
   'LotOrigin',
   'Shipment',
   'ShipmentItem',
+  'AuditLog',
+  'NonConformity',
+  'Recall',
+  'RecallStep',
+  'RecallLot',
+  'RecallCustomer',
 ]);
 
-/** Razão de estoque: só inclusão (o banco também bloqueia por trigger — ADR 0007). */
-export const APPEND_ONLY_MODELS = new Set(['StockMovement', 'LotOrigin', 'ShipmentItem']);
+/** Razão, genealogia, itens expedidos e auditoria: só inclusão (o banco também bloqueia por trigger). */
+export const APPEND_ONLY_MODELS = new Set([
+  'StockMovement',
+  'LotOrigin',
+  'ShipmentItem',
+  'AuditLog',
+]);
 const MUTATIONS = new Set([
   'update',
   'updateMany',

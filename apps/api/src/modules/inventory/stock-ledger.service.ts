@@ -25,6 +25,11 @@ export interface RecordMovementInput {
   reason?: string | null;
   reversalOfId?: string;
   idempotency?: { key: string; hash: string };
+  /**
+   * Permite baixar estoque de lote em quarentena/bloqueado. Uso exclusivo do descarte de não
+   * conformidade (perda do saldo retido); nenhuma rota pública repassa esta opção.
+   */
+  allowRestrictedLot?: boolean;
 }
 
 interface LockedLot {
@@ -98,7 +103,7 @@ export class StockLedgerService {
     const lot = await this.lockLot(tx, input.lotId);
     const locations = await this.loadLocations(tx, input);
 
-    if (input.fromLocationId && input.type !== MovementType.REVERSAL) {
+    if (input.fromLocationId && input.type !== MovementType.REVERSAL && !input.allowRestrictedLot) {
       const destination = input.toLocationId ? locations.get(input.toLocationId) : undefined;
       assertLotCanLeave(lot, destination?.type);
     }

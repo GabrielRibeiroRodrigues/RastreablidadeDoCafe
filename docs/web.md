@@ -19,19 +19,21 @@ SPA em React 19 + Vite + TypeScript strict: layout, autenticação, as telas de 
 
 ```text
 apps/web/src
-├── app/            # App (providers), rotas, QueryClient, itens de navegação
+├── app/            # App (providers), rotas, páginas lazy (pages.tsx), QueryClient, navegação
 ├── auth/           # AuthProvider, useAuth, ProtectedRoute, estratégias mock/cognito
 ├── components/
 │   ├── catalog/    # blocos genéricos das telas de cadastro (tabela, filtros, CatalogPage...)
 │   ├── form/       # campos RHF, TagInput, EntityCombobox, schemas Zod, erros da API → campos
-│   ├── layout/     # AppLayout, AppSidebar, AppHeader
+│   ├── layout/     # AppLayout, AppSidebar, MobileNav, AppHeader, PageHeader, DetailStates
 │   └── ui/         # componentes gerados pelo shadcn/ui (não editar à mão sem motivo)
 ├── config/env.ts   # leitura e validação (Zod) das variáveis VITE_*
 ├── features/       # um cadastro por pasta: api.ts, <X>Form.tsx, resource.tsx e testes
 │                   # (products, suppliers, customers, locations); inventory/ = telas de estoque;
 │                   # production/, shipments/ e trace/ = produção, expedição e rastreabilidade
-├── lib/            # api-client.ts (openapi-fetch), api.ts (ApiError), br.ts, quantity.ts, jwt.ts
-├── pages/          # login, callback do Cognito, 404
+│                   # dashboard/ = painel inicial
+├── lib/            # api-client.ts (openapi-fetch), api.ts (ApiError), br.ts, masks.ts, quantity.ts
+├── pages/          # login, callback do Cognito, 404, erro de rota, "Em breve"
+├── theme/          # ThemeProvider, ThemeToggle (sistema/claro/escuro)
 └── test/           # setup do Vitest, mock da API (fetch), sessão de teste
 ```
 
@@ -45,7 +47,7 @@ Para adicionar um componente do shadcn: `pnpm dlx shadcn@latest add <nome>` dent
 | ---------------------------- | ------- | ------------------------------------------------- |
 | `/login`                     | público | seleção de usuário (mock) ou botão Cognito        |
 | `/auth/callback`             | público | conclui o login do Cognito e redireciona          |
-| `/`                          | privado | redireciona para `/produtos`                      |
+| `/`                          | privado | Painel (indicadores, vencimentos, estoque)        |
 | `/produtos`                  | privado | cadastro de produtos                              |
 | `/fornecedores`              | privado | cadastro de fornecedores                          |
 | `/clientes`                  | privado | cadastro de clientes                              |
@@ -63,7 +65,11 @@ Para adicionar um componente do shadcn: `pnpm dlx shadcn@latest add <nome>` dent
 | `/expedicao/:id`             | privado | detalhe da expedição                              |
 | `/rastreabilidade`           | privado | busca de lote para rastrear                       |
 | `/lotes/:id/rastreabilidade` | privado | árvore para trás (origem) e para frente (destino) |
-| `*`                          | público | 404                                               |
+| `/recall`, `/qualidade`      | privado | reservadas: aviso "Em breve"                      |
+| `/auditoria`                 | privado | reservada: aviso "Em breve"                       |
+| `*`                          | privado | 404 dentro do layout                              |
+
+Todas as páginas autenticadas são carregadas sob demanda (`React.lazy`, em `app/pages.tsx`): cada uma vira um chunk próprio e o layout mostra um esqueleto (`PageSkeleton`) enquanto o código chega. Passar o mouse (ou o foco) num link da barra lateral pré-carrega a página (`preloadRoute`).
 
 Rotas privadas ficam sob `ProtectedRoute`: enquanto a sessão é restaurada mostra um carregando; sem sessão, redireciona para `/login` guardando a rota original, para voltar a ela após o login.
 
@@ -116,7 +122,7 @@ O cabeçalho mostra a empresa de `GET /v1/me` (`useMe`, em `auth/use-me.ts`) nos
 
 ### Sessão expirada
 
-Se uma chamada autenticada recebe **401**, o `AuthProvider` encerra a sessão, mostra o toast "Sua sessão expirou" e o `ProtectedRoute` leva ao login guardando a página atual.
+Se uma chamada autenticada recebe **401**, o `AuthProvider` descarta só a sessão local (`clearSession` da estratégia — no Cognito não passa pelo logout do Hosted UI), limpa o cache, mostra o toast "Sua sessão expirou" e o `ProtectedRoute` leva ao login guardando a página atual (com query string). O login exibe o aviso "Sua sessão expirou" e, ao entrar, volta para a mesma página.
 
 ## Chamadas à API (cliente tipado)
 
@@ -354,6 +360,70 @@ Na raiz: `pnpm --filter @traceflow/web <script>`.
 
 Antes de rodar o front, compile o pacote compartilhado: `pnpm --filter @traceflow/shared build`.
 
+## Painel (`/`)
+
+Página inicial (`features/dashboard`). Indicadores em cartões clicáveis (lotes disponíveis/quarentena/bloqueados, movimentações do dia, produção e expedições dos últimos 30 dias), lista "Vencendo em 30 dias" (vencidos em vermelho), "Estoque por produto" (barras horizontais em CSS puro, proporcionais à massa em kg; itens em unidades ficam numa lista à parte) e "Movimentações recentes". As ações rápidas mudam com o perfil: admin/operador veem Novo recebimento, Nova ordem e Nova expedição; o auditor vê Ver estoque e Rastrear lote.
+
+Os dados vêm de `GET /v1/dashboard`. Enquanto o endpoint não estiver no contrato OpenAPI, o tipo é escrito à mão em `features/dashboard/api.ts` (`TODO(openapi)`); se a API responder **404**, o painel monta os mesmos números com as listagens existentes (lotes, movimentações, estoque, produção e expedições — agregados limitados a 100 registros por listagem).
+
+## Design system
+
+### Tokens
+
+Cores em OKLCH em `src/index.css`, sempre por token (nunca cor fixa no componente):
+
+| Token                              | Uso                                                       |
+| ---------------------------------- | --------------------------------------------------------- |
+| `background`, `foreground`, `card` | superfícies e texto                                       |
+| `primary`                          | marrom "café" (claro) / caramelo (escuro): ação principal |
+| `muted`, `muted-foreground`        | fundos neutros e texto secundário                         |
+| `accent`                           | hover e fundo de ícones                                   |
+| `destructive`                      | erro, bloqueado, estorno                                  |
+| `success`, `warning`, `info`       | estados (disponível, quarentena/vencendo, informativo)    |
+| `sidebar-*`                        | barra lateral espresso (igual nos dois temas)             |
+| `chart-1…5`                        | gráficos (o painel usa só `chart-1`: uma série, um tom)   |
+
+### Tema claro/escuro
+
+`theme/ThemeProvider.tsx` guarda a escolha (Sistema, Claro ou Escuro) em `localStorage` (`traceflow.theme`, com `try/catch`) e aplica a classe `.dark` no `<html>`. Um script inline no `index.html` aplica o tema antes do primeiro paint (sem "flash"). O botão fica no cabeçalho e na tela de login; o toast (Sonner) segue o tema.
+
+### Layout
+
+- **Barra lateral** (md+): seções Visão geral · Operação · Estoque · Qualidade · Cadastros; recolhível para só ícones (escolha salva em `localStorage`). "Recebimento" só aparece para quem opera o estoque; Recall, Qualidade e Auditoria têm o selo "Em breve".
+- **Celular**: botão "hambúrguer" no cabeçalho abre a mesma navegação numa gaveta (`components/ui/sheet.tsx`).
+- **Cabeçalho**: empresa, selo "Ambiente de desenvolvimento" (só com `VITE_AUTH_MODE=mock`), tema e menu do usuário (perfil e empresa).
+- Conteúdo com `max-w-7xl` e respiro `px-4 → px-8`; link "Pular para o conteúdo" para teclado.
+
+### Padrões de página
+
+- **`PageHeader`** (`components/layout/PageHeader.tsx`) em toda página: trilha (`breadcrumbs`), título `h1`, descrição, selos (`badges`) e ações. Também define o `document.title` ("Lotes · TraceFlow"). Códigos (lote, OP, EXP) usam `mono`.
+- **Detalhe**: `DetailPageSkeleton` enquanto carrega e `DetailPageError` em erro (404 vira "não encontrado" com atalho para a lista — a API responde 404 também para registros de outra empresa).
+- **Listas**: `DataTable` com cabeçalho fixo (a tabela rola dentro do cartão), hover na linha, esqueleto ao carregar e, abaixo de 768 px, lista de cartões (a primeira coluna — ou a marcada `mobile: 'title'` — vira o título; `mobile: 'hidden'` esconde).
+- **Vazio**: `EmptyState` (ícone + título + texto de ajuda + ação principal); com filtros, a ação é "Limpar filtros".
+- **Erro**: `ErrorState` com mensagem amigável, ID da requisição (erros 5xx) e "Tentar novamente".
+- **Cadastros somente leitura**: o botão "Ver detalhes" (olho) abre a ficha completa numa gaveta (`CatalogDetailSheet`), com datas de criação/alteração; quem pode editar tem o botão "Editar" ali mesmo.
+
+### Formulários
+
+- Máscaras em `lib/masks.ts`, aplicadas pelo `TextField` (`mask`): CPF/CNPJ (vira CNPJ a partir do 12º dígito), telefone com DDD, decimal pt-BR (vírgula; ponto digitado vira vírgula; colar `1.250,5` funciona) e inteiro. `suffix` mostra a unidade dentro do campo.
+- Botão de envio desabilitado e com spinner/texto "Registrando…" durante o envio.
+- Formulários longos (recebimento, produção, expedição) usam `UnsavedChangesGuard`: confirmação ao sair pela navegação do app e aviso nativo ao fechar a aba.
+
+### Robustez
+
+- Erro ao renderizar uma página: `RouteErrorPage` dentro do layout ("Tentar novamente", ID da requisição se vier da API). Chunk ausente após um deploy (aba antiga) sugere recarregar.
+- Erro fora das rotas: `AppErrorBoundary` (tela simples com "Recarregar").
+- Offline: toast fixo "Você está sem conexão" até a rede voltar; falha de rede nas consultas gera um único toast (QueryCache).
+- Números e datas sempre em pt-BR (`lib/quantity.ts`: `formatQuantity`, `formatDate`, `formatDateTime`).
+
+### Acessibilidade
+
+Foco visível em todos os controles (anel `ring`), `aria-label` em botões só de ícone, diálogos e menus do Radix (foco preso, Esc fecha, navegação por setas), contraste AA nos dois temas e animações reduzidas com `prefers-reduced-motion`.
+
+### PWA básico
+
+`public/site.webmanifest` com ícones PNG (192, 512 e maskable) e `apple-touch-icon`; `theme-color` acompanha o tema.
+
 ## Visual
 
-Cinzas levemente aquecidos com acento marrom "café" (`--primary`) e barra lateral em tom espresso com destaque caramelo. Tokens em `src/index.css` (OKLCH); há valores para `.dark`, mas ainda não existe alternância de tema.
+Cinzas levemente aquecidos com acento marrom "café" (`--primary`) e barra lateral em tom espresso com destaque caramelo. Tokens em `src/index.css` (OKLCH), com tema claro e escuro (ver "Design system").

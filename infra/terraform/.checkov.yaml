@@ -1,0 +1,48 @@
+# Achados do checkov aceitos conscientemente (custo ~zero / projeto de portfólio).
+# Justificativas: docs/deploy.md ("Segurança: achados aceitos") e docs/adr/0010.
+# Rodar: docker run --rm -v "$PWD/infra/terraform:/tf" bridgecrew/checkov -d /tf \
+#          --config-file /tf/.checkov.yaml
+framework:
+  - terraform
+skip-path:
+  - .terraform
+compact: true
+quiet: true
+skip-check:
+  # Criptografia com CMK (KMS ~US$ 1/mês por chave): usamos chaves gerenciadas pela AWS.
+  - CKV_AWS_158 # log groups com KMS
+  - CKV_AWS_173 # env da Lambda com CMK (não há segredos no env: vêm do SSM)
+  - CKV_AWS_337 # SSM SecureString com CMK (usa aws/ssm)
+  - CKV_AWS_145 # S3 com KMS (usa SSE-S3)
+  - CKV_AWS_297 # EventBridge Scheduler com CMK
+  - CKV_AWS_26 # SNS cifrado: alarmes do CloudWatch não publicam com a chave aws/sns
+  # Retenção e logs de acesso (custo de armazenamento/ingestão)
+  - CKV_AWS_338 # retenção de 1 ano (usamos 14 dias)
+  - CKV_AWS_18 # access logging do S3
+  - CKV_AWS_86 # access logging do CloudFront
+  - CKV2_AWS_11 # VPC flow logs
+  - CKV_AWS_285 # Step Functions loga só ERROR (sem dados de execução)
+  # Alta disponibilidade e monitoramento pagos
+  - CKV_AWS_157 # RDS Multi-AZ (dobra o custo)
+  - CKV_AWS_118 # RDS enhanced monitoring
+  - CKV_AWS_353 # RDS Performance Insights
+  - CKV_AWS_144 # replicação S3 entre regiões
+  - CKV_AWS_310 # failover de origem no CloudFront
+  # WAF (~US$ 5/mês + regras): só no módulo ecs-alternative
+  - CKV_AWS_68 # WAF no CloudFront
+  - CKV2_AWS_47 # regra Log4j do WAF no CloudFront
+  - CKV2_AWS_31 # logging do WAF (ecs-alternative)
+  - CKV2_AWS_76 # regra Log4j específica (ecs-alternative já usa KnownBadInputs)
+  # Decisões de produto
+  - CKV_AWS_309 # autorização na rota do API Gateway: feita na API (JWT + rotas públicas)
+  - CKV_AWS_272 # code signing da Lambda
+  - CKV_AWS_374 # geo restriction: página pública de rastreio é acessada de qualquer país
+  - CKV2_AWS_62 # notificações de eventos do S3
+  - CKV_AWS_21 # versionamento do bucket do front (artefato de build recriável)
+  - CKV2_AWS_5 # SG da Lambda só é usado com private_networking = true
+  - CKV_AWS_394 # zonas de disponibilidade: usamos as 2 primeiras da região
+  # ecs-alternative (não aplicado): ALB com redirect HTTP->HTTPS e sem logs/proteção
+  - CKV_AWS_91
+  - CKV_AWS_150
+  - CKV_AWS_260
+  - CKV_AWS_378

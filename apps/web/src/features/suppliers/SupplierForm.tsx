@@ -18,6 +18,7 @@ import { FieldGroup } from '@/components/ui/field';
 import { formatDocument, formatPhone, UFS } from '@/lib/br';
 import { toOptions } from '@/lib/options';
 import { SUPPLIER_TYPE_LABELS, SUPPLIER_TYPES, type Supplier, type SupplierInput } from './api';
+import { maskDocument, maskInteger, maskPhone } from '@/lib/masks';
 
 const MAX_VARIETIES = 20;
 
@@ -133,7 +134,8 @@ export function SupplierForm({
           name="document"
           label="CPF ou CNPJ"
           inputMode="numeric"
-          placeholder="Com ou sem pontuação"
+          mask={maskDocument}
+          placeholder="000.000.000-00"
         />
         <TextField
           control={form.control}
@@ -161,6 +163,7 @@ export function SupplierForm({
             control={form.control}
             name="altitudeMeters"
             label="Altitude (m)"
+            mask={maskInteger}
             inputMode="numeric"
             placeholder="1250"
           />
@@ -187,6 +190,8 @@ export function SupplierForm({
           name="phone"
           label="Telefone"
           type="tel"
+          inputMode="tel"
+          mask={maskPhone}
           placeholder="(35) 99999-0000"
         />
       </FieldGroup>

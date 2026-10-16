@@ -1,4 +1,5 @@
 import { CircleAlertIcon } from 'lucide-react';
+import { cn } from 'cn';
 import { useId, type ComponentProps, type ReactNode } from 'react';
 import {
   Controller,
@@ -77,8 +78,16 @@ export function TextField<T extends FieldValues, C, O extends FieldValues>({
   required,
   className,
   inputClassName,
+  mask,
+  suffix,
   ...inputProps
-}: BaseFieldProps<T, C, O> & { inputClassName?: string } & Omit<
+}: BaseFieldProps<T, C, O> & {
+  inputClassName?: string;
+  /** Formata o texto a cada alteração (ex.: `maskDocument`, `maskDecimal`). */
+  mask?: (value: string) => string;
+  /** Texto fixo à direita, dentro do campo (ex.: unidade "kg"). */
+  suffix?: ReactNode;
+} & Omit<
     ComponentProps<typeof Input>,
     'name' | 'value' | 'onChange' | 'onBlur' | 'ref' | 'className'
   >) {
@@ -89,15 +98,25 @@ export function TextField<T extends FieldValues, C, O extends FieldValues>({
       name={name}
       render={({ field, fieldState }) => (
         <FieldShell {...{ id, label, required, description, fieldState, className }}>
-          <Input
-            {...inputProps}
-            {...field}
-            value={field.value ?? ''}
-            id={id}
-            className={inputClassName}
-            aria-invalid={fieldState.invalid}
-            aria-required={required}
-          />
+          <div className={suffix ? 'relative' : 'contents'}>
+            <Input
+              {...inputProps}
+              {...field}
+              onChange={(event) =>
+                field.onChange(mask ? mask(event.target.value) : event.target.value)
+              }
+              value={field.value ?? ''}
+              id={id}
+              className={cn(suffix && 'pr-10', inputClassName)}
+              aria-invalid={fieldState.invalid}
+              aria-required={required}
+            />
+            {suffix && (
+              <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-xs text-muted-foreground">
+                {suffix}
+              </span>
+            )}
+          </div>
         </FieldShell>
       )}
     />

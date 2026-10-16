@@ -1,4 +1,5 @@
 import { Toaster as Sonner, type ToasterProps } from 'sonner';
+import { useResolvedTheme } from '@/theme/theme';
 import {
   CircleCheckIcon,
   InfoIcon,
@@ -7,11 +8,12 @@ import {
   Loader2Icon,
 } from 'lucide-react';
 
-// Adaptado do shadcn/ui: sem next-themes (o app ainda não tem alternância de tema).
-const Toaster = ({ theme = 'light', ...props }: ToasterProps) => {
+// Adaptado do shadcn/ui: o tema vem do ThemeProvider do app (sem next-themes).
+const Toaster = ({ theme, ...props }: ToasterProps) => {
+  const resolved = useResolvedTheme();
   return (
     <Sonner
-      theme={theme}
+      theme={theme ?? resolved}
       className="toaster group"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

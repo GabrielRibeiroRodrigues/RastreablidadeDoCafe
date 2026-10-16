@@ -17,6 +17,11 @@
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar: var(--sidebar);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-info: var(--info);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
@@ -77,6 +82,11 @@
   --chart-3: oklch(0.75 0.09 80);
   --chart-4: oklch(0.55 0.05 150);
   --chart-5: oklch(0.35 0.03 50);
+  --success: oklch(0.52 0.12 155);
+  --success-foreground: oklch(0.4 0.1 155);
+  --warning: oklch(0.72 0.15 70);
+  --warning-foreground: oklch(0.45 0.1 60);
+  --info: oklch(0.5 0.1 235);
   --radius: 0.625rem;
   --sidebar: oklch(0.235 0.02 48);
   --sidebar-foreground: oklch(0.9 0.015 70);
@@ -90,6 +100,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.17 0.008 50);
   --foreground: oklch(0.96 0.006 75);
   --card: oklch(0.21 0.01 50);
@@ -107,7 +118,17 @@
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.62 0.08 55);
+  --ring: oklch(0.7 0.09 65);
+  --chart-1: oklch(0.76 0.105 68);
+  --chart-2: oklch(0.66 0.09 50);
+  --chart-3: oklch(0.82 0.07 85);
+  --chart-4: oklch(0.68 0.07 150);
+  --chart-5: oklch(0.55 0.04 60);
+  --success: oklch(0.72 0.13 155);
+  --success-foreground: oklch(0.8 0.12 155);
+  --warning: oklch(0.78 0.14 75);
+  --warning-foreground: oklch(0.85 0.12 80);
+  --info: oklch(0.72 0.1 235);
   --sidebar: oklch(0.2 0.015 48);
   --sidebar-foreground: oklch(0.9 0.015 70);
   --sidebar-muted: oklch(0.62 0.02 60);
@@ -128,5 +149,24 @@
   }
   html {
     @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
   }
+  /* Foco visível em links e controles nativos sem estilo próprio (teclado). */
+  a:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    @apply rounded-sm outline-2 outline-offset-2 outline-ring;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
 }

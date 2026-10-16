@@ -5,6 +5,7 @@ import {
   ArrayMinSize,
   IsArray,
   IsDateString,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -77,6 +78,9 @@ export class CreateShipmentDto {
   items!: CreateShipmentItemDto[];
 }
 
+export const SHIPMENT_SORTS = ['-shippedAt', 'shippedAt', '-number', 'number'] as const;
+export type ShipmentSort = (typeof SHIPMENT_SORTS)[number];
+
 export class ListShipmentsQueryDto extends PagingDto {
   @ApiPropertyOptional({ format: 'uuid' })
   @IsOptional()
@@ -104,6 +108,16 @@ export class ListShipmentsQueryDto extends PagingDto {
   @IsString()
   @MaxLength(60)
   q?: string;
+
+  @ApiPropertyOptional({ format: 'uuid', description: 'Quem registrou a expedição' })
+  @IsOptional()
+  @IsUUID()
+  userId?: string;
+
+  @ApiPropertyOptional({ enum: SHIPMENT_SORTS, default: '-shippedAt' })
+  @IsOptional()
+  @IsIn(SHIPMENT_SORTS)
+  sort: ShipmentSort = '-shippedAt';
 }
 
 export class CustomerSummary {

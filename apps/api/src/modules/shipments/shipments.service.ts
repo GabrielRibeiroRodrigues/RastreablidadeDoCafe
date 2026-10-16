@@ -1,12 +1,13 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { DomainProblemException } from '../../common/http/domain-problem.exception.js';
-import { pageArgs, toPage, type Page } from '../../common/http/pagination.js';
+import { orderBy, pageArgs, toPage, type Page } from '../../common/http/pagination.js';
 import { MovementType, type Prisma } from '../../generated/prisma/client.js';
 import { TenantContext } from '../../tenancy/tenant-context.js';
 import {
   TenantPrismaService,
   type TenantTransaction,
 } from '../../tenancy/tenant-prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { DOCUMENT_KINDS, DocumentNumberService } from '../inventory/document-number.service.js';
 import {
   assertSameRequest,
@@ -71,6 +72,7 @@ export class ShipmentsService {
     private readonly tenant: TenantContext,
     private readonly ledger: StockLedgerService,
     private readonly numbers: DocumentNumberService,
+    private readonly audit: AuditService,
   ) {}
 
   async create(dto: CreateShipmentDto, idempotency?: IdempotencyToken): Promise<ShipmentResult> {
@@ -95,6 +97,7 @@ export class ShipmentsService {
   async list(query: ListShipmentsQueryDto): Promise<Page<ShipmentResponse>> {
     const where: Prisma.ShipmentWhereInput = {
       ...(query.customerId && { customerId: query.customerId }),
+      ...(query.userId && { userId: query.userId }),
       ...(query.lotId && { items: { some: { lotId: query.lotId } } }),
       ...((query.from || query.to) && {
         shippedAt: {
@@ -114,7 +117,7 @@ export class ShipmentsService {
       this.db.client.shipment.findMany({
         where,
         include: LIST_INCLUDE,
-        orderBy: [{ shippedAt: 'desc' }, { id: 'desc' }],
+        orderBy: orderBy(query.sort),
         ...pageArgs(query),
       }),
       this.db.client.shipment.count({ where }),
@@ -183,6 +186,21 @@ export class ShipmentsService {
         } as Prisma.ShipmentItemUncheckedCreateInput,
       });
     }
+
+    await this.audit.record(
+      {
+        action: 'shipment.created',
+        entityType: 'shipment',
+        entityId: shipment.id,
+        after: {
+          number,
+          customer: { id: customer.id, name: customer.name },
+          orderRef: dto.orderRef ?? null,
+          items: dto.items,
+        },
+      },
+      tx,
+    );
     return shipment.id;
   }
 

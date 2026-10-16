@@ -45,6 +45,11 @@ export class StockQueryDto extends PagingDto {
   @IsEnum(LotStatus)
   lotStatus?: LotStatus;
 
+  @ApiPropertyOptional({ enum: ProductType, enumName: 'ProductType' })
+  @IsOptional()
+  @IsEnum(ProductType)
+  productType?: ProductType;
+
   @ApiPropertyOptional({ description: 'Busca pelo código do lote' })
   @IsOptional()
   @Transform(upperTrim)
@@ -85,7 +90,7 @@ export class StockService {
   constructor(private readonly db: TenantPrismaService) {}
 
   async position(query: StockQueryDto): Promise<Page<StockRow>> {
-    const { productId = null, locationId = null, lotStatus = null } = query;
+    const { productId = null, locationId = null, lotStatus = null, productType = null } = query;
     const code = query.q ? `%${query.q}%` : null;
     const offset = (query.page - 1) * query.pageSize;
 
@@ -117,6 +122,7 @@ export class StockService {
         WHERE (${productId}::uuid IS NULL OR p.id = ${productId}::uuid)
           AND (${locationId}::uuid IS NULL OR loc.id = ${locationId}::uuid)
           AND (${lotStatus}::text IS NULL OR l.status::text = ${lotStatus}::text)
+          AND (${productType}::text IS NULL OR p.type::text = ${productType}::text)
           AND (${code}::text IS NULL OR l.code ILIKE ${code}::text)
         ORDER BY ${STOCK_ORDER[query.sort]}
         LIMIT ${query.pageSize} OFFSET ${offset}`,

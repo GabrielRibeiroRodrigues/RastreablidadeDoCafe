@@ -1,4 +1,4 @@
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import type { NavItem } from '@/app/navigation';
 import type { Column } from './DataTable';
 import type { Option } from './FilterSelect';
@@ -8,6 +8,16 @@ import type { ListParams, ListParamsConfig } from './use-list-params';
 export interface CatalogEntity {
   id: string;
   isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Campo exibido na ficha somente leitura do cadastro (`null`/vazio aparece como "—"). */
+export interface DetailField {
+  label: string;
+  value: ReactNode;
+  /** Ocupa a largura toda (textos longos, listas). */
+  wide?: boolean;
 }
 
 export interface Page<T> {
@@ -56,6 +66,8 @@ export interface CatalogResource<T extends CatalogEntity, Input> {
   Form: ComponentType<EntityFormProps<T, Input>>;
   /** Nome exibido em confirmações e toasts. */
   describe: (entity: T) => string;
+  /** Todos os campos, para a ficha de detalhes (auditor e consulta rápida). */
+  details: (entity: T) => DetailField[];
   /** Largura do diálogo de formulário (classe Tailwind). */
   dialogClassName?: string;
 }

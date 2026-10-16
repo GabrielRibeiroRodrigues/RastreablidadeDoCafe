@@ -26,6 +26,7 @@ lerna-debug.log*
 # Monorepo
 node_modules
 dist
+dist-lambda
 coverage
 *.tsbuildinfo
 .env.local
@@ -36,6 +37,8 @@ coverage
 *.tfstate.*
 *.tfvars
 !*.tfvars.example
+# Lock só do ambiente (módulos herdam as versões do root)
+infra/terraform/modules/**/.terraform.lock.hcl
 
 # Editors / OS
 .vscode/*

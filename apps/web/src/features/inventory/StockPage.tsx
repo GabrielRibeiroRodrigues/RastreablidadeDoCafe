@@ -1,5 +1,7 @@
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Loader2Icon } from 'lucide-react';
+import { LayersIcon, Loader2Icon, SearchXIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { DataTable, type Column } from '@/components/catalog/DataTable';
 import { FilterSelect } from '@/components/catalog/FilterSelect';
@@ -10,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { LOCATION_TYPE_LABELS } from '@/features/locations/api';
 import { toOptions } from '@/lib/options';
 import { inventoryApi, type StockQuery, type StockRow } from './api';
-import { EmptyState, ExpiryText, LotStatusBadge, PageHeader, Quantity } from './components';
+import { ExpiryText, LotStatusBadge, Quantity } from './components';
 import { useLocations, useProducts } from './hooks';
 import { LOT_STATUSES, LOT_STATUS_LABELS } from './labels';
 import { isUuid } from './url-filters';
@@ -104,6 +106,7 @@ export function StockPage() {
     <div className="space-y-6">
       <PageHeader
         title="Estoque"
+        breadcrumbs={[{ label: 'Estoque' }, { label: 'Posição' }]}
         description="Posição atual: quanto há de cada lote em cada local. Calculada do razão de movimentações."
       />
 
@@ -156,14 +159,29 @@ export function StockPage() {
           sort=""
           onSortChange={() => undefined}
           empty={
-            <EmptyState>
-              <p>{hasFilters ? 'Nenhum saldo para os filtros aplicados.' : 'Estoque vazio.'}</p>
-              {hasFilters && (
-                <Button variant="outline" size="sm" onClick={list.clearFilters}>
-                  Limpar filtros
-                </Button>
-              )}
-            </EmptyState>
+            hasFilters ? (
+              <EmptyState
+                icon={SearchXIcon}
+                title="Nenhum saldo encontrado"
+                description="Nenhum lote com saldo corresponde aos filtros aplicados."
+                action={
+                  <Button variant="outline" size="sm" onClick={list.clearFilters}>
+                    Limpar filtros
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={LayersIcon}
+                title="Estoque vazio"
+                description="O saldo aparece aqui depois do primeiro recebimento de café."
+                action={
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/lotes">Ver lotes</Link>
+                  </Button>
+                }
+              />
+            )
           }
         />
 

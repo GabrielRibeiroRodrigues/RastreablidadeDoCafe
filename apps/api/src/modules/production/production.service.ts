@@ -1,6 +1,6 @@
 import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { DomainProblemException } from '../../common/http/domain-problem.exception.js';
-import { pageArgs, toPage, type Page } from '../../common/http/pagination.js';
+import { orderBy, pageArgs, toPage, type Page } from '../../common/http/pagination.js';
 import {
   LocationType,
   LotStatus,
@@ -14,6 +14,7 @@ import {
   TenantPrismaService,
   type TenantTransaction,
 } from '../../tenancy/tenant-prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { DOCUMENT_KINDS, DocumentNumberService } from '../inventory/document-number.service.js';
 import {
   assertSameRequest,
@@ -83,6 +84,7 @@ export class ProductionService {
     private readonly ledger: StockLedgerService,
     private readonly lotCodes: LotCodeService,
     private readonly numbers: DocumentNumberService,
+    private readonly audit: AuditService,
   ) {}
 
   async create(
@@ -235,18 +237,47 @@ export class ProductionService {
       })) as Prisma.LotOriginCreateManyInput[],
     });
 
+    await this.audit.record(
+      {
+        action: 'production_order.created',
+        entityType: 'production_order',
+        entityId: order.id,
+        after: {
+          number,
+          stage: dto.stage,
+          outputLot: { id: lot.id, code, quantity: formatQuantity(outputQuantity) },
+          inputs: dto.inputs,
+          yieldPercent: mass.yieldPercent,
+          lossKg: mass.lossKg,
+        },
+      },
+      tx,
+    );
     return order.id;
   }
 
   async list(query: ListProductionOrdersQueryDto): Promise<Page<ProductionOrderResponse>> {
     const where: Prisma.ProductionOrderWhereInput = {
       ...(query.stage && { stage: query.stage }),
-      ...(query.q && {
-        OR: [
-          { number: { contains: query.q, mode: 'insensitive' } },
-          { outputLot: { code: { contains: query.q, mode: 'insensitive' } } },
-        ],
-      }),
+      ...(query.userId && { userId: query.userId }),
+      AND: [
+        query.q
+          ? {
+              OR: [
+                { number: { contains: query.q, mode: 'insensitive' } },
+                { outputLot: { code: { contains: query.q, mode: 'insensitive' } } },
+              ],
+            }
+          : {},
+        query.lotId
+          ? {
+              OR: [
+                { outputLotId: query.lotId },
+                { origins: { some: { parentLotId: query.lotId } } },
+              ],
+            }
+          : {},
+      ],
       ...((query.from || query.to) && {
         performedAt: {
           ...(query.from && { gte: new Date(query.from) }),
@@ -258,7 +289,7 @@ export class ProductionService {
       this.db.client.productionOrder.findMany({
         where,
         include: ORDER_INCLUDE,
-        orderBy: [{ performedAt: 'desc' }, { id: 'desc' }],
+        orderBy: orderBy(query.sort),
         ...pageArgs(query),
       }),
       this.db.client.productionOrder.count({ where }),

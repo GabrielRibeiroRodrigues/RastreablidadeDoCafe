@@ -1,5 +1,7 @@
+import { PageHeader } from '@/components/layout/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { Loader2Icon, XIcon } from 'lucide-react';
+import { ArrowLeftRightIcon, Loader2Icon, SearchXIcon, XIcon } from 'lucide-react';
 import { useId } from 'react';
 import { Link } from 'react-router';
 import { DataTable } from '@/components/catalog/DataTable';
@@ -12,7 +14,6 @@ import { Input } from '@/components/ui/input';
 import { toOptions } from '@/lib/options';
 import { startOfLocalDayIso } from '@/lib/quantity';
 import { inventoryApi, type MovementsQuery } from './api';
-import { EmptyState, PageHeader } from './components';
 import { useLocations } from './hooks';
 import { MOVEMENT_TYPES, MOVEMENT_TYPE_LABELS } from './labels';
 import { movementColumns } from './movement-columns';
@@ -66,6 +67,7 @@ export function MovementsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Movimentações"
+        breadcrumbs={[{ label: 'Estoque' }, { label: 'Movimentações' }]}
         description="Razão de estoque: entradas, saídas, transferências, ajustes e estornos. Nenhuma linha é alterada ou apagada."
       />
 
@@ -143,22 +145,29 @@ export function MovementsPage() {
           onSortChange={() => undefined}
           isMuted={(movement) => movement.reversedById !== null}
           empty={
-            <EmptyState>
-              <p>
-                {hasFilters
-                  ? 'Nenhuma movimentação para os filtros aplicados.'
-                  : 'Nenhuma movimentação ainda.'}
-              </p>
-              {hasFilters ? (
-                <Button variant="outline" size="sm" onClick={list.clearFilters}>
-                  Limpar filtros
-                </Button>
-              ) : (
-                <Link to="/lotes" className="text-primary underline-offset-4 hover:underline">
-                  Ir para Lotes
-                </Link>
-              )}
-            </EmptyState>
+            hasFilters ? (
+              <EmptyState
+                icon={SearchXIcon}
+                title="Nenhuma movimentação encontrada"
+                description="Nenhum lançamento corresponde aos filtros aplicados."
+                action={
+                  <Button variant="outline" size="sm" onClick={list.clearFilters}>
+                    Limpar filtros
+                  </Button>
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={ArrowLeftRightIcon}
+                title="Nenhuma movimentação ainda"
+                description="Recebimentos, transferências, produções e expedições geram lançamentos aqui."
+                action={
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to="/lotes">Ir para Lotes</Link>
+                  </Button>
+                }
+              />
+            )
           }
         />
 
