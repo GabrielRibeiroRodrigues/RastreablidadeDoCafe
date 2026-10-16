@@ -1,0 +1,32 @@
+# Copie para terraform.tfvars (fora do git) e ajuste.
+
+aws_region = "us-east-1"
+
+# Recebe alarmes e falhas de recall (confirme a assinatura no e-mail recebido).
+notification_emails = ["voce@example.com"]
+
+# Conta nova com limite de 10 execuções concorrentes? Use -1 (sem reserva). Veja docs/deploy.md.
+api_reserved_concurrency = 5
+
+# Jobs da Semana 4: desligue se os zips ainda não existirem em apps/api/dist-lambda.
+enable_expiry_alert = true
+enable_recall       = true
+
+# Rede (ADR 0010). false = custo ~zero (RDS público com TLS obrigatório);
+# true = Lambdas na VPC + RDS privado + interface endpoints (~US$ 22/mês).
+private_networking = false
+
+# Proteções contra exclusão (RDS, Cognito, bucket de arquivos). false antes do `terraform destroy`.
+db_deletion_protection = true
+
+# Desenvolvimento local contra o Cognito de produção (opcional):
+# extra_callback_urls = ["http://localhost:5173/auth/callback"]
+# extra_logout_urls   = ["http://localhost:5173/login"]
+# extra_cors_origins  = ["http://localhost:5173"]
+
+# Domínio próprio (opcional; certificado ACM em us-east-1):
+# web_aliases         = ["app.exemplo.com.br"]
+# web_certificate_arn = "arn:aws:acm:us-east-1:123456789012:certificate/..."
+
+# A conta já tem o provider OIDC do GitHub?
+# create_github_oidc_provider = false

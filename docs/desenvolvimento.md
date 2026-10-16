@@ -47,6 +47,16 @@ Para rodar só um pacote: `pnpm --filter @traceflow/shared build`.
 
 Modelo e convenções: [modelo-de-dados.md](modelo-de-dados.md).
 
+### Lambda e AWS (rodar com `pnpm --filter @traceflow/api <script>`)
+
+| Script             | O que faz                                                                     |
+| ------------------ | ----------------------------------------------------------------------------- |
+| `bundle:lambda`    | `nest build` + esbuild: `dist-lambda/<handler>/index.mjs` e `.zip`            |
+| `smoke:lambda`     | Sobe os bundles localmente com eventos falsos do API Gateway (`DATABASE_URL`) |
+| `tenant:bootstrap` | Cria empresa + primeiro usuário ligado a um `sub` do Cognito (idempotente)    |
+
+Detalhes em [deploy.md](deploy.md).
+
 ## Rodando a API
 
 ```bash
