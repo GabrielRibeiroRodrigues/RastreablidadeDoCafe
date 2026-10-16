@@ -139,6 +139,23 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
       ? 'Cada par (lote, local) só pode aparecer uma vez na expedição: some as quantidades.'
       : `Expedição inválida: ${detail ?? 'confira os itens.'}`,
   '/problems/inactive-customer': () => 'O cliente está inativo e não pode receber expedições.',
+  '/problems/recall-already-open': ({ extensions: ext }) =>
+    `Este lote já tem um recall em andamento${text(ext.recall) ? ` (${text(ext.recall)})` : ''}: encerre-o antes de abrir outro.`,
+  '/problems/lot-under-recall': ({ extensions: ext }) =>
+    `${text(ext.lot) ? `O lote ${text(ext.lot)}` : 'O lote'} está num recall em andamento${text(ext.recall) ? ` (${text(ext.recall)})` : ''} e não pode voltar a Disponível.`,
+  '/problems/recall-not-startable': () =>
+    'Só recalls abertos ou com falha podem ser executados. Recarregue a página.',
+  '/problems/recall-not-closable': () =>
+    'Só recalls concluídos ou com falha podem ser encerrados. Recarregue a página.',
+  '/problems/recall-report-unavailable': () =>
+    'O relatório deste recall ainda não foi gerado (etapa pendente, com falha ou ignorada).',
+  '/problems/non-conformity-not-open': () =>
+    'Esta não conformidade já foi resolvida. Recarregue a página.',
+  '/problems/invalid-import': ({ detail, extensions: ext }) =>
+    /empty/i.test(detail ?? '')
+      ? 'O arquivo está vazio: a primeira linha deve ser o cabeçalho.'
+      : `CSV malformado${typeof ext.line === 'number' ? ` na linha ${ext.line}` : ''}: confira aspas e separadores.`,
+  '/problems/import-too-large': () => 'O arquivo tem mais de 5.000 linhas: divida-o em partes.',
 };
 
 const STAGE_TEXT: Record<string, string> = {
@@ -199,6 +216,12 @@ export function getErrorMessage(error: unknown): string {
         return 'Registro não encontrado.';
       case 409:
         return 'Já existe um cadastro com estes dados.';
+      case 413:
+        return 'Arquivo grande demais para o envio.';
+      case 415:
+        return 'Formato de arquivo não aceito.';
+      case 429:
+        return 'Muitas requisições em pouco tempo. Aguarde um instante e tente de novo.';
       default:
         return error.status >= 500
           ? `Erro inesperado na API. Tente novamente em instantes (ID: ${error.requestId}).`

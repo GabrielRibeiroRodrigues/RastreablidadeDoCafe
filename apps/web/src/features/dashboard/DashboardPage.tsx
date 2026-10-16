@@ -396,7 +396,7 @@ export function DashboardPage() {
                   )}
                 </span>
               }
-              action={<SeeAll to={`/lotes?expiresWithinDays=${EXPIRING_DAYS}&sort=expiresAt`} />}
+              action={<SeeAll to={`/lotes?vencendo=${EXPIRING_DAYS}`} />}
               className="lg:col-span-2"
             >
               <ExpiringList data={query.data} />

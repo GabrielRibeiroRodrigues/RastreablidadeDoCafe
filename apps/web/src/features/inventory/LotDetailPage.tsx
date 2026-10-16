@@ -2,6 +2,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeftRightIcon,
+  ClipboardPlusIcon,
   GitForkIcon,
   PencilIcon,
   ShieldAlertIcon,
@@ -9,7 +10,9 @@ import {
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import { useInventoryPermissions } from '@/auth/permissions';
+import { useInventoryPermissions, useQualityPermissions } from '@/auth/permissions';
+import { OpenNcDialog } from '@/features/quality/OpenNcDialog';
+import { OpenNcAlert } from '@/features/quality/OpenNcAlert';
 import { DataTable } from '@/components/catalog/DataTable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +45,7 @@ type DialogState =
   | { kind: 'move' }
   | { kind: 'status' }
   | { kind: 'edit' }
+  | { kind: 'nc' }
   | { kind: 'reverse'; movement: Movement }
   | null;
 
@@ -62,6 +66,7 @@ const num = (value: number | null, suffix = '') =>
 export function LotDetailPage() {
   const { id = '' } = useParams();
   const permissions = useInventoryPermissions();
+  const { canOpenNc } = useQualityPermissions();
   const [dialog, setDialog] = useState<DialogState>(null);
 
   const lotQuery = useQuery({
@@ -143,6 +148,12 @@ export function LotDetailPage() {
               </Link>
             </Button>
             {permissions.canOperate && <LabelButton lot={lot} />}
+            {canOpenNc && (
+              <Button variant="outline" onClick={() => setDialog({ kind: 'nc' })}>
+                <ClipboardPlusIcon />
+                Abrir não conformidade
+              </Button>
+            )}
             {permissions.canOperate && (
               <Button variant="outline" onClick={() => setDialog({ kind: 'edit' })}>
                 <PencilIcon />
@@ -167,6 +178,8 @@ export function LotDetailPage() {
           </>
         }
       />
+
+      <OpenNcAlert lotId={lot.id} />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -310,6 +323,7 @@ export function LotDetailPage() {
         />
       )}
       {dialog?.kind === 'edit' && <EditLotDialog lot={lot} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'nc' && <OpenNcDialog lot={lot} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'reverse' && (
         <ReverseMovementDialog
           movement={dialog.movement}
