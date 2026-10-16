@@ -91,10 +91,7 @@ function EntityCell({ log }: { log: AuditLog }) {
       <div>{entityLabel(log.entityType)}</div>
       {log.entityId &&
         (href ? (
-          <Link
-            to={href}
-            className="font-mono text-[0.7rem] text-primary underline-offset-4 hover:underline"
-          >
+          <Link to={href} className="text-xs text-primary underline-offset-4 hover:underline">
             Abrir registro
           </Link>
         ) : (

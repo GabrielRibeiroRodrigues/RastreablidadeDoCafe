@@ -206,7 +206,9 @@ export function NewRecallPage() {
     <div className="space-y-6">
       <PageHeader
         title={canCreateRecall ? 'Novo recall' : 'Simular recall'}
-        breadcrumbs={CRUMBS}
+        breadcrumbs={
+          canCreateRecall ? CRUMBS : [...CRUMBS.slice(0, 2), { label: 'Simular recall' }]
+        }
         description="Escolha o lote com problema e simule o impacto antes de executar: lotes derivados, saldo em estoque e clientes que receberam o produto."
       />
 

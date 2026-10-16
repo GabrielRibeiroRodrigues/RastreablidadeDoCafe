@@ -53,6 +53,8 @@ function importMessage(message: string): string {
   let m = /repeats line (\d+)/i.exec(message);
   if (m) return `Valor repetido (já aparece na linha ${m[1]}).`;
   if (/already exists/i.test(message)) return 'Já existe um cadastro com este valor.';
+  m = /must be one of the following values:\s*(.+)$/i.exec(message);
+  if (m) return `Valor inválido. Use um destes: ${m[1]}.`;
   m = /unknown column/i.exec(message);
   if (m) return `Coluna desconhecida: ${message.replace(/^.*?:\s*/, '')}`;
   if (/missing required column/i.test(message)) {

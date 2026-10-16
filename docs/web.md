@@ -1,6 +1,6 @@
 # Front-end (`apps/web`)
 
-SPA em React 19 + Vite + TypeScript strict: layout, autenticação, as telas de cadastro (Produtos, Fornecedores, Clientes e Locais) as telas de estoque (Recebimento, Lotes, Estoque e Movimentações) e as de operação (Produção, Expedição e Rastreabilidade), que falam com a API por um cliente tipado gerado do OpenAPI.
+SPA em React 19 + Vite + TypeScript strict: layout, autenticação, as telas de cadastro (Produtos, Fornecedores, Clientes e Locais) as telas de estoque (Recebimento, Lotes, Estoque e Movimentações) as de operação (Produção, Expedição e Rastreabilidade), as de qualidade (Recall, Não conformidades e Auditoria) e as de gestão (Relatórios CSV e Importação), que falam com a API por um cliente tipado gerado do OpenAPI.
 
 ## Stack
 
@@ -32,7 +32,7 @@ apps/web/src
 │                   # production/, shipments/ e trace/ = produção, expedição e rastreabilidade
 │                   # dashboard/ = painel inicial
 ├── lib/            # api-client.ts (openapi-fetch), api.ts (ApiError), br.ts, masks.ts, quantity.ts
-├── pages/          # login, callback do Cognito, 404, erro de rota, "Em breve"
+├── pages/          # login, callback do Cognito, 404, erro de rota
 ├── theme/          # ThemeProvider, ThemeToggle (sistema/claro/escuro)
 └── test/           # setup do Vitest, mock da API (fetch), sessão de teste
 ```
@@ -65,8 +65,14 @@ Para adicionar um componente do shadcn: `pnpm dlx shadcn@latest add <nome>` dent
 | `/expedicao/:id`             | privado | detalhe da expedição                              |
 | `/rastreabilidade`           | privado | busca de lote para rastrear                       |
 | `/lotes/:id/rastreabilidade` | privado | árvore para trás (origem) e para frente (destino) |
-| `/recall`, `/qualidade`      | privado | reservadas: aviso "Em breve"                      |
-| `/auditoria`                 | privado | reservada: aviso "Em breve"                       |
+| `/recall`                    | privado | recalls (lista)                                   |
+| `/recall/novo`               | privado | simulação de impacto; execução só admin           |
+| `/recall/:id`                | privado | detalhe: etapas, clientes, lotes, relatório       |
+| `/qualidade`                 | privado | não conformidades (lista)                         |
+| `/qualidade/:id`             | privado | detalhe da NC: liberar/descartar (admin)          |
+| `/auditoria`                 | privado | trilha de auditoria (admin e auditor)             |
+| `/relatorios`                | privado | relatórios CSV                                    |
+| `/importacao`                | privado | importação de cadastros por CSV (admin)           |
 | `*`                          | privado | 404 dentro do layout                              |
 
 Todas as páginas autenticadas são carregadas sob demanda (`React.lazy`, em `app/pages.tsx`): cada uma vira um chunk próprio e o layout mostra um esqueleto (`PageSkeleton`) enquanto o código chega. Passar o mouse (ou o foco) num link da barra lateral pré-carrega a página (`preloadRoute`).
@@ -205,7 +211,7 @@ Os formulários validam no cliente com Zod (mesmas regras da API) antes de envia
 
 ## Telas de estoque (`features/inventory`)
 
-Contrato da API em [estoque.md](estoque.md) e [anexos.md](anexos.md). A barra lateral ganhou a seção **Estoque** (Lotes, Estoque, Movimentações); a seção **Operação** (Produção, Expedição e Rastreabilidade) veio na Semana 3 e só o Recall segue em "Em breve".
+Contrato da API em [estoque.md](estoque.md) e [anexos.md](anexos.md). A barra lateral ganhou a seção **Estoque** (Lotes, Estoque, Movimentações); a seção **Operação** (Produção, Expedição e Rastreabilidade) veio na Semana 3; **Qualidade** (Recall, Qualidade, Auditoria) e **Gestão** (Relatórios, Importação) vieram depois.
 
 ### Recebimento (`/recebimento`)
 
@@ -325,6 +331,54 @@ Como funciona: `layout.ts` monta colunas e ligações a partir de `nodes`/`edges
 - `ProductionOrderResponse` não traz os locais dos insumos nem o local de saída; `TraceNode` não traz o saldo atual do lote.
 - Os `detail` de `/problems/invalid-production` vêm em inglês: o front traduz os casos conhecidos por expressão regular (frágil se a mensagem mudar).
 
+## Recall, qualidade, auditoria, relatórios e importação
+
+Contrato da API em [recall-qualidade-auditoria.md](recall-qualidade-auditoria.md) e [relatorios-importacao.md](relatorios-importacao.md). Código em `features/recalls`, `features/quality`, `features/audit`, `features/alerts`, `features/reports` e `features/imports`. Permissões em `auth/permissions.ts` (`useQualityPermissions`):
+
+| Perfil   | Recall                           | Não conformidade       | Auditoria | Relatórios | Importação |
+| -------- | -------------------------------- | ---------------------- | --------- | ---------- | ---------- |
+| admin    | simula, executa, retoma, encerra | abre, libera, descarta | vê        | baixa      | importa    |
+| operator | simula                           | abre                   | —         | baixa      | —          |
+| auditor  | simula                           | só leitura             | vê        | baixa      | —          |
+
+### Recall (`/recall`)
+
+- **Lista**: número (link), lote de origem (link), motivo, severidade, status com barra de progresso das 3 etapas (deduzida do status: a listagem não traz as etapas), nº de lotes e de clientes, data e usuário. Filtros na URL: status (`?recallStatus=`) e lote de origem (`?lotId=`). A lista se atualiza a cada 3 s enquanto houver recall em execução.
+- **Novo recall** (`/recall/novo`, aceita `?lotId=`): 1) lote de origem (busca pelo código) → **Simular impacto** (`POST /v1/recalls/simulate`, não grava nada): totais (lotes afetados, saldo a bloquear, já expedido, clientes), tabela de lotes afetados (nível, status, saldo), clientes a contatar com as expedições (número, data, lote, quantidade) e fazendas de origem; aviso se o grafo foi truncado. 2) **Executar** (só admin): motivo (≥ 5 caracteres) e severidade (Baixa/Média/Alta, em cartões) → diálogo de confirmação forte: o botão só habilita depois de **digitar o código do lote**. Trocar o lote descarta a simulação.
+- **Detalhe** (`/recall/:id`): status e severidade no cabeçalho; linha do tempo das etapas (Bloquear lotes → Gerar relatório → Notificar) com status, tentativas, início/fim e erro; motivo e datas; clientes a contatar em cartões (e-mail/telefone clicáveis, expedições com data e quantidade — vindas da rastreabilidade para frente do lote de origem) com **Copiar lista** (texto pronto para e-mail); lotes afetados (status anterior → atual, bloqueado em, saldo na abertura). Ações: **Relatório PDF** (URL pré-assinada numa nova aba), **Tentar de novo** (recall `FAILED`) e **Encerrar** (notas obrigatórias, ≥ 5 caracteres). Enquanto `OPEN`/`EXECUTING` (Step Functions), a página consulta a API a cada 2,5 s.
+
+### Qualidade (`/qualidade`)
+
+- **Lista** de não conformidades: número (link), lote (link + status), tipo, descrição, status (Aberta/Liberada/Descartada) e abertura (data e usuário). Filtros: status (`?ncStatus=`), tipo e lote.
+- **Abrir NC** (admin e operador): pela lista ou pelo botão **Abrir não conformidade** do detalhe do lote (lote já fixado). Lote, tipo (Umidade, Defeitos, Contaminação, Pragas, Embalagem, Outro) e descrição; avisa quando o lote não está disponível (a NC é registrada e o status é mantido). O detalhe do lote mostra um aviso com as NCs abertas.
+- **Detalhe** (`/qualidade/:id`): descrição, lote com saldo atual; resolução (quem, quando, justificativa). Admin: **Liberar** e **Descartar** com justificativa; o descarte mostra quanto será baixado e de quais locais.
+
+### Auditoria (`/auditoria`)
+
+Tabela paginada (admin e auditor; os demais veem "Acesso restrito"): data, usuário (clicar filtra por ele), ação traduzida (`lot.status_changed` → "Status do lote alterado"; ações desconhecidas aparecem com a chave), registro (tipo + "Abrir registro" para lote, recall, NC, ordem de produção e expedição) e ID da requisição. Clicar na linha mostra **antes × depois** campo a campo, com os campos alterados em destaque. Filtros na URL: tipo de registro, ação (exata ou grupo, ex.: `recall.`), usuário, período e `entityId`. A lista de usuários do filtro sai das 100 entradas mais recentes (a API não lista usuários).
+
+### Alertas de validade
+
+- **Sino** no cabeçalho com o número de lotes com saldo vencendo em 30 dias (`GET /v1/alerts/expiring`, cache de 5 min); vermelho se há vencidos. Leva a `/lotes?vencendo=30`.
+- **Lotes**: chips **Todos os lotes** / **Vencendo (N)**. A visão "Vencendo" usa o endpoint de alertas (só lotes com saldo, inclui vencidos, mais urgentes primeiro), com janela de 7 a 90 dias. O cartão "Vencendo em 30 dias" do painel leva para ela.
+
+### Relatórios (`/relatorios`)
+
+Um cartão por CSV (Estoque, Movimentações, Produção, Expedições) com os filtros de cada rota (produto, tipo, local, status; tipo de movimentação; etapa; cliente; período em dias locais, "até" inclusivo). **Baixar CSV** usa `fetch` com o Bearer (`lib/download.ts`), salva o blob com o nome do `Content-Disposition` e avisa se veio `X-Report-Truncated: true` (limite de 20.000 linhas).
+
+### Importação (`/importacao`, admin)
+
+1. Escolha do cadastro (Produtos, Fornecedores, Clientes, Locais) com as colunas documentadas (obrigatórias marcadas) e **Baixar modelo** (CSV gerado no navegador, com BOM e `;`).
+2. Arquivo (até 2 MB, checado no cliente): ao escolher, roda o **dry run** (`?dryRun=true`, multipart).
+3. Resultado: linhas, válidas, com erro e a tabela linha × campo × problema (mensagens traduzidas). **Importar** só habilita com zero erros; ao terminar, resumo com link para o cadastro.
+
+### Lacunas da API percebidas
+
+- `GET /v1/recalls` não traz as etapas (o progresso na lista é deduzido do status) nem filtra por período.
+- `RecallCustomerResponse` traz só os números das expedições: datas e quantidades vêm de `GET /v1/lots/:id/trace/forward`.
+- `ExpiringLot` no OpenAPI não declara `status`, `daysToExpiry` e `expired`, que a API já devolve (tipados à mão em `features/alerts/api.ts`).
+- Não há rota de usuários para o filtro da auditoria.
+
 ## Testes
 
 Vitest + Testing Library com `fetch` simulado (`test/mock-api.ts`, roteador por método e caminho, com `:id`) e sessão por perfil (`test/session.ts`). Cobrem: cliente tipado (headers, erros, 401, rede), listagem com paginação, busca/ordenação/situação na URL e na query, erro com retry, erros de campo 409 e 400, validação no cliente, edição, desativação com confirmação, permissões de auditor e operador, empresa via `/v1/me` e o formulário de fornecedor (CPF/CNPJ, variedades, telefone).
@@ -389,7 +443,7 @@ Cores em OKLCH em `src/index.css`, sempre por token (nunca cor fixa no component
 
 ### Layout
 
-- **Barra lateral** (md+): seções Visão geral · Operação · Estoque · Qualidade · Cadastros; recolhível para só ícones (escolha salva em `localStorage`). "Recebimento" só aparece para quem opera o estoque; Recall, Qualidade e Auditoria têm o selo "Em breve".
+- **Barra lateral** (md+): seções Visão geral · Operação · Estoque · Qualidade · Cadastros · Gestão; recolhível para só ícones (escolha salva em `localStorage`). "Recebimento" só aparece para quem opera o estoque; itens com `roles` em `app/navigation.ts` só aparecem para esses perfis (Auditoria: admin e auditor; Importação: admin). O selo "Em breve" (`soon`) continua disponível para módulos futuros.
 - **Celular**: botão "hambúrguer" no cabeçalho abre a mesma navegação numa gaveta (`components/ui/sheet.tsx`).
 - **Cabeçalho**: empresa, selo "Ambiente de desenvolvimento" (só com `VITE_AUTH_MODE=mock`), tema e menu do usuário (perfil e empresa).
 - Conteúdo com `max-w-7xl` e respiro `px-4 → px-8`; link "Pular para o conteúdo" para teclado.

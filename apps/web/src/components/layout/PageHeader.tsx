@@ -80,7 +80,8 @@ export function PageHeader({
     <header className={cn('space-y-3', className)}>
       {breadcrumbs && <Breadcrumbs items={breadcrumbs} />}
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-        <div className="min-w-0 flex-1 space-y-1.5">
+        {/* `basis-72`: no celular as ações descem para baixo do título em vez de espremê-lo. */}
+        <div className="min-w-0 flex-1 basis-72 space-y-1.5">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <h1
               className={cn(
