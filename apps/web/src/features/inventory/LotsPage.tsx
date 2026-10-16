@@ -24,6 +24,7 @@ import { EXPIRY_WINDOWS, LOT_STATUSES, LOT_STATUS_LABELS } from './labels';
 import { isUuid } from './url-filters';
 import { daysUntil, formatDateTime } from '@/lib/quantity';
 import { ALERT_DAYS, useExpiringLots, type ExpiringLot } from '@/features/alerts/api';
+import { countOf, plural } from '@/lib/plural';
 
 const LIST_CONFIG: ListParamsConfig = {
   sorts: ['-receivedAt', 'receivedAt', 'code', '-code', 'expiresAt', '-expiresAt'],
@@ -79,11 +80,13 @@ const expiringColumns: Column<ExpiringLot>[] = [
     cell: (lot) => {
       const days = lot.daysToExpiry ?? daysUntil(lot.expiresAt);
       return days < 0 ? (
-        <span className="font-medium text-destructive">Vencido há {-days} dia(s)</span>
+        <span className="font-medium text-destructive">
+          Vencido há {countOf(-days, 'dia', 'dias')}
+        </span>
       ) : days === 0 ? (
         <span className="font-medium text-amber-700 dark:text-amber-400">Vence hoje</span>
       ) : (
-        <span>Vence em {days} dia(s)</span>
+        <span>Vence em {countOf(days, 'dia', 'dias')}</span>
       );
     },
   },
@@ -276,7 +279,8 @@ export function LotsPage() {
               {(expiring.data?.expiredCount ?? 0) > 0 && (
                 <span className="font-medium text-destructive">
                   {' '}
-                  {expiring.data?.expiredCount} já vencido(s).
+                  {expiring.data?.expiredCount}{' '}
+                  {plural(expiring.data?.expiredCount ?? 0, 'já vencido', 'já vencidos')}.
                 </span>
               )}
             </p>

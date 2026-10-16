@@ -26,6 +26,7 @@ import { ExpiryText, MovementRoute, MovementTypeBadge } from '@/features/invento
 import { formatDateTime, formatQuantity } from '@/lib/quantity';
 import { EXPIRING_DAYS, fetchDashboard, type DashboardData } from './api';
 import { StockByProductChart } from './StockByProductChart';
+import { countOf } from '@/lib/plural';
 
 const integer = new Intl.NumberFormat('pt-BR');
 const percent = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
@@ -213,7 +214,7 @@ function ExpiringList({ data }: { data: DashboardData }) {
       </ul>
       {count > items.length && (
         <p className="text-xs text-muted-foreground">
-          E mais {integer.format(count - items.length)} lote(s).
+          E mais {countOf(count - items.length, 'lote', 'lotes')}.
         </p>
       )}
     </div>

@@ -437,6 +437,12 @@ Cores em OKLCH em `src/index.css`, sempre por token (nunca cor fixa no component
 | `sidebar-*`                        | barra lateral espresso (igual nos dois temas)             |
 | `chart-1…5`                        | gráficos (o painel usa só `chart-1`: uma série, um tom)   |
 
+### Tipografia e textos
+
+- **Geist** no texto e **Geist Mono** (`--font-mono`) em códigos de lote, SKU, locais e documentos — mesma família, altura-x compatível; sem ela o navegador caía na fonte monoespaçada do sistema, menor e destoante.
+- **Plural de verdade**, nunca "lote(s)": `countOf(3, 'lote', 'lotes')` → "3 lotes" e `plural(n, um, vários)` em `lib/plural.ts`.
+- Status restritivo explicado na tela: lote **bloqueado** ou **em quarentena** mostra um aviso (`LotStatusAlert`) dizendo o que está suspenso e como liberar; em lote bloqueado, "Movimentar" fica desativado (a API recusaria).
+
 ### Tema claro/escuro
 
 `theme/ThemeProvider.tsx` guarda a escolha (Sistema, Claro ou Escuro) em `localStorage` (`traceflow.theme`, com `try/catch`) e aplica a classe `.dark` no `<html>`. Um script inline no `index.html` aplica o tema antes do primeiro paint (sem "flash"). O botão fica no cabeçalho e na tela de login; o toast (Sonner) segue o tema.

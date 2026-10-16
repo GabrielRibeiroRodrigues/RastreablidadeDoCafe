@@ -66,7 +66,7 @@ const ACTION_OPTIONS = [
     .filter(([value]) => !value.startsWith('http.') || value === 'http.post')
     .map(([value, label]) => ({
       value,
-      label: value === 'http.post' ? 'Criação (genérica)' : label,
+      label: value === 'http.post' ? 'Registro criado' : label,
     })),
 ];
 

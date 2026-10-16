@@ -38,6 +38,7 @@ import {
   type ImportEntity,
   type ImportResult,
 } from './api';
+import { countOf, plural } from '@/lib/plural';
 
 const CRUMBS = [{ label: 'Gestão' }, { label: 'Importação' }];
 const ENTITIES = Object.keys(IMPORT_ENTITY_LABELS) as ImportEntity[];
@@ -95,7 +96,7 @@ export function ImportPage() {
     onSuccess: async (result) => {
       if (result.created > 0) {
         setDone(result);
-        toast.success(`${result.created} cadastro(s) importado(s)`);
+        toast.success(`${countOf(result.created, 'cadastro importado', 'cadastros importados')}`);
         await queryClient.invalidateQueries({ queryKey: [entity] });
       } else {
         // Algo mudou entre a validação e o envio (ex.: outro usuário cadastrou o mesmo SKU).
@@ -286,8 +287,9 @@ export function ImportPage() {
         <Alert className="border-emerald-600/40 bg-emerald-600/5">
           <CheckCircle2Icon className="text-emerald-700 dark:text-emerald-400" />
           <AlertTitle>
-            {done.created} cadastro(s) de {IMPORT_ENTITY_LABELS[done.entity].toLowerCase()}{' '}
-            importado(s)
+            {countOf(done.created, 'cadastro', 'cadastros')} de{' '}
+            {IMPORT_ENTITY_LABELS[done.entity].toLowerCase()}{' '}
+            {plural(done.created, 'importado', 'importados')}
           </AlertTitle>
           <AlertDescription>
             <div className="mt-2 flex flex-wrap gap-2">
@@ -374,7 +376,9 @@ export function ImportPage() {
                 ) : (
                   <UploadIcon />
                 )}
-                {commit.isPending ? 'Importando…' : `Importar ${check.valid} cadastro(s)`}
+                {commit.isPending
+                  ? 'Importando…'
+                  : `Importar ${countOf(check.valid, 'cadastro', 'cadastros')}`}
               </Button>
             </div>
           </section>

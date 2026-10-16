@@ -56,6 +56,7 @@ import { ROASTING_YIELD_RANGE, STAGES, STAGE_HINTS, STAGE_LABELS, STAGE_RULES } 
 import { massPreview, type MassPreview } from './mass';
 import { maskDecimal } from '@/lib/masks';
 import { UnsavedChangesGuard } from '@/components/form/UnsavedChangesGuard';
+import { countOf } from '@/lib/plural';
 
 const CRUMBS = [{ label: 'Produção', to: '/producao' }, { label: 'Nova ordem' }];
 
@@ -287,7 +288,8 @@ function MassPreviewCard({ stage, mass }: { stage: ProductionStage; mass: MassPr
         )}
         {mass.excluded > 0 && (
           <p className="text-xs text-muted-foreground">
-            {mass.excluded} insumo(s) fora do cálculo (embalagens ou quantidades em unidades).
+            {countOf(mass.excluded, 'insumo', 'insumos')} fora do cálculo (embalagens ou quantidades
+            em unidades).
           </p>
         )}
       </CardContent>

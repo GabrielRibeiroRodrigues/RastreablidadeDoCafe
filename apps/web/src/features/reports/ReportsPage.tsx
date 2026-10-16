@@ -33,6 +33,7 @@ import { getApiClient, unwrap } from '@/lib/api-client';
 import { downloadFromApi, type DownloadResult } from '@/lib/download';
 import { toOptions } from '@/lib/options';
 import { startOfLocalDayIso } from '@/lib/quantity';
+import { countOf } from '@/lib/plural';
 
 type Filters = Record<string, string | undefined>;
 
@@ -109,7 +110,7 @@ function ReportCard({
       <CardFooter className="justify-between gap-2">
         <span className="text-xs text-muted-foreground">
           {last && !last.truncated && last.rows !== null
-            ? `${last.rows.toLocaleString('pt-BR')} linha(s) no último arquivo`
+            ? `${countOf(last.rows, 'linha', 'linhas')} no último arquivo`
             : 'CSV para Excel (separador ";")'}
         </span>
         <Button onClick={() => download.mutate()} disabled={download.isPending}>

@@ -11,6 +11,7 @@ import { inventoryApi } from '@/features/inventory/api';
 import { LotStatusBadge } from '@/features/inventory/components';
 import { ProductTypeBadge } from '@/features/production/components';
 import { Skeleton } from '@/components/ui/skeleton';
+import { countOf } from '@/lib/plural';
 
 /** Busca de lote pelo código; leva à árvore de rastreabilidade. */
 export function TraceSearchPage() {
@@ -91,7 +92,7 @@ export function TraceSearchPage() {
           ) : (
             <>
               <p className="text-sm text-muted-foreground">
-                {results.data.meta.total} lote(s) encontrados
+                {countOf(results.data.meta.total, 'lote encontrado', 'lotes encontrados')}
                 {results.data.meta.total > results.data.data.length &&
                   ` (mostrando ${results.data.data.length})`}
                 . Escolha um:

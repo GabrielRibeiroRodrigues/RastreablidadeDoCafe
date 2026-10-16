@@ -2,6 +2,7 @@ import { BellIcon } from 'lucide-react';
 import { Link } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { ALERT_DAYS, useExpiringLots } from './api';
+import { countOf, plural } from '@/lib/plural';
 
 /** Sino do cabeçalho: lotes com saldo vencendo em 30 dias (inclui vencidos). */
 export function ExpiryBell() {
@@ -11,7 +12,7 @@ export function ExpiryBell() {
   const label =
     count === 0
       ? `Nenhum lote vencendo em ${ALERT_DAYS} dias`
-      : `${count} lote(s) vencendo em ${ALERT_DAYS} dias${expired > 0 ? `, ${expired} vencido(s)` : ''}`;
+      : `${countOf(count, 'lote', 'lotes')} vencendo em ${ALERT_DAYS} dias${expired > 0 ? `, ${expired} ${plural(expired, 'vencido', 'vencidos')}` : ''}`;
 
   return (
     <Button variant="ghost" size="icon" className="relative" asChild>

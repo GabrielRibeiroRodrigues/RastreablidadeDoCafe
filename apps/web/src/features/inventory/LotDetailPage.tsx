@@ -13,6 +13,7 @@ import { Link, useParams } from 'react-router';
 import { useInventoryPermissions, useQualityPermissions } from '@/auth/permissions';
 import { OpenNcDialog } from '@/features/quality/OpenNcDialog';
 import { OpenNcAlert } from '@/features/quality/OpenNcAlert';
+import { LotStatusAlert } from './LotStatusAlert';
 import { DataTable } from '@/components/catalog/DataTable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +38,7 @@ import { movementColumns } from './movement-columns';
 import { ChangeStatusDialog, ReverseMovementDialog } from './ReasonDialogs';
 import { DetailPageError, DetailPageSkeleton } from '@/components/layout/DetailStates';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { countOf } from '@/lib/plural';
 
 /** O histórico mostra as 100 movimentações mais recentes do lote. */
 const HISTORY_SIZE = 100;
@@ -98,6 +100,9 @@ export function LotDetailPage() {
 
   const lot: LotDetail = lotQuery.data;
   const consumed = lot.status === 'CONSUMED';
+  // Lote bloqueado: a API recusa qualquer saída; só ajuste de sobra seria aceito, então a ação
+  // fica desativada com a explicação no aviso de status (estornos seguem pelo histórico).
+  const blocked = lot.status === 'BLOCKED';
   const canChangeStatus =
     !consumed && permissions.settableStatuses.some((status) => status !== lot.status);
   const expiryDays = lot.expiresAt ? daysUntil(lot.expiresAt) : null;
@@ -169,7 +174,8 @@ export function LotDetailPage() {
             {permissions.canOperate && (
               <Button
                 onClick={() => setDialog({ kind: 'move' })}
-                disabled={consumed && !permissions.canAdjust}
+                disabled={blocked || (consumed && !permissions.canAdjust)}
+                title={blocked ? 'Lote bloqueado: movimentações suspensas' : undefined}
               >
                 <ArrowLeftRightIcon />
                 Movimentar
@@ -179,6 +185,7 @@ export function LotDetailPage() {
         }
       />
 
+      <LotStatusAlert status={lot.status} />
       <OpenNcAlert lotId={lot.id} />
 
       <div className="grid gap-4 md:grid-cols-3">
@@ -210,10 +217,10 @@ export function LotDetailPage() {
             {expiryDays === null
               ? 'Sem validade informada.'
               : expiryDays < 0
-                ? `Vencido há ${-expiryDays} dia(s).`
+                ? `Vencido há ${countOf(-expiryDays, 'dia', 'dias')}.`
                 : expiryDays === 0
                   ? 'Vence hoje.'
-                  : `Vence em ${expiryDays} dia(s) — ${formatDate(lot.expiresAt)}.`}
+                  : `Vence em ${countOf(expiryDays, 'dia', 'dias')} — ${formatDate(lot.expiresAt)}.`}
           </CardContent>
         </Card>
 

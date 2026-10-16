@@ -37,6 +37,7 @@ import { recallsApi, type RecallSeverity, type RecallSimulation } from './api';
 import { UnitQuantities } from './components';
 import { ImpactView } from './ImpactView';
 import { RECALL_SEVERITY_HINTS, RECALL_SEVERITY_LABELS } from './labels';
+import { countOf, plural } from '@/lib/plural';
 
 const CRUMBS = [
   { label: 'Qualidade' },
@@ -81,12 +82,14 @@ function ExecuteDialog({
         </DialogHeader>
         <ul className="space-y-1.5 rounded-lg border bg-muted/40 p-3 text-sm">
           <li>
-            <strong className="font-medium">{impact.totals.lots}</strong> lote(s) serão bloqueados
+            <strong className="font-medium">{impact.totals.lots}</strong>{' '}
+            {plural(impact.totals.lots, 'lote será bloqueado', 'lotes serão bloqueados')}
             (saldo: <UnitQuantities items={impact.totals.stock} />)
           </li>
           <li>
-            <strong className="font-medium">{impact.totals.customers}</strong> cliente(s) a contatar
-            ({impact.totals.shipments} expedição(ões))
+            <strong className="font-medium">{impact.totals.customers}</strong>{' '}
+            {plural(impact.totals.customers, 'cliente', 'clientes')} a contatar (
+            {impact.totals.shipments} expedição(ões))
           </li>
           <li>Relatório PDF e aviso à equipe serão gerados.</li>
         </ul>
@@ -173,7 +176,7 @@ export function NewRecallPage() {
         description:
           recall.status === 'FAILED'
             ? 'Uma etapa falhou: veja o detalhe e tente de novo.'
-            : `${recall.lotsCount} lote(s) bloqueado(s), ${recall.customersCount} cliente(s) a contatar.`,
+            : `${countOf(recall.lotsCount, 'lote bloqueado', 'lotes bloqueados')}, ${countOf(recall.customersCount, 'cliente', 'clientes')} a contatar.`,
       });
       await Promise.all(
         ['recalls', 'lots', 'stock', 'movements'].map((key) =>
@@ -296,8 +299,8 @@ export function NewRecallPage() {
               <CardHeader>
                 <CardTitle>3. Executar</CardTitle>
                 <CardDescription>
-                  Registra o recall, bloqueia os {impact.totals.lots} lote(s), gera o relatório e
-                  avisa a equipe.
+                  Registra o recall, bloqueia {plural(impact.totals.lots, 'o', 'os')}{' '}
+                  {countOf(impact.totals.lots, 'lote', 'lotes')}, gera o relatório e avisa a equipe.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-5">
@@ -356,7 +359,10 @@ export function NewRecallPage() {
                 {impact.totals.customers > 0 && (
                   <Alert>
                     <TriangleAlertIcon />
-                    <AlertTitle>{impact.totals.customers} cliente(s) receberam produto</AlertTitle>
+                    <AlertTitle>
+                      {countOf(impact.totals.customers, 'cliente recebeu', 'clientes receberam')}{' '}
+                      produto
+                    </AlertTitle>
                     <AlertDescription>
                       Depois de executar, a lista de contatos fica no detalhe do recall.
                     </AlertDescription>

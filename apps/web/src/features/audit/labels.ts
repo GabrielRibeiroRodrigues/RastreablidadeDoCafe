@@ -19,10 +19,10 @@ export const AUDIT_ACTION_LABELS: Record<string, string> = {
   'recall.executed': 'Recall executado',
   'recall.failed': 'Recall falhou',
   'recall.closed': 'Recall encerrado',
-  'http.post': 'Criação (genérica)',
-  'http.put': 'Alteração (genérica)',
-  'http.patch': 'Alteração (genérica)',
-  'http.delete': 'Exclusão (genérica)',
+  'http.post': 'Registro criado',
+  'http.put': 'Registro alterado',
+  'http.patch': 'Registro alterado',
+  'http.delete': 'Registro removido',
 };
 
 /** Filtro por grupo: a API aceita prefixo terminado em ponto (`recall.`). */

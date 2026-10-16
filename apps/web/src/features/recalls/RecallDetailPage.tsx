@@ -297,28 +297,117 @@ export function RecallDetailPage() {
         </Alert>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardDescription>Motivo</CardDescription>
-            <CardTitle className="text-base leading-snug font-medium whitespace-pre-line">
-              {recall.reason}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <Info label="Lotes afetados">{recall.lotsCount}</Info>
-              <Info label="Clientes a contatar">{recall.customersCount}</Info>
-              <Info label="Iniciado em">
-                {recall.startedAt ? formatDateTime(recall.startedAt) : '—'}
-              </Info>
-              <Info label="Concluído em">
-                {recall.completedAt ? formatDateTime(recall.completedAt) : '—'}
-              </Info>
-            </dl>
-          </CardContent>
-        </Card>
-        <Card>
+      <div className="grid items-start gap-4 lg:grid-cols-3">
+        {/* Coluna principal: o que aconteceu e quem precisa ser contatado. */}
+        <div className="space-y-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardDescription>Motivo</CardDescription>
+              <CardTitle className="text-base leading-snug font-medium whitespace-pre-line">
+                {recall.reason}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                <Info label="Lotes afetados">{recall.lotsCount}</Info>
+                <Info label="Clientes a contatar">{recall.customersCount}</Info>
+                <Info label="Iniciado em">
+                  {recall.startedAt ? formatDateTime(recall.startedAt) : '—'}
+                </Info>
+                <Info label="Concluído em">
+                  {recall.completedAt ? formatDateTime(recall.completedAt) : '—'}
+                </Info>
+              </dl>
+            </CardContent>
+          </Card>
+
+          <section className="space-y-3">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <h2 className="text-lg font-semibold">Clientes a contatar</h2>
+              {recall.customers.length > 0 && (
+                <Button variant="outline" size="sm" onClick={() => void onCopy()}>
+                  {copied ? <CheckIcon /> : <ClipboardCopyIcon />}
+                  Copiar lista
+                </Button>
+              )}
+            </div>
+            {recall.customers.length === 0 ? (
+              <p className="rounded-xl border border-dashed bg-card/50 p-6 text-center text-sm text-muted-foreground">
+                Nenhum lote afetado foi expedido: não há clientes a contatar.
+              </p>
+            ) : (
+              <ul className="grid gap-3 md:grid-cols-2">
+                {recall.customers.map((row) => {
+                  const { customer } = row;
+                  const place = [customer.city, customer.state].filter(Boolean).join('/');
+                  return (
+                    <li key={customer.id} className="space-y-3 rounded-xl border bg-card p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <div className="font-medium">{customer.name}</div>
+                          {place && <div className="text-xs text-muted-foreground">{place}</div>}
+                        </div>
+                        <span className="text-sm">
+                          <UnitQuantities items={row.quantities} />
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+                        {customer.email ? (
+                          <a
+                            href={`mailto:${customer.email}?subject=${encodeURIComponent(`Recall ${recall.number}`)}`}
+                            className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
+                          >
+                            <MailIcon className="size-3.5" aria-hidden />
+                            {customer.email}
+                          </a>
+                        ) : null}
+                        {customer.phone ? (
+                          <a
+                            href={`tel:${customer.phone}`}
+                            className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
+                          >
+                            <PhoneIcon className="size-3.5" aria-hidden />
+                            {formatPhone(customer.phone)}
+                          </a>
+                        ) : null}
+                        {!customer.email && !customer.phone && (
+                          <span className="text-muted-foreground">Sem contato cadastrado</span>
+                        )}
+                      </div>
+                      <ul className="space-y-1 border-t pt-2 text-xs">
+                        {row.shipmentNumbers.map((number) => {
+                          const shipment = shipments.get(number);
+                          return (
+                            <li key={number} className="flex flex-wrap gap-x-2">
+                              {shipment ? (
+                                <Link
+                                  to={`/expedicao/${shipment.shipmentId}`}
+                                  className="font-mono text-primary underline-offset-4 hover:underline"
+                                >
+                                  {number}
+                                </Link>
+                              ) : (
+                                <span className="font-mono">{number}</span>
+                              )}
+                              {shipment && (
+                                <span className="text-muted-foreground">
+                                  {formatDateTime(shipment.shippedAt)} · {shipment.lotCode} ·{' '}
+                                  {formatQuantity(shipment.quantity, shipment.unit)}
+                                </span>
+                              )}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        </div>
+        {/* Lateral: andamento das etapas, visível enquanto se rola a página. */}
+        <Card className="lg:sticky lg:top-20">
           <CardHeader>
             <CardTitle>Etapas</CardTitle>
             <CardDescription>
@@ -332,91 +421,6 @@ export function RecallDetailPage() {
           </CardContent>
         </Card>
       </div>
-
-      <section className="space-y-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-lg font-semibold">Clientes a contatar</h2>
-          {recall.customers.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => void onCopy()}>
-              {copied ? <CheckIcon /> : <ClipboardCopyIcon />}
-              Copiar lista
-            </Button>
-          )}
-        </div>
-        {recall.customers.length === 0 ? (
-          <p className="rounded-xl border border-dashed bg-card/50 p-6 text-center text-sm text-muted-foreground">
-            Nenhum lote afetado foi expedido: não há clientes a contatar.
-          </p>
-        ) : (
-          <ul className="grid gap-3 md:grid-cols-2">
-            {recall.customers.map((row) => {
-              const { customer } = row;
-              const place = [customer.city, customer.state].filter(Boolean).join('/');
-              return (
-                <li key={customer.id} className="space-y-3 rounded-xl border bg-card p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div>
-                      <div className="font-medium">{customer.name}</div>
-                      {place && <div className="text-xs text-muted-foreground">{place}</div>}
-                    </div>
-                    <span className="text-sm">
-                      <UnitQuantities items={row.quantities} />
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-                    {customer.email ? (
-                      <a
-                        href={`mailto:${customer.email}?subject=${encodeURIComponent(`Recall ${recall.number}`)}`}
-                        className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
-                      >
-                        <MailIcon className="size-3.5" aria-hidden />
-                        {customer.email}
-                      </a>
-                    ) : null}
-                    {customer.phone ? (
-                      <a
-                        href={`tel:${customer.phone}`}
-                        className="inline-flex items-center gap-1.5 text-primary underline-offset-4 hover:underline"
-                      >
-                        <PhoneIcon className="size-3.5" aria-hidden />
-                        {formatPhone(customer.phone)}
-                      </a>
-                    ) : null}
-                    {!customer.email && !customer.phone && (
-                      <span className="text-muted-foreground">Sem contato cadastrado</span>
-                    )}
-                  </div>
-                  <ul className="space-y-1 border-t pt-2 text-xs">
-                    {row.shipmentNumbers.map((number) => {
-                      const shipment = shipments.get(number);
-                      return (
-                        <li key={number} className="flex flex-wrap gap-x-2">
-                          {shipment ? (
-                            <Link
-                              to={`/expedicao/${shipment.shipmentId}`}
-                              className="font-mono text-primary underline-offset-4 hover:underline"
-                            >
-                              {number}
-                            </Link>
-                          ) : (
-                            <span className="font-mono">{number}</span>
-                          )}
-                          {shipment && (
-                            <span className="text-muted-foreground">
-                              {formatDateTime(shipment.shippedAt)} · {shipment.lotCode} ·{' '}
-                              {formatQuantity(shipment.quantity, shipment.unit)}
-                            </span>
-                          )}
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
 
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Lotes afetados</h2>
