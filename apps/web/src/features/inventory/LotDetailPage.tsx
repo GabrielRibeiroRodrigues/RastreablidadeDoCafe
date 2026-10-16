@@ -2,6 +2,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeftRightIcon,
+  ClipboardPlusIcon,
   GitForkIcon,
   PencilIcon,
   ShieldAlertIcon,
@@ -9,7 +10,10 @@ import {
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
-import { useInventoryPermissions } from '@/auth/permissions';
+import { useInventoryPermissions, useQualityPermissions } from '@/auth/permissions';
+import { OpenNcDialog } from '@/features/quality/OpenNcDialog';
+import { OpenNcAlert } from '@/features/quality/OpenNcAlert';
+import { LotStatusAlert } from './LotStatusAlert';
 import { DataTable } from '@/components/catalog/DataTable';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +38,7 @@ import { movementColumns } from './movement-columns';
 import { ChangeStatusDialog, ReverseMovementDialog } from './ReasonDialogs';
 import { DetailPageError, DetailPageSkeleton } from '@/components/layout/DetailStates';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { countOf } from '@/lib/plural';
 
 /** O histórico mostra as 100 movimentações mais recentes do lote. */
 const HISTORY_SIZE = 100;
@@ -42,6 +47,7 @@ type DialogState =
   | { kind: 'move' }
   | { kind: 'status' }
   | { kind: 'edit' }
+  | { kind: 'nc' }
   | { kind: 'reverse'; movement: Movement }
   | null;
 
@@ -62,6 +68,7 @@ const num = (value: number | null, suffix = '') =>
 export function LotDetailPage() {
   const { id = '' } = useParams();
   const permissions = useInventoryPermissions();
+  const { canOpenNc } = useQualityPermissions();
   const [dialog, setDialog] = useState<DialogState>(null);
 
   const lotQuery = useQuery({
@@ -93,6 +100,9 @@ export function LotDetailPage() {
 
   const lot: LotDetail = lotQuery.data;
   const consumed = lot.status === 'CONSUMED';
+  // Lote bloqueado: a API recusa qualquer saída; só ajuste de sobra seria aceito, então a ação
+  // fica desativada com a explicação no aviso de status (estornos seguem pelo histórico).
+  const blocked = lot.status === 'BLOCKED';
   const canChangeStatus =
     !consumed && permissions.settableStatuses.some((status) => status !== lot.status);
   const expiryDays = lot.expiresAt ? daysUntil(lot.expiresAt) : null;
@@ -143,6 +153,12 @@ export function LotDetailPage() {
               </Link>
             </Button>
             {permissions.canOperate && <LabelButton lot={lot} />}
+            {canOpenNc && (
+              <Button variant="outline" onClick={() => setDialog({ kind: 'nc' })}>
+                <ClipboardPlusIcon />
+                Abrir não conformidade
+              </Button>
+            )}
             {permissions.canOperate && (
               <Button variant="outline" onClick={() => setDialog({ kind: 'edit' })}>
                 <PencilIcon />
@@ -158,7 +174,8 @@ export function LotDetailPage() {
             {permissions.canOperate && (
               <Button
                 onClick={() => setDialog({ kind: 'move' })}
-                disabled={consumed && !permissions.canAdjust}
+                disabled={blocked || (consumed && !permissions.canAdjust)}
+                title={blocked ? 'Lote bloqueado: movimentações suspensas' : undefined}
               >
                 <ArrowLeftRightIcon />
                 Movimentar
@@ -167,6 +184,9 @@ export function LotDetailPage() {
           </>
         }
       />
+
+      <LotStatusAlert status={lot.status} />
+      <OpenNcAlert lotId={lot.id} />
 
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
@@ -197,10 +217,10 @@ export function LotDetailPage() {
             {expiryDays === null
               ? 'Sem validade informada.'
               : expiryDays < 0
-                ? `Vencido há ${-expiryDays} dia(s).`
+                ? `Vencido há ${countOf(-expiryDays, 'dia', 'dias')}.`
                 : expiryDays === 0
                   ? 'Vence hoje.'
-                  : `Vence em ${expiryDays} dia(s) — ${formatDate(lot.expiresAt)}.`}
+                  : `Vence em ${countOf(expiryDays, 'dia', 'dias')} — ${formatDate(lot.expiresAt)}.`}
           </CardContent>
         </Card>
 
@@ -310,6 +330,7 @@ export function LotDetailPage() {
         />
       )}
       {dialog?.kind === 'edit' && <EditLotDialog lot={lot} onClose={() => setDialog(null)} />}
+      {dialog?.kind === 'nc' && <OpenNcDialog lot={lot} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'reverse' && (
         <ReverseMovementDialog
           movement={dialog.movement}

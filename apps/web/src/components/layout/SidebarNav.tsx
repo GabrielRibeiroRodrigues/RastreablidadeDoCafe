@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router';
 import { cn } from 'cn';
-import { NAV_SECTIONS, type NavLinkItem } from '@/app/navigation';
+import { canSeeNavItem, NAV_SECTIONS, type NavLinkItem } from '@/app/navigation';
 import { preloadRoute } from '@/app/pages';
+import { useAuth } from '@/auth/auth-context';
 import { useInventoryPermissions } from '@/auth/permissions';
 
 interface SidebarNavProps {
@@ -75,11 +76,13 @@ function NavEntry({
 /** Links da barra lateral, agrupados por seção (mesmo conteúdo no desktop e na gaveta). */
 export function SidebarNav({ collapsed = false, onNavigate }: SidebarNavProps) {
   const { canOperate } = useInventoryPermissions();
+  const { user } = useAuth();
+  const roles = user?.roles ?? [];
 
   return (
     <nav aria-label="Navegação principal" className="space-y-5">
       {NAV_SECTIONS.map((section) => {
-        const items = section.items.filter((item) => !item.requiresOperate || canOperate);
+        const items = section.items.filter((item) => canSeeNavItem(item, roles, canOperate));
         if (items.length === 0) return null;
         return (
           <div key={section.title}>

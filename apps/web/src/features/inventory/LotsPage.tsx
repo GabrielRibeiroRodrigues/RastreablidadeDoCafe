@@ -1,7 +1,13 @@
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { BoxesIcon, Loader2Icon, PackagePlusIcon, SearchXIcon } from 'lucide-react';
+import {
+  BoxesIcon,
+  CalendarClockIcon,
+  Loader2Icon,
+  PackagePlusIcon,
+  SearchXIcon,
+} from 'lucide-react';
 import { Link } from 'react-router';
 import { useInventoryPermissions } from '@/auth/permissions';
 import { DataTable, type Column } from '@/components/catalog/DataTable';
@@ -16,7 +22,9 @@ import { ExpiryText, LotStatusBadge, Quantity } from './components';
 import { useProducts } from './hooks';
 import { EXPIRY_WINDOWS, LOT_STATUSES, LOT_STATUS_LABELS } from './labels';
 import { isUuid } from './url-filters';
-import { formatDateTime } from '@/lib/quantity';
+import { daysUntil, formatDateTime } from '@/lib/quantity';
+import { ALERT_DAYS, useExpiringLots, type ExpiringLot } from '@/features/alerts/api';
+import { countOf, plural } from '@/lib/plural';
 
 const LIST_CONFIG: ListParamsConfig = {
   sorts: ['-receivedAt', 'receivedAt', 'code', '-code', 'expiresAt', '-expiresAt'],
@@ -26,8 +34,68 @@ const LIST_CONFIG: ListParamsConfig = {
     lotStatus: LOT_STATUSES,
     productId: isUuid,
     expiresWithinDays: EXPIRY_WINDOWS,
+    // Visão de alerta (`GET /v1/alerts/expiring`): só lotes com saldo, vencidos ou vencendo.
+    vencendo: EXPIRY_WINDOWS,
   },
 };
+
+const expiringColumns: Column<ExpiringLot>[] = [
+  {
+    id: 'code',
+    header: 'Código',
+    cell: (lot) => (
+      <Link
+        to={`/lotes/${lot.id}`}
+        className="font-mono text-xs font-medium text-primary underline-offset-4 hover:underline"
+      >
+        {lot.code}
+      </Link>
+    ),
+  },
+  {
+    id: 'product',
+    header: 'Produto',
+    className: 'whitespace-normal',
+    cell: (lot) => (
+      <div className="min-w-40">
+        <div className="font-medium text-foreground">{lot.product.name}</div>
+        <div className="text-xs text-muted-foreground">{lot.product.sku}</div>
+      </div>
+    ),
+  },
+  {
+    id: 'balance',
+    header: 'Saldo',
+    className: 'text-right',
+    cell: (lot) => <Quantity value={lot.balance} unit={lot.unit} />,
+  },
+  {
+    id: 'expiresAt',
+    header: 'Validade',
+    cell: (lot) => <ExpiryText value={lot.expiresAt} />,
+  },
+  {
+    id: 'days',
+    header: 'Situação',
+    cell: (lot) => {
+      const days = lot.daysToExpiry ?? daysUntil(lot.expiresAt);
+      return days < 0 ? (
+        <span className="font-medium text-destructive">
+          Vencido há {countOf(-days, 'dia', 'dias')}
+        </span>
+      ) : days === 0 ? (
+        <span className="font-medium text-amber-700 dark:text-amber-400">Vence hoje</span>
+      ) : (
+        <span>Vence em {countOf(days, 'dia', 'dias')}</span>
+      );
+    },
+  },
+  {
+    id: 'status',
+    header: 'Status',
+    cell: (lot) => (lot.status ? <LotStatusBadge status={lot.status} /> : null),
+  },
+];
 
 const columns: Column<Lot>[] = [
   {
@@ -103,6 +171,10 @@ export function LotsPage() {
   const list = useListParams(LIST_CONFIG);
   const { params } = list;
   const products = useProducts();
+  const expiringWindow = params.filters.vencendo;
+  const expiring = useExpiringLots(Number(expiringWindow ?? ALERT_DAYS), Boolean(expiringWindow));
+  // Contagem do chip (mesma consulta do sino do cabeçalho, em cache).
+  const expiringCount = useExpiringLots();
 
   const query = useQuery({
     queryKey: ['lots', 'list', params],
@@ -120,6 +192,7 @@ export function LotsPage() {
       return inventoryApi.listLots(apiQuery, signal);
     },
     placeholderData: keepPreviousData,
+    enabled: !expiringWindow,
   });
 
   const newReceipt = canOperate && (
@@ -161,67 +234,138 @@ export function LotsPage() {
         actions={newReceipt}
       />
 
-      <div className="space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <SearchInput
-            value={params.q}
-            onChange={list.setQuery}
-            placeholder="Buscar pelo código (CAF-2026-…)"
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Visão">
+        <Button
+          size="sm"
+          variant={expiringWindow ? 'outline' : 'secondary'}
+          aria-pressed={!expiringWindow}
+          className="rounded-full"
+          onClick={() => list.setFilter('vencendo', null)}
+        >
+          Todos os lotes
+        </Button>
+        <Button
+          size="sm"
+          variant={expiringWindow ? 'secondary' : 'outline'}
+          aria-pressed={Boolean(expiringWindow)}
+          className="rounded-full"
+          onClick={() => list.setFilter('vencendo', expiringWindow ? null : String(ALERT_DAYS))}
+        >
+          <CalendarClockIcon />
+          Vencendo
+          {(expiringCount.data?.data.length ?? 0) > 0 && (
+            <span className="rounded-full bg-warning px-1.5 text-[0.7rem] leading-4 font-semibold text-black">
+              {expiringCount.data?.data.length}
+            </span>
+          )}
+        </Button>
+      </div>
+
+      {expiringWindow ? (
+        <div className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <FilterSelect
+              label="Janela"
+              allLabel={`Vencendo em ${ALERT_DAYS} dias`}
+              options={EXPIRY_WINDOWS.filter((days) => days !== String(ALERT_DAYS)).map((days) => ({
+                value: days,
+                label: `Vencendo em ${days} dias`,
+              }))}
+              value={expiringWindow === String(ALERT_DAYS) ? undefined : expiringWindow}
+              onChange={(value) => list.setFilter('vencendo', value ?? String(ALERT_DAYS))}
+            />
+            <p className="text-sm text-muted-foreground">
+              Lotes com saldo vencidos ou que vencem na janela, os mais urgentes primeiro.
+              {(expiring.data?.expiredCount ?? 0) > 0 && (
+                <span className="font-medium text-destructive">
+                  {' '}
+                  {expiring.data?.expiredCount}{' '}
+                  {plural(expiring.data?.expiredCount ?? 0, 'já vencido', 'já vencidos')}.
+                </span>
+              )}
+            </p>
+          </div>
+          <DataTable
+            caption="Lotes vencendo"
+            columns={expiringColumns}
+            rows={expiring.data?.data}
+            isLoading={expiring.isPending}
+            error={expiring.isError ? expiring.error : null}
+            onRetry={() => void expiring.refetch()}
+            sort=""
+            onSortChange={() => undefined}
+            empty={
+              <EmptyState
+                icon={CalendarClockIcon}
+                title="Nada vencendo"
+                description={`Nenhum lote com saldo vence nos próximos ${expiringWindow} dias.`}
+              />
+            }
           />
-          <FilterSelect
-            label="Produto"
-            allLabel="Todos os produtos"
-            options={(products.data?.data ?? []).map((p) => ({ value: p.id, label: p.name }))}
-            value={params.filters.productId}
-            onChange={(value) => list.setFilter('productId', value)}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+            <SearchInput
+              value={params.q}
+              onChange={list.setQuery}
+              placeholder="Buscar pelo código (CAF-2026-…)"
+            />
+            <FilterSelect
+              label="Produto"
+              allLabel="Todos os produtos"
+              options={(products.data?.data ?? []).map((p) => ({ value: p.id, label: p.name }))}
+              value={params.filters.productId}
+              onChange={(value) => list.setFilter('productId', value)}
+            />
+            <FilterSelect
+              label="Status"
+              allLabel="Todos os status"
+              options={toOptions(LOT_STATUS_LABELS)}
+              value={params.filters.lotStatus}
+              onChange={(value) => list.setFilter('lotStatus', value)}
+            />
+            <FilterSelect
+              label="Validade"
+              allLabel="Qualquer validade"
+              options={EXPIRY_WINDOWS.map((days) => ({
+                value: days,
+                label: `Vencendo em ${days} dias`,
+              }))}
+              value={params.filters.expiresWithinDays}
+              onChange={(value) => list.setFilter('expiresWithinDays', value)}
+            />
+            {query.isFetching && !query.isPending && (
+              <Loader2Icon
+                className="size-4 animate-spin text-muted-foreground sm:ml-auto"
+                aria-label="Atualizando"
+              />
+            )}
+          </div>
+
+          <DataTable
+            caption="Lista de lotes"
+            columns={columns}
+            rows={query.data?.data}
+            isLoading={query.isPending}
+            error={query.isError ? query.error : null}
+            onRetry={() => void query.refetch()}
+            sort={params.sort}
+            onSortChange={list.setSort}
+            empty={empty}
+            isMuted={(lot) => lot.status === 'CONSUMED'}
           />
-          <FilterSelect
-            label="Status"
-            allLabel="Todos os status"
-            options={toOptions(LOT_STATUS_LABELS)}
-            value={params.filters.lotStatus}
-            onChange={(value) => list.setFilter('lotStatus', value)}
-          />
-          <FilterSelect
-            label="Validade"
-            allLabel="Qualquer validade"
-            options={EXPIRY_WINDOWS.map((days) => ({
-              value: days,
-              label: `Vencendo em ${days} dias`,
-            }))}
-            value={params.filters.expiresWithinDays}
-            onChange={(value) => list.setFilter('expiresWithinDays', value)}
-          />
-          {query.isFetching && !query.isPending && (
-            <Loader2Icon
-              className="size-4 animate-spin text-muted-foreground sm:ml-auto"
-              aria-label="Atualizando"
+
+          {query.data && query.data.meta.total > 0 && (
+            <PaginationBar
+              meta={query.data.meta}
+              onPageChange={list.setPage}
+              onPageSizeChange={list.setPageSize}
+              disabled={query.isPlaceholderData}
             />
           )}
         </div>
-
-        <DataTable
-          caption="Lista de lotes"
-          columns={columns}
-          rows={query.data?.data}
-          isLoading={query.isPending}
-          error={query.isError ? query.error : null}
-          onRetry={() => void query.refetch()}
-          sort={params.sort}
-          onSortChange={list.setSort}
-          empty={empty}
-          isMuted={(lot) => lot.status === 'CONSUMED'}
-        />
-
-        {query.data && query.data.meta.total > 0 && (
-          <PaginationBar
-            meta={query.data.meta}
-            onPageChange={list.setPage}
-            onPageSizeChange={list.setPageSize}
-            disabled={query.isPlaceholderData}
-          />
-        )}
-      </div>
+      )}
     </div>
   );
 }

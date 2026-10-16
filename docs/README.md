@@ -15,6 +15,7 @@
 | [etiqueta-pagina-publica.md](etiqueta-pagina-publica.md)       | Etiqueta PDF com QR code, token público e página de rastreio    |
 | [relatorios-importacao.md](relatorios-importacao.md)           | Dashboard, relatórios CSV e importação de cadastros             |
 | [seguranca.md](seguranca.md)                                   | Segurança e produção: rate limit, proxy, CORS, códigos de erro  |
+| [go-live.md](go-live.md)                                       | Checklist de entrada em produção, riscos e conferência          |
 | [desenvolvimento.md](desenvolvimento.md)                       | Como rodar, scripts, convenções, solução de problemas           |
 | [web.md](web.md)                                               | Front-end: estrutura, autenticação, variáveis de ambiente       |
 | [adr/](adr/README.md)                                          | Registro das decisões de arquitetura                            |

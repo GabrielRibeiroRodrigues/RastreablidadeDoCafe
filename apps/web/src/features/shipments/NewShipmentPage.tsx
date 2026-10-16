@@ -33,6 +33,7 @@ import {
 import { searchActiveCustomers, shipmentsApi, type ShipmentInput } from './api';
 import { maskDecimal } from '@/lib/masks';
 import { UnsavedChangesGuard } from '@/components/form/UnsavedChangesGuard';
+import { countOf } from '@/lib/plural';
 
 const QUANTITY_HINT = 'Informe uma quantidade positiva (até 3 casas decimais).';
 
@@ -131,7 +132,7 @@ export function NewShipmentPage() {
     onSuccess: async (shipment) => {
       idempotency.reset();
       toast.success(`Expedição ${shipment.number} registrada`, {
-        description: `${shipment.customer.name} · ${shipment.items.length} item(ns)`,
+        description: `${shipment.customer.name} · ${countOf(shipment.items.length, 'item', 'itens')}`,
       });
       await Promise.all([invalidate(), queryClient.invalidateQueries({ queryKey: ['shipments'] })]);
       void navigate(`/expedicao/${shipment.id}`);

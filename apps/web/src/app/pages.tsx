@@ -93,6 +93,38 @@ export const ShipmentDetailPage = lazyPage(
   () => import('@/features/shipments/ShipmentDetailPage'),
   (m) => m.ShipmentDetailPage,
 );
+export const RecallsPage = lazyPage(
+  () => import('@/features/recalls/RecallsPage'),
+  (m) => m.RecallsPage,
+);
+export const NewRecallPage = lazyPage(
+  () => import('@/features/recalls/NewRecallPage'),
+  (m) => m.NewRecallPage,
+);
+export const RecallDetailPage = lazyPage(
+  () => import('@/features/recalls/RecallDetailPage'),
+  (m) => m.RecallDetailPage,
+);
+export const NonConformitiesPage = lazyPage(
+  () => import('@/features/quality/NonConformitiesPage'),
+  (m) => m.NonConformitiesPage,
+);
+export const NonConformityDetailPage = lazyPage(
+  () => import('@/features/quality/NonConformityDetailPage'),
+  (m) => m.NonConformityDetailPage,
+);
+export const AuditPage = lazyPage(
+  () => import('@/features/audit/AuditPage'),
+  (m) => m.AuditPage,
+);
+export const ReportsPage = lazyPage(
+  () => import('@/features/reports/ReportsPage'),
+  (m) => m.ReportsPage,
+);
+export const ImportPage = lazyPage(
+  () => import('@/features/imports/ImportPage'),
+  (m) => m.ImportPage,
+);
 export const PublicTracePage = lazyPage(
   () => import('@/features/public-trace/PublicTracePage'),
   (m) => m.PublicTracePage,
@@ -112,6 +144,11 @@ export const PRELOADERS: Record<string, LazyPage['preload']> = {
   '/rastreabilidade': TraceSearchPage.preload,
   '/producao': ProductionOrdersPage.preload,
   '/expedicao': ShipmentsPage.preload,
+  '/recall': RecallsPage.preload,
+  '/qualidade': NonConformitiesPage.preload,
+  '/auditoria': AuditPage.preload,
+  '/relatorios': ReportsPage.preload,
+  '/importacao': ImportPage.preload,
 };
 
 export function preloadRoute(path: string): void {

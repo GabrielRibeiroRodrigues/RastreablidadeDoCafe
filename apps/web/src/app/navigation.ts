@@ -3,6 +3,7 @@ import {
   BoxesIcon,
   ClipboardCheckIcon,
   FactoryIcon,
+  FileSpreadsheetIcon,
   GitForkIcon,
   LayoutDashboardIcon,
   LayersIcon,
@@ -12,10 +13,12 @@ import {
   SirenIcon,
   SproutIcon,
   TruckIcon,
+  UploadIcon,
   UsersIcon,
   WarehouseIcon,
   type LucideIcon,
 } from 'lucide-react';
+import type { Role } from '@traceflow/shared';
 
 export interface NavLinkItem {
   path: string;
@@ -24,6 +27,8 @@ export interface NavLinkItem {
   icon: LucideIcon;
   /** Só aparece para quem opera o estoque (admin e operador). */
   requiresOperate?: boolean;
+  /** Só aparece para estes perfis (ex.: Auditoria para admin e auditor). */
+  roles?: readonly Role[];
   /** Módulo ainda não entregue: aparece com o selo "Em breve". */
   soon?: boolean;
 }
@@ -96,28 +101,43 @@ export const STOCK_ITEMS: NavLinkItem[] = [
   },
 ];
 
-/** Qualidade e conformidade (módulos em construção). */
+/** Qualidade e conformidade. */
 export const QUALITY_ITEMS: NavLinkItem[] = [
   {
     path: '/recall',
     label: 'Recall',
-    description: 'Simulação de recall: quais clientes receberam um lote e seus derivados.',
+    description: 'Recolhimento de um lote e seus derivados: bloqueio, relatório e clientes.',
     icon: SirenIcon,
-    soon: true,
   },
   {
     path: '/qualidade',
     label: 'Qualidade',
-    description: 'Não conformidades: registro, análise e tratamento.',
+    description: 'Não conformidades: quarentena, liberação e descarte de lotes.',
     icon: ClipboardCheckIcon,
-    soon: true,
   },
   {
     path: '/auditoria',
     label: 'Auditoria',
     description: 'Trilha de auditoria: quem fez o quê e quando.',
     icon: ScrollTextIcon,
-    soon: true,
+    roles: ['admin', 'auditor'],
+  },
+];
+
+/** Relatórios e importação. */
+export const MANAGEMENT_ITEMS: NavLinkItem[] = [
+  {
+    path: '/relatorios',
+    label: 'Relatórios',
+    description: 'Planilhas CSV de estoque, movimentações, produção e expedições.',
+    icon: FileSpreadsheetIcon,
+  },
+  {
+    path: '/importacao',
+    label: 'Importação',
+    description: 'Carga de cadastros por planilha CSV.',
+    icon: UploadIcon,
+    roles: ['admin'],
   },
 ];
 
@@ -160,6 +180,7 @@ export const NAV_SECTIONS: NavSection[] = [
   { title: 'Estoque', items: STOCK_ITEMS },
   { title: 'Qualidade', items: QUALITY_ITEMS },
   { title: 'Cadastros', items: NAV_ITEMS },
+  { title: 'Gestão', items: MANAGEMENT_ITEMS },
 ];
 
 /** Item de navegação de uma rota (falha cedo se a rota não existir). */
@@ -169,7 +190,12 @@ export function navItem(path: string): NavItem {
   return item;
 }
 
-/** Item de qualquer seção (para páginas "Em breve"). */
-export function findNavLink(path: string): NavLinkItem | undefined {
-  return NAV_SECTIONS.flatMap((section) => section.items).find((item) => item.path === path);
+/** O perfil vê o item? (`requiresOperate` e `roles`). */
+export function canSeeNavItem(
+  item: NavLinkItem,
+  roles: readonly Role[],
+  canOperate: boolean,
+): boolean {
+  if (item.requiresOperate && !canOperate) return false;
+  return !item.roles || item.roles.some((role) => roles.includes(role));
 }

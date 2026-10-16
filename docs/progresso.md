@@ -45,6 +45,23 @@
 
 **Testes pendentes (Semana 3):** produção concorrente sobre o mesmo insumo, grafo em diamante e limite de profundidade, isolamento por empresa nas consultas recursivas, expedição concorrente, página pública (nenhum dado sensível, rate limit), etiqueta.
 
+## Semanas 4 a 6 — Pronto para produção
+
+Feito de forma autônoma, em paralelo, a pedido ("aplicação pronta para entrar em produção amanhã, front profissional, sem foco em testes").
+
+| #   | Frente                                                                                                                   | Status       |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| 1   | API: recall orquestrado (simular, executar, relatório PDF, notificar), não conformidade, alertas de validade, auditoria  | ✅ concluída |
+| 2   | API: painel, relatórios CSV, importação CSV, rate limit, proxy, limites, checagens de produção, códigos de erro estáveis | ✅ concluída |
+| 3   | Infra: Lambda + bundle esbuild, Terraform (12 módulos, só validate), deploy por OIDC, runbook, ADRs 0010–0011            | ✅ concluída |
+| 4   | Front profissional: painel, modo escuro, menu móvel, máscaras, fichas só-leitura, páginas de erro, code splitting        | ✅ concluída |
+| 5   | Telas de recall, qualidade, auditoria, alertas, relatórios e importação                                                  | ✅ concluída |
+| 6   | Entrada em produção: checklist em [go-live.md](go-live.md)                                                               | ✅ concluída |
+
+**Nada foi aplicado na AWS** — o primeiro `terraform apply` é um passo humano ([go-live.md](go-live.md)).
+
+**Testes pendentes (Semanas 4–6):** recall (impacto, bloqueio, retomada idempotente das etapas, recall concorrente no mesmo lote), descarte de NC (baixa de todo o saldo), auditoria (append-only, interceptor sem duplicar), importação (tudo ou nada, duplicados), relatórios CSV (escape contra fórmula), rate limit, Lambda handler e job de migrations.
+
 ## Registro
 
 ### Etapa 1 — Base do monorepo
@@ -168,9 +185,28 @@
 
 **Semana 3 concluída (2026-10-15) — MVP v0.1.**
 
+### Semanas 4–6 — Pronto para produção
+
+- **Recall** ([recall-qualidade-auditoria.md](recall-qualidade-auditoria.md), [ADR 0009](adr/0009-recall-orquestrado.md)): simulação sem escrita; execução em etapas idempotentes (bloquear lotes → relatório PDF → notificar), local no processo ou por Step Functions na AWS; retomada após falha; lote em recall aberto não volta a disponível.
+- **Qualidade**: não conformidade abre quarentena; liberar (admin) ou descartar (baixa de todo o saldo por ajuste).
+- **Auditoria**: `audit_logs` só de inclusão, com antes/depois nas operações críticas e interceptor para o resto.
+- **Alertas de validade**: rota e job diário (EventBridge Scheduler).
+- **Painel, relatórios CSV (Excel pt-BR, à prova de fórmula) e importação CSV** (pré-visualização, tudo ou nada) — [relatorios-importacao.md](relatorios-importacao.md).
+- **Segurança de produção** ([seguranca.md](seguranca.md)): rate limit global, `trust proxy`, limites de corpo, timeout, helmet, CORS estrito, checagens do env em produção (sem mock, sem Swagger), códigos de erro estáveis.
+- **Infra** ([deploy.md](deploy.md), ADRs [0010](adr/0010-rede-e-custos-aws.md) e [0011](adr/0011-lambda-esbuild-migrations.md)): Lambda + API Gateway, RDS `t4g.micro`, Cognito, S3 + CloudFront (OAC), Step Functions, SNS, Scheduler, CloudWatch, OIDC; módulo ECS + ALB + WAF só validado. Custo ~US$ 0–1/mês no free tier.
+- **Front profissional** ([web.md](web.md)): painel, modo escuro sem flash, menu móvel, `PageHeader` em todas as páginas, fichas só-leitura, máscaras, páginas de erro e 404, sessão expirada com retorno à página, code splitting (pacote inicial de 216 kB → 72 kB).
+- **Integração**: nomes de variáveis alinhados entre app e Terraform (`SNS_TOPIC_ARN`, `TRUST_PROXY=1`); a máquina de estados do recall para quando uma etapa devolve `FAILED`.
+
+### QA no navegador (Playwright, Chrome real)
+
+- Varredura de 44 visitas (27 rotas em desktop claro, 7 no escuro, 9 no celular + página pública): **sem erros de console, exceções, HTTP 4xx/5xx inesperados nem rolagem horizontal**.
+- Fluxos executados pela interface: cadastros com máscara de CPF e isolamento entre empresas; recebimento, transferência, saldo insuficiente (cliente e API), saída, estorno, bloqueio, edição, anexo; produção (torra) com prévia de rendimento; expedição; rastreio para trás e para frente; etiqueta, relatório do recall e anexo abrindo PDF de verdade; recall simulado → executado → encerrado; não conformidade aberta → liberada; auditoria com diff; CSV; importação com erro; perfis operador e auditor; menu móvel, tema persistente, logout e retorno à página.
+- Corrigido nesta rodada: aviso de lote bloqueado/em quarentena e "Movimentar" desativado em lote bloqueado, fonte monoespaçada (Geist Mono), layout do detalhe do recall, plurais ("lote(s)" → concordância real), rótulos da auditoria.
+- Limitação: o MCP do Playwright só carrega numa sessão nova do Claude Code; a QA usou o Playwright (playwright-core) diretamente contra a aplicação.
+
 ## Próximos passos
 
-- Gravar o vídeo curto do MVP (recebimento → torra → blend → expedição → rastreio → página pública pelo QR).
-- Rodada de testes adiada (Semanas 2 e 3), quando for pedida.
-- Semana 4: recall (simulação e execução com Step Functions/SNS), não conformidade e quarentena, alerta de validade, auditoria.
-- Pendências conhecidas: mensagens de erro da API em inglês (o front traduz as comuns); sem tela de detalhe só-leitura para auditor; máscara de CPF/CNPJ durante a digitação; `/stock` sem filtro por tipo de produto; listas de produção/expedição sem ordenação e filtro por usuário.
+- Seguir o checklist de [go-live.md](go-live.md) (passos na conta AWS são humanos).
+- Rodada de testes adiada (Semanas 2–6), quando for pedida.
+- Gravar o vídeo do MVP.
+- Pendências conhecidas: mensagens de erro da API em inglês (o front traduz pelos códigos); CSP do front desligada até validar o login do Cognito; RDS público por custo (ADR 0010).

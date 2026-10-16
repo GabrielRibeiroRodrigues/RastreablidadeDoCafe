@@ -30,8 +30,11 @@ import { LOT_STATUS_LABELS, MOVEMENT_TYPE_LABELS, SETTABLE_STATUS_LABELS } from 
 
 const MIN_REASON = 3;
 
-/** Diálogo com motivo obrigatório; o erro da API aparece no topo e o diálogo continua aberto. */
-function ReasonDialog({
+/**
+ * Diálogo com texto obrigatório (motivo, justificativa, notas); o erro da API aparece no topo e o
+ * diálogo continua aberto.
+ */
+export function ReasonDialog({
   open,
   onOpenChange,
   title,
@@ -43,6 +46,9 @@ function ReasonDialog({
   error,
   onSubmit,
   reasonPlaceholder,
+  fieldLabel = 'Motivo',
+  minLength = MIN_REASON,
+  maxLength = 500,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -55,17 +61,20 @@ function ReasonDialog({
   error: unknown;
   onSubmit: (reason: string) => void;
   reasonPlaceholder: string;
+  fieldLabel?: string;
+  minLength?: number;
+  maxLength?: number;
 }) {
   const formId = useId();
   const reasonId = useId();
   const [reason, setReason] = useState('');
   const [touched, setTouched] = useState(false);
-  const invalid = touched && reason.trim().length < MIN_REASON;
+  const invalid = touched && reason.trim().length < minLength;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setTouched(true);
-    if (reason.trim().length >= MIN_REASON) onSubmit(reason.trim());
+    if (reason.trim().length >= minLength) onSubmit(reason.trim());
   };
 
   return (
@@ -85,7 +94,8 @@ function ReasonDialog({
           {children}
           <Field data-invalid={invalid}>
             <FieldLabel htmlFor={reasonId}>
-              Motivo<span className="text-destructive">*</span>
+              {fieldLabel}
+              <span className="text-destructive">*</span>
             </FieldLabel>
             <Textarea
               id={reasonId}
@@ -93,13 +103,17 @@ function ReasonDialog({
               value={reason}
               aria-invalid={invalid}
               placeholder={reasonPlaceholder}
-              maxLength={500}
+              maxLength={maxLength}
               onChange={(event) => setReason(event.target.value)}
               onBlur={() => setTouched(true)}
             />
             {invalid && (
               <FieldError
-                errors={[{ message: `Informe o motivo (pelo menos ${MIN_REASON} caracteres).` }]}
+                errors={[
+                  {
+                    message: `${fieldLabel}: informe pelo menos ${minLength} caracteres.`,
+                  },
+                ]}
               />
             )}
           </Field>

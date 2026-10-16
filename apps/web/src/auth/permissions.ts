@@ -50,3 +50,36 @@ export function useInventoryPermissions(): InventoryPermissions {
   const { user } = useAuth();
   return inventoryPermissions(user?.roles ?? []);
 }
+
+export interface QualityPermissions {
+  /** Executar um recall (só admin; a simulação é aberta a todos os perfis). */
+  canCreateRecall: boolean;
+  /** Retomar e encerrar recalls (só admin). */
+  canManageRecall: boolean;
+  /** Abrir não conformidade (admin e operador). */
+  canOpenNc: boolean;
+  /** Liberar e descartar não conformidade (só admin). */
+  canResolveNc: boolean;
+  /** Trilha de auditoria (admin e auditor). */
+  canViewAudit: boolean;
+  /** Importação de cadastros por CSV (só admin). */
+  canImport: boolean;
+}
+
+/** Recall, qualidade, auditoria e importação na UI (a API aplica as mesmas regras). */
+export function qualityPermissions(roles: readonly Role[]): QualityPermissions {
+  const isAdmin = roles.includes('admin');
+  return {
+    canCreateRecall: isAdmin,
+    canManageRecall: isAdmin,
+    canOpenNc: isAdmin || roles.includes('operator'),
+    canResolveNc: isAdmin,
+    canViewAudit: isAdmin || roles.includes('auditor'),
+    canImport: isAdmin,
+  };
+}
+
+export function useQualityPermissions(): QualityPermissions {
+  const { user } = useAuth();
+  return qualityPermissions(user?.roles ?? []);
+}

@@ -4,13 +4,19 @@ import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { FullPageLoader } from '@/components/FullPageLoader';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AuthCallbackPage } from '@/pages/AuthCallbackPage';
-import { ComingSoonPage } from '@/pages/ComingSoonPage';
 import { LoginPage } from '@/pages/login/LoginPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
 import { RouteErrorPage } from '@/pages/RouteErrorPage';
-import { QUALITY_ITEMS } from './navigation';
 import {
+  AuditPage,
   CustomersPage,
+  ImportPage,
+  NewRecallPage,
+  NonConformitiesPage,
+  NonConformityDetailPage,
+  RecallDetailPage,
+  RecallsPage,
+  ReportsPage,
   DashboardPage,
   LocationsPage,
   LotDetailPage,
@@ -75,11 +81,14 @@ export const routes: RouteObject[] = [
                   { path: '/expedicao', element: <ShipmentsPage /> },
                   { path: '/expedicao/nova', element: <NewShipmentPage /> },
                   { path: '/expedicao/:id', element: <ShipmentDetailPage /> },
-                  // Módulos do roadmap: rotas reservadas com aviso "Em breve".
-                  ...QUALITY_ITEMS.map((item) => ({
-                    path: item.path,
-                    element: <ComingSoonPage path={item.path} />,
-                  })),
+                  { path: '/recall', element: <RecallsPage /> },
+                  { path: '/recall/novo', element: <NewRecallPage /> },
+                  { path: '/recall/:id', element: <RecallDetailPage /> },
+                  { path: '/qualidade', element: <NonConformitiesPage /> },
+                  { path: '/qualidade/:id', element: <NonConformityDetailPage /> },
+                  { path: '/auditoria', element: <AuditPage /> },
+                  { path: '/relatorios', element: <ReportsPage /> },
+                  { path: '/importacao', element: <ImportPage /> },
                   { path: '*', element: <NotFoundPage /> },
                 ],
               },
