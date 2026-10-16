@@ -1,0 +1,265 @@
+name: Deploy
+
+# Deploy to AWS (docs/deploy.md). Runs on version tags or manually; the apply job waits for a
+# manual approval in the `production` environment. Credentials come from GitHub OIDC (no keys).
+#
+# Required repository/environment configuration:
+#   secret   AWS_DEPLOY_ROLE_ARN  output `github_deploy_role_arn` of the first (local) apply
+#   variable AWS_REGION           optional, defaults to us-east-1
+#   variable TF_VARS              optional, contents of terraform.tfvars (no secrets in it)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  TF_VERSION: 1.16.4
+  TF_DIR: infra/terraform/envs/prod
+  TF_IN_AUTOMATION: '1'
+
+jobs:
+  build:
+    name: Build and bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      enable_expiry_alert: ${{ steps.jobs.outputs.enable_expiry_alert }}
+      enable_recall: ${{ steps.jobs.outputs.enable_recall }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter @traceflow/shared build
+
+      - name: Bundle Lambdas
+        run: pnpm --filter @traceflow/api bundle:lambda
+
+      # Week 4 jobs may not exist yet: disable their Terraform resources instead of failing.
+      - name: Detect optional job bundles
+        id: jobs
+        run: |
+          for job in expiry-alert recall-step; do
+            if [ -f "apps/api/dist-lambda/$job.zip" ]; then found=true; else found=false
+              echo "::warning::apps/api/dist-lambda/$job.zip not found: $job will be disabled"
+            fi
+            case "$job" in
+              expiry-alert) echo "enable_expiry_alert=$found" >> "$GITHUB_OUTPUT" ;;
+              recall-step) echo "enable_recall=$found" >> "$GITHUB_OUTPUT" ;;
+            esac
+          done
+
+      - name: Upload Lambda bundles
+        uses: actions/upload-artifact@v7
+        with:
+          name: lambda-bundles
+          path: apps/api/dist-lambda/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  plan:
+    name: Terraform plan
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Without a remote backend the state would be lost at the end of the job.
+      - name: Require the S3 backend
+        run: |
+          if ! grep -Eq '^[[:space:]]*backend "s3"' "$TF_DIR"/*.tf; then
+            echo "::error::Configure the S3 backend in $TF_DIR/backend.tf first (docs/deploy.md)"
+            exit 1
+          fi
+
+      - name: Download Lambda bundles
+        uses: actions/download-artifact@v8
+        with:
+          name: lambda-bundles
+          path: apps/api/dist-lambda
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Write tfvars
+        env:
+          TF_VARS: ${{ vars.TF_VARS }}
+          ENABLE_EXPIRY_ALERT: ${{ needs.build.outputs.enable_expiry_alert }}
+          ENABLE_RECALL: ${{ needs.build.outputs.enable_recall }}
+        run: |
+          printf '%s\n' "$TF_VARS" > "$TF_DIR/terraform.tfvars"
+          {
+            echo "aws_region          = \"$AWS_REGION\""
+            echo "enable_expiry_alert = $ENABLE_EXPIRY_ALERT"
+            echo "enable_recall       = $ENABLE_RECALL"
+          } > "$TF_DIR/ci.auto.tfvars"
+
+      - name: Terraform init
+        run: terraform -chdir="$TF_DIR" init -input=false
+
+      # The plan is only shown here for review: it is not uploaded as an artifact because a
+      # saved plan contains secrets (the RDS password) and artifacts are readable by the repo.
+      - name: Terraform plan
+        run: terraform -chdir="$TF_DIR" plan -input=false -lock-timeout=5m
+
+  deploy:
+    name: Apply, migrate and publish web
+    needs: [build, plan]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: production
+      url: ${{ steps.outputs.outputs.web_url }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Download Lambda bundles
+        uses: actions/download-artifact@v8
+        with:
+          name: lambda-bundles
+          path: apps/api/dist-lambda
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      - name: Write tfvars
+        env:
+          TF_VARS: ${{ vars.TF_VARS }}
+          ENABLE_EXPIRY_ALERT: ${{ needs.build.outputs.enable_expiry_alert }}
+          ENABLE_RECALL: ${{ needs.build.outputs.enable_recall }}
+        run: |
+          printf '%s\n' "$TF_VARS" > "$TF_DIR/terraform.tfvars"
+          {
+            echo "aws_region          = \"$AWS_REGION\""
+            echo "enable_expiry_alert = $ENABLE_EXPIRY_ALERT"
+            echo "enable_recall       = $ENABLE_RECALL"
+          } > "$TF_DIR/ci.auto.tfvars"
+
+      - name: Terraform init
+        run: terraform -chdir="$TF_DIR" init -input=false
+
+      # Same inputs as the reviewed plan job; the concurrency group prevents parallel deploys.
+      - name: Terraform apply
+        run: terraform -chdir="$TF_DIR" apply -input=false -auto-approve -lock-timeout=5m
+
+      - name: Read outputs
+        id: outputs
+        run: |
+          out() { terraform -chdir="$TF_DIR" output -raw "$1"; }
+          {
+            echo "web_url=$(out web_url)"
+            echo "web_bucket=$(out web_bucket)"
+            echo "distribution_id=$(out web_distribution_id)"
+            echo "api_url=$(out api_url)"
+            echo "cognito_authority=$(out cognito_authority)"
+            echo "cognito_client_id=$(out cognito_client_id)"
+            echo "cognito_domain=$(out cognito_domain)"
+            echo "migrate_function=$(out migrate_function_name)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Run database migrations
+        env:
+          FUNCTION: ${{ steps.outputs.outputs.migrate_function }}
+        run: |
+          aws lambda invoke --function-name "$FUNCTION" \
+            --cli-binary-format raw-in-base64-out --payload '{}' \
+            --cli-read-timeout 320 --query FunctionError --output text \
+            response.json > function-error.txt
+          cat response.json; echo
+          if [ "$(cat function-error.txt)" != "None" ]; then
+            echo "::error::Migration failed: $(cat function-error.txt)"
+            exit 1
+          fi
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build web
+        env:
+          VITE_API_URL: ${{ steps.outputs.outputs.api_url }}
+          VITE_AUTH_MODE: cognito
+          VITE_COGNITO_AUTHORITY: ${{ steps.outputs.outputs.cognito_authority }}
+          VITE_COGNITO_CLIENT_ID: ${{ steps.outputs.outputs.cognito_client_id }}
+          VITE_COGNITO_DOMAIN: ${{ steps.outputs.outputs.cognito_domain }}
+          VITE_COGNITO_REDIRECT_URI: ${{ steps.outputs.outputs.web_url }}/auth/callback
+          VITE_COGNITO_LOGOUT_URI: ${{ steps.outputs.outputs.web_url }}/login
+        run: |
+          pnpm --filter @traceflow/shared build
+          pnpm --filter @traceflow/web build
+
+      # Hashed assets first (immutable), then index.html (no-cache), then remove stale files.
+      - name: Upload web to S3
+        env:
+          BUCKET: ${{ steps.outputs.outputs.web_bucket }}
+        run: |
+          aws s3 sync apps/web/dist/assets "s3://$BUCKET/assets" \
+            --cache-control "public, max-age=31536000, immutable"
+          aws s3 sync apps/web/dist "s3://$BUCKET" --exclude "assets/*" --exclude "index.html" \
+            --cache-control "public, max-age=3600"
+          aws s3 cp apps/web/dist/index.html "s3://$BUCKET/index.html" \
+            --cache-control "no-cache" --content-type "text/html; charset=utf-8"
+          aws s3 sync apps/web/dist "s3://$BUCKET" --delete --size-only
+
+      - name: Invalidate CloudFront
+        env:
+          DISTRIBUTION: ${{ steps.outputs.outputs.distribution_id }}
+        run: |
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" \
+            --paths "/index.html" "/" --query Invalidation.Id --output text

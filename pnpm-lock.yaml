@@ -62,12 +62,18 @@ importers:
       '@aws-sdk/client-sns':
         specifier: ^3.1152.0
         version: 3.1152.0
+      '@aws-sdk/client-ssm':
+        specifier: ^3.1152.0
+        version: 3.1152.0
       '@aws-sdk/s3-presigned-post':
         specifier: ^3.1152.0
         version: 3.1152.0
       '@aws-sdk/s3-request-presigner':
         specifier: ^3.1152.0
         version: 3.1152.0
+      '@codegenie/serverless-express':
+        specifier: ^5.0.0
+        version: 5.0.0
       '@nestjs/common':
         specifier: ^12.1.3
         version: 12.1.3(class-transformer@0.5.1)(class-validator@0.15.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -159,6 +165,9 @@ importers:
       '@testcontainers/postgresql':
         specifier: ^12.2.1
         version: 12.2.1
+      '@types/aws-lambda':
+        specifier: ^8.10.164
+        version: 8.10.164
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
@@ -177,6 +186,12 @@ importers:
       '@types/supertest':
         specifier: ^7.2.1
         version: 7.2.1
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       pino-pretty:
         specifier: ^13.2.0
         version: 13.2.0
@@ -366,6 +381,10 @@ packages:
 
   '@aws-sdk/client-sns@3.1152.0':
     resolution: {integrity: sha512-o2f/Fld/y0mSBsj0S8lShYNrfTrMCDjT8q7NMoKwWgUYYTkwjG9fOT1AJkd091lj3dP6njrQV7XbA8NZfL+RcQ==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-ssm@3.1152.0':
+    resolution: {integrity: sha512-kaXb3zkCVVSjq5xDtTapBEiRkTSwagWNLP9Ch0JPS88Xh29fWfda7LXDVJ0WBIagSrxK7zucF9LZQx8zIvTn3g==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/core@3.978.3':
@@ -588,6 +607,10 @@ packages:
 
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
+
+  '@codegenie/serverless-express@5.0.0':
+    resolution: {integrity: sha512-7+PvSBj4KmPC8PVFDoXZp2cwTr13YIgFsZT55uJhpt7Ml1hJ3IK1Xnw36hr6GYVzLDrEW26oBZt50jamfu6kkw==}
+    engines: {node: '>=24'}
 
   '@colors/colors@1.5.0':
     resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
@@ -2855,6 +2878,9 @@ packages:
   '@types/aria-query@5.0.4':
     resolution: {integrity: sha512-rfT93uj5s0PRL7EzccGMs3brplhcrghnDoV26NqKhCAS1hVo+WdNsPvE/yb6ilfr5hi2MEk6d5EWJTKdxg8jVw==}
 
+  '@types/aws-lambda@8.10.164':
+    resolution: {integrity: sha512-XOnrazWcOd6yWPnR7DxqCBPPYciDjHq+NN8LPwwqBCJNXLyPJgKo47fZpJ113+oyAn9Zti0Cf6H4k6yPcE3WFg==}
+
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
 
@@ -4260,6 +4286,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fflate@0.8.3:
+    resolution: {integrity: sha512-tbZNuJrLwGUp3zshBtdy4W+ORxZuIh8a5ilyIEQDC5rY1f3U20JMry0Ll3WBzU58EZKsEuJFXhb5gwv8CsPvgA==}
 
   figures@6.1.0:
     resolution: {integrity: sha512-d+l3qxjSesT4V7v2fh+QnmFnUWv9lSpjarhShNTgBOfA0ttejbQUAlHLitbjkoRiDulW0OPoQPYIGhIC8ohejg==}
@@ -6826,6 +6855,17 @@ snapshots:
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 
+  '@aws-sdk/client-ssm@3.1152.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.3
+      '@aws-sdk/credential-provider-node': 3.972.86
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.36.0
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
   '@aws-sdk/core@3.978.3':
     dependencies:
       '@aws-sdk/types': 3.974.6
@@ -7195,6 +7235,8 @@ snapshots:
     dependencies:
       hashery: 1.5.1
       keyv: 5.6.0
+
+  '@codegenie/serverless-express@5.0.0': {}
 
   '@colors/colors@1.5.0':
     optional: true
@@ -9285,6 +9327,8 @@ snapshots:
 
   '@types/aria-query@5.0.4': {}
 
+  '@types/aws-lambda@8.10.164': {}
+
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
@@ -10820,6 +10864,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
       picomatch: 4.0.7
+
+  fflate@0.8.3: {}
 
   figures@6.1.0:
     dependencies:
