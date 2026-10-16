@@ -55,7 +55,7 @@ Feito de forma autônoma, em paralelo, a pedido ("aplicação pronta para entrar
 | 2   | API: painel, relatórios CSV, importação CSV, rate limit, proxy, limites, checagens de produção, códigos de erro estáveis | ✅ concluída |
 | 3   | Infra: Lambda + bundle esbuild, Terraform (12 módulos, só validate), deploy por OIDC, runbook, ADRs 0010–0011            | ✅ concluída |
 | 4   | Front profissional: painel, modo escuro, menu móvel, máscaras, fichas só-leitura, páginas de erro, code splitting        | ✅ concluída |
-| 5   | Telas de recall, qualidade, auditoria, alertas, relatórios e importação                                                  | ⏳ agente    |
+| 5   | Telas de recall, qualidade, auditoria, alertas, relatórios e importação                                                  | ✅ concluída |
 | 6   | Entrada em produção: checklist em [go-live.md](go-live.md)                                                               | ✅ concluída |
 
 **Nada foi aplicado na AWS** — o primeiro `terraform apply` é um passo humano ([go-live.md](go-live.md)).
@@ -196,6 +196,13 @@ Feito de forma autônoma, em paralelo, a pedido ("aplicação pronta para entrar
 - **Infra** ([deploy.md](deploy.md), ADRs [0010](adr/0010-rede-e-custos-aws.md) e [0011](adr/0011-lambda-esbuild-migrations.md)): Lambda + API Gateway, RDS `t4g.micro`, Cognito, S3 + CloudFront (OAC), Step Functions, SNS, Scheduler, CloudWatch, OIDC; módulo ECS + ALB + WAF só validado. Custo ~US$ 0–1/mês no free tier.
 - **Front profissional** ([web.md](web.md)): painel, modo escuro sem flash, menu móvel, `PageHeader` em todas as páginas, fichas só-leitura, máscaras, páginas de erro e 404, sessão expirada com retorno à página, code splitting (pacote inicial de 216 kB → 72 kB).
 - **Integração**: nomes de variáveis alinhados entre app e Terraform (`SNS_TOPIC_ARN`, `TRUST_PROXY=1`); a máquina de estados do recall para quando uma etapa devolve `FAILED`.
+
+### QA no navegador (Playwright, Chrome real)
+
+- Varredura de 44 visitas (27 rotas em desktop claro, 7 no escuro, 9 no celular + página pública): **sem erros de console, exceções, HTTP 4xx/5xx inesperados nem rolagem horizontal**.
+- Fluxos executados pela interface: cadastros com máscara de CPF e isolamento entre empresas; recebimento, transferência, saldo insuficiente (cliente e API), saída, estorno, bloqueio, edição, anexo; produção (torra) com prévia de rendimento; expedição; rastreio para trás e para frente; etiqueta, relatório do recall e anexo abrindo PDF de verdade; recall simulado → executado → encerrado; não conformidade aberta → liberada; auditoria com diff; CSV; importação com erro; perfis operador e auditor; menu móvel, tema persistente, logout e retorno à página.
+- Corrigido nesta rodada: aviso e bloqueio de em lote bloqueado/quarentena, fonte monoespaçada (Geist Mono), layout do detalhe do recall, plurais ("lote(s)" → concordância real), rótulos da auditoria.
+- Limitação: o MCP do Playwright só carrega numa sessão nova do Claude Code; a QA usou o Playwright (playwright-core) diretamente contra a aplicação.
 
 ## Próximos passos
 
