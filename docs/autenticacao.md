@@ -26,7 +26,8 @@ sequenceDiagram
   1. `passport-jwt`: assinatura RS256, emissor e expiração.
   2. `parseAccessTokenClaims`: `token_use` precisa ser `access` (um ID token é recusado), `client_id` precisa ser o do app e `sub` precisa existir.
 - O usuário precisa estar cadastrado e **ativo** — desativar alguém corta o acesso mesmo com token ainda válido.
-- **Perfis vêm do token** (`cognito:groups`), não do banco. Grupos desconhecidos são ignorados.
+- **Perfil vem do banco** (`users.role`), não dos grupos do token ([ADR 0012](adr/0012-perfil-do-banco-e-gestao-de-usuarios.md)): o token prova quem é a pessoa; o banco diz o que ela pode fazer. Mudar o perfil ou desativar vale na próxima requisição. A gestão de usuários mantém os grupos do Cognito iguais.
+- **Gestão de usuários** (`/v1/users`, só admin; tela **Gestão → Usuários**): convidar (em produção o Cognito envia a senha temporária por e-mail), mudar nome e perfil, desativar e reativar. O admin não mexe no próprio perfil nem desativa a própria conta, e a empresa nunca fica sem admin ativo.
 - `@Roles('admin', 'operator')` restringe a rota; sem `@Roles`, qualquer usuário autenticado passa.
 
 | Situação                                         | Resposta |

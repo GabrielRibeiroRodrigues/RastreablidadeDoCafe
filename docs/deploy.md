@@ -229,7 +229,8 @@ pnpm --filter @traceflow/api tenant:bootstrap --tax-id 12345678000195 \
   --email "$EMAIL" --name "Ana Ribeiro" --sub "$SUB" --role ADMIN
 ```
 
-- Grupos (`admin`, `operator`, `auditor`) definem os **perfis** que a API aceita (vêm no token); `--role` grava o perfil "de cadastro" na tabela `users`. Mantenha os dois iguais.
+- O perfil gravado por `--role` na tabela `users` é o que vale para a API ([ADR 0012](adr/0012-perfil-do-banco-e-gestao-de-usuarios.md)); coloque o usuário no grupo de mesmo nome para o console ficar coerente.
+- **Só o primeiro admin** passa por este roteiro. Os demais usuários são convidados por ele na tela **Gestão → Usuários**: a API cria a conta no Cognito, envia o convite e mantém os grupos.
 - Outros usuários da mesma empresa: repita com o mesmo `--tax-id` (a empresa é reaproveitada).
 - O script recusa mover um `sub` que já pertence a outra empresa.
 - Todas as opções também podem vir de variáveis (`TENANT_TAX_ID`, `TENANT_COMPANY`, `TENANT_LOT_PREFIX`, `TENANT_ADMIN_EMAIL`, `TENANT_ADMIN_NAME`, `TENANT_ADMIN_SUB`, `TENANT_ADMIN_ROLE`).

@@ -149,6 +149,7 @@ export function CatalogPage<T extends CatalogEntity, Input>({
           </Button>
         )}
         {canToggleActive &&
+          (resource.canToggle?.(row) ?? true) &&
           (row.isActive ? (
             <Button
               variant="ghost"
@@ -219,7 +220,7 @@ export function CatalogPage<T extends CatalogEntity, Input>({
       <PageHeader
         title={nav.label}
         description={nav.description}
-        breadcrumbs={[{ label: 'Cadastros' }, { label: nav.label }]}
+        breadcrumbs={[{ label: resource.section ?? 'Cadastros' }, { label: nav.label }]}
         actions={
           canWrite && (
             <Button onClick={openCreate}>

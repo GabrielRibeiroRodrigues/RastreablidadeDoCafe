@@ -8,7 +8,7 @@ export interface AuthUser {
   companyName: string;
   email: string;
   name: string;
-  /** Perfis vindos do token (`cognito:groups`), não do banco. */
+  /** Perfil do banco (fonte de verdade, ADR 0012); os grupos do Cognito são mantidos iguais. */
   roles: AppRole[];
 }
 

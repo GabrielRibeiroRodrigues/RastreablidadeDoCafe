@@ -87,6 +87,70 @@ export interface paths {
     patch: operations['CompaniesController_update'];
     trace?: never;
   };
+  '/v1/users': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['UsersController_list'];
+    put?: never;
+    post: operations['UsersController_invite'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/users/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['UsersController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UsersController_update'];
+    trace?: never;
+  };
+  '/v1/users/{id}/deactivate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['UsersController_deactivate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/users/{id}/activate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['UsersController_activate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/products': {
     parameters: {
       query?: never;
@@ -1041,6 +1105,37 @@ export interface components {
       total: number;
       /** @example 3 */
       totalPages: number;
+    };
+    /** @enum {string} */
+    AppRole: 'admin' | 'operator' | 'auditor';
+    UserResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example bruno@serraazul.com.br */
+      email: string;
+      /** @example Bruno Costa */
+      name: string;
+      role: components['schemas']['AppRole'];
+      isActive: boolean;
+      /** @description É o próprio usuário logado */
+      isCurrentUser: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    InviteUserDto: {
+      /** @example bruno@serraazul.com.br */
+      email: string;
+      /** @example Bruno Costa */
+      name: string;
+      /** @example operator */
+      role: components['schemas']['AppRole'];
+    };
+    UpdateUserDto: {
+      /** @example Bruno Costa */
+      name?: string;
+      role?: components['schemas']['AppRole'];
     };
     /** @enum {string} */
     ProductType: 'GREEN' | 'ROASTED' | 'BLEND' | 'PACKAGING';
@@ -2712,6 +2807,174 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['CompanyResponse'];
+        };
+      };
+    };
+  };
+  UsersController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: 'active' | 'inactive' | 'all';
+        sort?: 'name' | '-name' | 'createdAt' | '-createdAt';
+        /** @description Busca por nome ou e-mail */
+        q?: string;
+        role?: components['schemas']['AppRole'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['UserResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  UsersController_invite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InviteUserDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description E-mail já cadastrado */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UsersController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UsersController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateUserDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description Mudaria o próprio perfil ou deixaria a empresa sem admin */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UsersController_deactivate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description Própria conta ou último admin */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UsersController_activate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
         };
       };
     };

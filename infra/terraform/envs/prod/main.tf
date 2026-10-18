@@ -149,6 +149,19 @@ module "api" {
         actions   = ["sns:Publish"]
         resources = [module.workflow.notifications_topic_arn]
       },
+      {
+        # Gestão de usuários (ADR 0012): convite, grupos e bloqueio de login no User Pool.
+        sid = "ManageUsers"
+        actions = [
+          "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminAddUserToGroup",
+          "cognito-idp:AdminRemoveUserFromGroup",
+          "cognito-idp:AdminDisableUser",
+          "cognito-idp:AdminEnableUser",
+          "cognito-idp:AdminUserGlobalSignOut",
+        ]
+        resources = [module.auth.user_pool_arn]
+      },
     ],
     var.enable_recall ? [{
       sid       = "StartRecall"

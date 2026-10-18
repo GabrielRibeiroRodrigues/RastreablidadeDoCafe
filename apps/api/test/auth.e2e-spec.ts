@@ -208,12 +208,21 @@ describe('Authentication and roles (e2e)', () => {
         .expect(status);
     });
 
-    it('uses the roles from the token, not from the database', async () => {
-      // Token sem grupos: autenticado, mas sem perfil — mesmo sendo ADMIN no banco.
+    it('uses the role from the database, not the token groups (ADR 0012)', async () => {
+      // Token sem grupos (ex.: emitido antes de uma mudança de perfil): vale o perfil do banco.
       const token = await signWithMockKey({ sub: admin.cognitoSub, 'cognito:groups': [] });
+      await testApp.http().post('/v1/probe-auth/admin').auth(token, { type: 'bearer' }).expect(201);
 
-      await testApp.http().get('/v1/probe-auth/any').auth(token, { type: 'bearer' }).expect(200);
-      await testApp.http().post('/v1/probe-auth/admin').auth(token, { type: 'bearer' }).expect(403);
+      // Grupos "promovidos" no token também não valem: um operador continua operador.
+      const forged = await signWithMockKey({
+        sub: operator.cognitoSub,
+        'cognito:groups': ['admin'],
+      });
+      await testApp
+        .http()
+        .post('/v1/probe-auth/admin')
+        .auth(forged, { type: 'bearer' })
+        .expect(403);
     });
   });
 });

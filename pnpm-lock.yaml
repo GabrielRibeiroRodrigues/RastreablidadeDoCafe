@@ -53,6 +53,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@aws-sdk/client-cognito-identity-provider':
+        specifier: ^3.1152.0
+        version: 3.1152.0
       '@aws-sdk/client-s3':
         specifier: ^3.1152.0
         version: 3.1152.0
@@ -372,6 +375,10 @@ packages:
 
   '@aws-sdk/checksums@3.1001.3':
     resolution: {integrity: sha512-CcAkVyEUKGngbEqJdVdSc53Iy52+XzVL5NIcTen2BlK8UByNC1DThVtf5VKSrNzyA+SqyTvs+3S+knVBbOUizQ==}
+    engines: {node: '>=20.0.0'}
+
+  '@aws-sdk/client-cognito-identity-provider@3.1152.0':
+    resolution: {integrity: sha512-XIMSkrNCnQ0/4N47MQREyDupF5fWoBQKUcft+MLoMeSobQuKJaKOG7kNBZLT0DOdlqHfe5tEUFjm+eDazB27og==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/client-s3@3.1152.0':
@@ -6822,6 +6829,17 @@ snapshots:
       '@aws-sdk/core': 3.978.3
       '@aws-sdk/types': 3.974.6
       '@smithy/core': 3.36.0
+      '@smithy/types': 4.19.0
+      tslib: 2.8.1
+
+  '@aws-sdk/client-cognito-identity-provider@3.1152.0':
+    dependencies:
+      '@aws-sdk/core': 3.978.3
+      '@aws-sdk/credential-provider-node': 3.972.86
+      '@aws-sdk/types': 3.974.6
+      '@smithy/core': 3.36.0
+      '@smithy/fetch-http-handler': 5.8.0
+      '@smithy/node-http-handler': 4.12.1
       '@smithy/types': 4.19.0
       tslib: 2.8.1
 

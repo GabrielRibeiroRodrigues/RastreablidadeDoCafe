@@ -19,6 +19,7 @@ import { QualityModule } from './modules/quality/quality.module.js';
 import { ShipmentsModule } from './modules/shipments/shipments.module.js';
 import { SuppliersModule } from './modules/suppliers/suppliers.module.js';
 import { TraceModule } from './modules/trace/trace.module.js';
+import { UsersModule } from './modules/users/users.module.js';
 import { PrismaModule } from './prisma/prisma.module.js';
 import { PublicModule } from './public/public.module.js';
 import { SecurityModule } from './security/security.module.js';
@@ -39,6 +40,7 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     TenancyModule,
     AuthModule,
     CompaniesModule,
+    UsersModule,
     ProductsModule,
     SuppliersModule,
     CustomersModule,

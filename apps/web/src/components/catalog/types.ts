@@ -70,6 +70,10 @@ export interface CatalogResource<T extends CatalogEntity, Input> {
   details: (entity: T) => DetailField[];
   /** Largura do diálogo de formulário (classe Tailwind). */
   dialogClassName?: string;
+  /** Seção no breadcrumb (padrão: "Cadastros"). */
+  section?: string;
+  /** Linha pode ser desativada/reativada? (ex.: o admin não desativa a própria conta). */
+  canToggle?: (entity: T) => boolean;
 }
 
 export type DefinedCatalogResource<T extends CatalogEntity, Input> = CatalogResource<T, Input> & {

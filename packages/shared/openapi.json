@@ -147,6 +147,285 @@
         "tags": ["companies"]
       }
     },
+    "/v1/users": {
+      "get": {
+        "operationId": "UsersController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "active",
+              "type": "string",
+              "enum": ["active", "inactive", "all"]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "name",
+              "type": "string",
+              "enum": ["name", "-name", "createdAt", "-createdAt"]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca por nome ou e-mail",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AppRole"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      },
+      "post": {
+        "operationId": "UsersController_invite",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "E-mail já cadastrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      }
+    },
+    "/v1/users/{id}": {
+      "get": {
+        "operationId": "UsersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      },
+      "patch": {
+        "operationId": "UsersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Mudaria o próprio perfil ou deixaria a empresa sem admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      }
+    },
+    "/v1/users/{id}/deactivate": {
+      "post": {
+        "operationId": "UsersController_deactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Própria conta ou último admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      }
+    },
+    "/v1/users/{id}/activate": {
+      "post": {
+        "operationId": "UsersController_activate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      }
+    },
     "/v1/products": {
       "get": {
         "operationId": "ProductsController_list",
@@ -3965,6 +4244,97 @@
           }
         },
         "required": ["page", "pageSize", "total", "totalPages"]
+      },
+      "AppRole": {
+        "type": "string",
+        "enum": ["admin", "operator", "auditor"]
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "example": "bruno@serraazul.com.br"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bruno Costa"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppRole"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isCurrentUser": {
+            "type": "boolean",
+            "description": "É o próprio usuário logado"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role",
+          "isActive",
+          "isCurrentUser",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "InviteUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "bruno@serraazul.com.br"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bruno Costa"
+          },
+          "role": {
+            "example": "operator",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppRole"
+              }
+            ]
+          }
+        },
+        "required": ["email", "name", "role"]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bruno Costa"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppRole"
+              }
+            ]
+          }
+        }
       },
       "ProductType": {
         "type": "string",
