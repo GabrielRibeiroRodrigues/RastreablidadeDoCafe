@@ -25,6 +25,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ExpiryText, MovementRoute, MovementTypeBadge } from '@/features/inventory/components';
 import { formatDateTime, formatQuantity } from '@/lib/quantity';
 import { EXPIRING_DAYS, fetchDashboard, type DashboardData } from './api';
+import { PerformanceSection } from './PerformanceSection';
 import { StockByProductChart } from './StockByProductChart';
 import { countOf } from '@/lib/plural';
 
@@ -403,6 +404,8 @@ export function DashboardPage() {
               <ExpiringList data={query.data} />
             </SectionCard>
           </div>
+
+          <PerformanceSection />
 
           <SectionCard
             title="Movimentações recentes"

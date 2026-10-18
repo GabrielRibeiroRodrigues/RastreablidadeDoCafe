@@ -2985,6 +2985,42 @@
         "tags": ["dashboard"]
       }
     },
+    "/v1/dashboard/performance": {
+      "get": {
+        "operationId": "DashboardController_performanceSummary",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Janela em dias",
+            "schema": {
+              "default": 30,
+              "type": "number",
+              "enum": [30, 90, 180, 365]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["dashboard"]
+      }
+    },
     "/v1/reports/stock.csv": {
       "get": {
         "operationId": "ReportsController_stock",
@@ -7243,6 +7279,186 @@
           "shipments30d",
           "recentMovements"
         ]
+      },
+      "ProductionTotals": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "number",
+            "example": 12
+          },
+          "inputKg": {
+            "type": "string",
+            "example": "1800.000",
+            "description": "Massa de entrada (kg)"
+          },
+          "outputKg": {
+            "type": "string",
+            "example": "1496.000",
+            "description": "Massa de saída (kg)"
+          },
+          "yieldPercent": {
+            "type": "number",
+            "nullable": true,
+            "example": 83.11
+          },
+          "lossKg": {
+            "type": "string",
+            "example": "304.000"
+          }
+        },
+        "required": ["orders", "inputKg", "outputKg", "yieldPercent", "lossKg"]
+      },
+      "ShipmentTotals": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 9
+          },
+          "customers": {
+            "type": "number",
+            "example": 4
+          }
+        },
+        "required": ["count", "customers"]
+      },
+      "PeriodTotals": {
+        "type": "object",
+        "properties": {
+          "production": {
+            "$ref": "#/components/schemas/ProductionTotals"
+          },
+          "shipments": {
+            "$ref": "#/components/schemas/ShipmentTotals"
+          }
+        },
+        "required": ["production", "shipments"]
+      },
+      "YieldBucket": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "example": "2026-10-05",
+            "description": "Início da semana ou do mês"
+          },
+          "orders": {
+            "type": "number",
+            "example": 3
+          },
+          "outputKg": {
+            "type": "string",
+            "example": "420.000"
+          },
+          "yieldPercent": {
+            "type": "number",
+            "nullable": true,
+            "example": 82.5
+          }
+        },
+        "required": ["start", "orders", "outputKg", "yieldPercent"]
+      },
+      "ProductTurnover": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "VRD-BOURBON-AM"
+          },
+          "name": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "outflow": {
+            "type": "string",
+            "example": "120.000",
+            "description": "Saídas no período (expedição + consumo), líquidas de estornos"
+          },
+          "balance": {
+            "type": "string",
+            "example": "40.000",
+            "description": "Saldo atual"
+          },
+          "coverageDays": {
+            "type": "number",
+            "nullable": true,
+            "example": 10,
+            "description": "Dias de cobertura no ritmo do período (saldo ÷ saída diária média)"
+          }
+        },
+        "required": [
+          "productId",
+          "sku",
+          "name",
+          "type",
+          "unit",
+          "outflow",
+          "balance",
+          "coverageDays"
+        ]
+      },
+      "PerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "number",
+            "enum": [30, 90, 180, 365]
+          },
+          "bucket": {
+            "type": "string",
+            "enum": ["week", "month"],
+            "description": "Agrupamento da série de rendimento"
+          },
+          "current": {
+            "description": "Últimos `days` dias",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodTotals"
+              }
+            ]
+          },
+          "previous": {
+            "description": "Os `days` dias anteriores, para comparação",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodTotals"
+              }
+            ]
+          },
+          "yieldSeries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/YieldBucket"
+            }
+          },
+          "turnover": {
+            "description": "Até 8 produtos com maior saída",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductTurnover"
+            }
+          }
+        },
+        "required": ["days", "bucket", "current", "previous", "yieldSeries", "turnover"]
       },
       "ImportRowError": {
         "type": "object",

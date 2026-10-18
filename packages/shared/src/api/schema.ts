@@ -711,6 +711,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/dashboard/performance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['DashboardController_performanceSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/reports/stock.csv': {
     parameters: {
       query?: never;
@@ -2336,6 +2352,88 @@ export interface components {
       shipments30d: components['schemas']['Shipments30d'];
       /** @description Até 8 movimentações mais recentes */
       recentMovements: components['schemas']['MovementResponse'][];
+    };
+    ProductionTotals: {
+      /** @example 12 */
+      orders: number;
+      /**
+       * @description Massa de entrada (kg)
+       * @example 1800.000
+       */
+      inputKg: string;
+      /**
+       * @description Massa de saída (kg)
+       * @example 1496.000
+       */
+      outputKg: string;
+      /** @example 83.11 */
+      yieldPercent: number | null;
+      /** @example 304.000 */
+      lossKg: string;
+    };
+    ShipmentTotals: {
+      /** @example 9 */
+      count: number;
+      /** @example 4 */
+      customers: number;
+    };
+    PeriodTotals: {
+      production: components['schemas']['ProductionTotals'];
+      shipments: components['schemas']['ShipmentTotals'];
+    };
+    YieldBucket: {
+      /**
+       * @description Início da semana ou do mês
+       * @example 2026-10-05
+       */
+      start: string;
+      /** @example 3 */
+      orders: number;
+      /** @example 420.000 */
+      outputKg: string;
+      /** @example 82.5 */
+      yieldPercent: number | null;
+    };
+    ProductTurnover: {
+      /** Format: uuid */
+      productId: string;
+      /** @example VRD-BOURBON-AM */
+      sku: string;
+      /** @example Café verde Bourbon Amarelo */
+      name: string;
+      type: components['schemas']['ProductType'];
+      unit: components['schemas']['Unit'];
+      /**
+       * @description Saídas no período (expedição + consumo), líquidas de estornos
+       * @example 120.000
+       */
+      outflow: string;
+      /**
+       * @description Saldo atual
+       * @example 40.000
+       */
+      balance: string;
+      /**
+       * @description Dias de cobertura no ritmo do período (saldo ÷ saída diária média)
+       * @example 10
+       */
+      coverageDays: number | null;
+    };
+    PerformanceResponse: {
+      /** @enum {number} */
+      days: 30 | 90 | 180 | 365;
+      /**
+       * @description Agrupamento da série de rendimento
+       * @enum {string}
+       */
+      bucket: 'week' | 'month';
+      /** @description Últimos `days` dias */
+      current: components['schemas']['PeriodTotals'];
+      /** @description Os `days` dias anteriores, para comparação */
+      previous: components['schemas']['PeriodTotals'];
+      yieldSeries: components['schemas']['YieldBucket'][];
+      /** @description Até 8 produtos com maior saída */
+      turnover: components['schemas']['ProductTurnover'][];
     };
     ImportRowError: {
       /**
@@ -4601,6 +4699,28 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['DashboardResponse'];
+        };
+      };
+    };
+  };
+  DashboardController_performanceSummary: {
+    parameters: {
+      query?: {
+        /** @description Janela em dias */
+        days?: 30 | 90 | 180 | 365;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceResponse'];
         };
       };
     };
