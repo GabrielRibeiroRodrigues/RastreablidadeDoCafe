@@ -75,17 +75,17 @@ await fetch(upload.url, { method: 'POST', body: form });
 
 ## Configuração
 
-| Variável                     | Padrão      | Observação                                                                            |
-| ---------------------------- | ----------- | ------------------------------------------------------------------------------------- |
-| `S3_BUCKET`                  | —           | Sem ela a API sobe, mas as rotas de anexos respondem **503** "Storage not configured" |
-| `S3_REGION`                  | `us-east-1` |                                                                                       |
-| `S3_ENDPOINT`                | —           | Endpoint usado pela API (MinIO). Na AWS, vazio                                        |
-| `S3_PUBLIC_ENDPOINT`         | —           | Endpoint usado para assinar URLs do navegador, se diferente do anterior               |
-| `S3_FORCE_PATH_STYLE`        | `false`     | `true` no MinIO                                                                       |
-| `S3_ACCESS_KEY_ID`           | —           | Só local. Usadas apenas se as duas estiverem definidas                                |
-| `S3_SECRET_ACCESS_KEY`       | —           | Na AWS, a role da Lambda fornece as credenciais                                       |
-| `ATTACHMENT_MAX_BYTES`       | 10485760    | Tamanho máximo aceito na solicitação                                                  |
-| `ATTACHMENT_URL_TTL_SECONDS` | 300         | Validade do formulário de upload e da URL de download (30–3600)                       |
+| Variável                     | Padrão      | Observação                                                                                                              |
+| ---------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `S3_BUCKET`                  | —           | Sem ela a API sobe e a lista de anexos funciona; upload, download e etiqueta respondem **503** "Storage not configured" |
+| `S3_REGION`                  | `us-east-1` |                                                                                                                         |
+| `S3_ENDPOINT`                | —           | Endpoint usado pela API (MinIO). Na AWS, vazio                                                                          |
+| `S3_PUBLIC_ENDPOINT`         | —           | Endpoint usado para assinar URLs do navegador, se diferente do anterior                                                 |
+| `S3_FORCE_PATH_STYLE`        | `false`     | `true` no MinIO                                                                                                         |
+| `S3_ACCESS_KEY_ID`           | —           | Só local. Usadas apenas se as duas estiverem definidas                                                                  |
+| `S3_SECRET_ACCESS_KEY`       | —           | Na AWS, a role da Lambda fornece as credenciais                                                                         |
+| `ATTACHMENT_MAX_BYTES`       | 10485760    | Tamanho máximo aceito na solicitação                                                                                    |
+| `ATTACHMENT_URL_TTL_SECONDS` | 300         | Validade do formulário de upload e da URL de download (30–3600)                                                         |
 
 ## Uso local (MinIO)
 

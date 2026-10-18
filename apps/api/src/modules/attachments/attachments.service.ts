@@ -91,7 +91,7 @@ export class AttachmentsService {
   }
 
   async list(lotId: string): Promise<AttachmentResponse[]> {
-    this.storage.assertConfigured();
+    // Listar é só banco: sem bucket, a página do lote continua sem erro (upload e download dão 503).
     await this.assertLot(lotId);
     const attachments = await this.db.client.attachment.findMany({
       where: { lotId, status: AttachmentStatus.UPLOADED },

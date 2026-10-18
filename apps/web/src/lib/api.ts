@@ -237,6 +237,10 @@ export function getErrorMessage(error: unknown): string {
         return 'Formato de arquivo não aceito.';
       case 429:
         return 'Muitas requisições em pouco tempo. Aguarde um instante e tente de novo.';
+      case 503:
+        return /storage not configured/i.test(error.detail ?? '')
+          ? 'O armazenamento de arquivos não está configurado neste ambiente: anexos e etiquetas ficam indisponíveis.'
+          : `Serviço temporariamente indisponível. Tente novamente em instantes (ID: ${error.requestId}).`;
       default:
         return error.status >= 500
           ? `Erro inesperado na API. Tente novamente em instantes (ID: ${error.requestId}).`
