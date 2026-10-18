@@ -110,6 +110,24 @@ Com `NODE_ENV=test` a API ignora o `.env`: os testes dependem só do ambiente ex
 
 Os arquivos de integração rodam em série (compartilham o banco). Os testes de concorrência disparam requisições simultâneas pelo supertest: as transações disputam as travas no Postgres de verdade.
 
+## Testes de navegador (Playwright)
+
+O pacote `e2e/` testa a aplicação de verdade no navegador: API com login simulado, build do front e Postgres com o seed.
+
+- `tests/smoke.spec.ts`: todas as telas abrem com título, sem erro de console, exceção ou 5xx, e sem rolagem horizontal, no desktop e no celular.
+- `tests/flows.spec.ts`: recebimento pelo formulário, saldo insuficiente, recall executado com aviso no sino, convite de usuário e auditor somente leitura.
+- Todo teste falha se a página registrar erro não esperado (fixture `watch` em `tests/support.ts`).
+
+Localmente, com o banco migrado e o seed aplicados:
+
+```bash
+pnpm --filter @traceflow/api build && (cd apps/api && CORS_ORIGINS=http://localhost:4173 node dist/main.js) &
+pnpm --filter @traceflow/web build && (cd apps/web && npx vite preview --port 4173) &
+E2E_CHANNEL=chrome pnpm e2e        # usa o Chrome instalado; sem a variável, o Chromium do Playwright
+```
+
+Na CI, o job **Browser tests (Playwright)** sobe tudo no próprio runner (serviço Postgres) e publica o relatório e os logs quando falha.
+
 ## Convenções
 
 - **Commits**: [Conventional Commits](https://www.conventionalcommits.org/pt-br/) validados pelo commitlint. Escopos sugeridos: `api`, `web`, `shared`, `infra`, `docs`, `ci`, `deps`, `repo`. Ex.: `feat(api): add supplier CRUD`.

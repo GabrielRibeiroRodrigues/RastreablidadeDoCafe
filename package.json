@@ -22,7 +22,8 @@
     "storage:up": "docker compose up -d minio minio-init",
     "stack:up": "docker compose --profile full up -d --build",
     "openapi": "pnpm --filter @traceflow/api openapi && pnpm --filter @traceflow/shared api:types",
-    "openapi:check": "pnpm openapi && git diff --exit-code -- packages/shared/openapi.json packages/shared/src/api"
+    "openapi:check": "pnpm openapi && git diff --exit-code -- packages/shared/openapi.json packages/shared/src/api",
+    "e2e": "pnpm --filter @traceflow/e2e e2e"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",

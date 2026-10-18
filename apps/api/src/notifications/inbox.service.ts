@@ -62,7 +62,9 @@ export class InboxService {
     });
     if (recipients.length === 0) return 0;
 
-    const title = notification.subject.replace(/^TraceFlow:\s*/, '').slice(0, 200);
+    // O assunto do e-mail vem como "TraceFlow: recall …": na central, sem prefixo e com maiúscula.
+    const subject = notification.subject.replace(/^TraceFlow:\s*/, '');
+    const title = (subject.charAt(0).toUpperCase() + subject.slice(1)).slice(0, 200);
     const body = notification.body.slice(0, 2000);
     const link = linkOf(notification);
     const { count } = await this.db.client.notification.createMany({

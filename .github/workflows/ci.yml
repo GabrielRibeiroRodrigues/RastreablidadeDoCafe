@@ -62,6 +62,84 @@ jobs:
       - name: Check OpenAPI contract is up to date
         run: pnpm openapi:check
 
+  e2e:
+    name: Browser tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: traceflow
+          POSTGRES_PASSWORD: traceflow
+          POSTGRES_DB: traceflow
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U traceflow" --health-interval 5s --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://traceflow:traceflow@localhost:5432/traceflow
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared, API and web
+        run: |
+          pnpm --filter @traceflow/shared build
+          pnpm --filter @traceflow/api build
+          pnpm --filter @traceflow/web build
+
+      - name: Migrate and seed the database
+        run: |
+          pnpm --filter @traceflow/api db:deploy
+          pnpm --filter @traceflow/api db:seed
+
+      # API com login simulado (mesmo modo do desenvolvimento) e o build do front no `vite preview`.
+      - name: Start API and web
+        env:
+          AUTH_MODE: mock
+          CORS_ORIGINS: http://localhost:4173
+          PUBLIC_WEB_URL: http://localhost:4173
+          RATE_LIMIT_PER_MINUTE: '100000'
+          LOG_PRETTY: 'false'
+        run: |
+          (cd apps/api && node dist/main.js > ../../api.log 2>&1 &)
+          (cd apps/web && npx vite preview --port 4173 --strictPort > ../../web.log 2>&1 &)
+          for url in http://localhost:3000/v1/health http://localhost:4173/login; do
+            for i in $(seq 1 60); do curl -fs "$url" > /dev/null && break; sleep 1; done
+            curl -fs "$url" > /dev/null || { echo "::error::$url did not start"; cat api.log web.log; exit 1; }
+          done
+
+      - name: Install Chromium
+        run: pnpm --filter @traceflow/e2e exec playwright install --with-deps chromium
+
+      - name: Run browser tests
+        run: pnpm e2e
+
+      - name: Upload report and logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            api.log
+            web.log
+          retention-days: 7
+
   terraform:
     name: Terraform fmt and validate
     runs-on: ubuntu-latest
