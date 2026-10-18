@@ -3061,6 +3061,89 @@
         "tags": ["dashboard"]
       }
     },
+    "/v1/reports/lots.csv": {
+      "get": {
+        "operationId": "ReportsController_lots",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda)",
+            "schema": {
+              "example": "bourbon",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "supplierId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LotStatus"
+            }
+          },
+          {
+            "name": "expiresWithinDays",
+            "required": false,
+            "in": "query",
+            "description": "Só lotes que vencem nos próximos N dias (inclui vencidos)",
+            "schema": {
+              "minimum": 0,
+              "maximum": 3650,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "-receivedAt",
+              "type": "string",
+              "enum": ["-receivedAt", "receivedAt", "code", "-code", "expiresAt", "-expiresAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV para Excel pt-BR (UTF-8 com BOM, separador \";\", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["reports"]
+      }
+    },
     "/v1/reports/stock.csv": {
       "get": {
         "operationId": "ReportsController_stock",

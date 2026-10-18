@@ -743,6 +743,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/reports/lots.csv': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ReportsController_lots'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/reports/stock.csv': {
     parameters: {
       query?: never;
@@ -4813,6 +4829,35 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['PerformanceResponse'];
+        };
+      };
+    };
+  };
+  ReportsController_lots: {
+    parameters: {
+      query?: {
+        /** @description Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda) */
+        q?: string;
+        productId?: string;
+        supplierId?: string;
+        status?: components['schemas']['LotStatus'];
+        /** @description Só lotes que vencem nos próximos N dias (inclui vencidos) */
+        expiresWithinDays?: number;
+        sort?: '-receivedAt' | 'receivedAt' | 'code' | '-code' | 'expiresAt' | '-expiresAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description CSV para Excel pt-BR (UTF-8 com BOM, separador ";", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
         };
       };
     };
