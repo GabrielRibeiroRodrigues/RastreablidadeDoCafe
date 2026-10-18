@@ -70,14 +70,18 @@ enum LocationType {
 }
 
 model Company {
-  id        String   @id @default(uuid(7)) @db.Uuid
-  name      String
+  id         String   @id @default(uuid(7)) @db.Uuid
+  name       String
   /// CNPJ (somente dígitos)
-  taxId     String   @unique @map("tax_id") @db.VarChar(14)
+  taxId      String   @unique @map("tax_id") @db.VarChar(14)
   /// Prefixo dos códigos de lote, ex.: CAF -> CAF-2026-000123
-  lotPrefix String   @map("lot_prefix") @db.VarChar(5)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  lotPrefix  String   @map("lot_prefix") @db.VarChar(5)
+  /// Identidade na página pública e na etiqueta: cor da marca (#RRGGBB), frase curta e site.
+  brandColor String?  @map("brand_color") @db.VarChar(7)
+  tagline    String?  @db.VarChar(140)
+  website    String?  @db.VarChar(200)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   users            User[]
   products         Product[]

@@ -1,4 +1,4 @@
-import { Controller, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiNotFoundResponse,
@@ -7,7 +7,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Roles } from '../../auth/decorators.js';
-import { LabelResponse } from './labels.dto.js';
+import { LabelBatchDto, LabelBatchResponse, LabelResponse } from './labels.dto.js';
 import { LabelsService } from './labels.service.js';
 
 @ApiTags('labels')
@@ -28,5 +28,23 @@ export class LabelsController {
   @ApiServiceUnavailableResponse({ description: 'Armazenamento não configurado (S3_BUCKET)' })
   generate(@Param('id', ParseUUIDPipe) id: string): Promise<LabelResponse> {
     return this.labels.generate(id);
+  }
+}
+
+@ApiTags('labels')
+@ApiBearerAuth()
+@Controller('labels')
+export class LabelBatchController {
+  constructor(private readonly labels: LabelsService) {}
+
+  /** Um PDF com as etiquetas de vários lotes (uma por página), para imprimir de uma vez. */
+  @Post('batch')
+  @HttpCode(200)
+  @Roles('admin', 'operator')
+  @ApiOkResponse({ type: LabelBatchResponse })
+  @ApiNotFoundResponse({ description: 'Algum lote não foi encontrado na empresa' })
+  @ApiServiceUnavailableResponse({ description: 'Armazenamento não configurado (S3_BUCKET)' })
+  generateBatch(@Body() dto: LabelBatchDto): Promise<LabelBatchResponse> {
+    return this.labels.generateBatch(dto.lotIds);
   }
 }

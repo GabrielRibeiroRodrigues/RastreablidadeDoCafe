@@ -1,5 +1,6 @@
 import {
   ArrowLeftRightIcon,
+  Building2Icon,
   BoxesIcon,
   ClipboardCheckIcon,
   FactoryIcon,
@@ -151,6 +152,13 @@ export const MANAGEMENT_ITEMS: NavLinkItem[] = [
     roles: ['admin'],
   },
   USERS_ITEM,
+  {
+    path: '/empresa',
+    label: 'Empresa',
+    description: 'Nome e identidade visual da página pública e das etiquetas.',
+    icon: Building2Icon,
+    roles: ['admin'],
+  },
 ];
 
 /** Cadastros. */

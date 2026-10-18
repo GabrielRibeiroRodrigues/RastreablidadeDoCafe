@@ -49,6 +49,11 @@ export const UsersPage = lazyPage(
     },
 );
 
+export const CompanyPage = lazyPage(
+  () => import('@/features/company/CompanyPage'),
+  (m) => m.CompanyPage,
+);
+
 export const LotsPage = lazyPage(
   () => import('@/features/inventory/LotsPage'),
   (m) => m.LotsPage,
@@ -146,6 +151,7 @@ export const PRELOADERS: Record<string, LazyPage['preload']> = {
   '/clientes': CustomersPage.preload,
   '/locais': LocationsPage.preload,
   '/usuarios': UsersPage.preload,
+  '/empresa': CompanyPage.preload,
   '/lotes': LotsPage.preload,
   '/recebimento': ReceiptPage.preload,
   '/estoque': StockPage.preload,

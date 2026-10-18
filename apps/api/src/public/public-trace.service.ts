@@ -48,7 +48,7 @@ export class PublicTraceService {
       }),
       this.db.client.company.findUniqueOrThrow({
         where: { id: companyId },
-        select: { name: true },
+        select: { name: true, brandColor: true, tagline: true, website: true },
       }),
       this.trace.backward(lotId),
     ]);
@@ -75,6 +75,7 @@ export class PublicTraceService {
 
     return {
       companyName: company.name,
+      brand: { color: company.brandColor, tagline: company.tagline, website: company.website },
       lot: {
         code: lot.code,
         productName: lot.product.name,

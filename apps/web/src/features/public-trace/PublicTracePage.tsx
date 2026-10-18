@@ -3,6 +3,7 @@ import type { ApiSchema } from '@traceflow/shared';
 import { cn } from 'cn';
 import {
   CoffeeIcon,
+  ExternalLinkIcon,
   FactoryIcon,
   LeafIcon,
   MapPinIcon,
@@ -18,6 +19,7 @@ import { useParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PRODUCT_TYPE_LABELS, ROAST_LEVEL_LABELS } from '@/features/products/labels';
+import { isDarkColor } from '@/lib/color';
 import { ApiError, getErrorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/quantity';
 import { publicTraceApi, type PublicOrigin, type PublicTrace, type PublicTraceStep } from './api';
@@ -71,7 +73,10 @@ export function PublicTracePage() {
 }
 
 function TraceView({ trace }: { trace: PublicTrace }) {
-  const { lot } = trace;
+  const { lot, brand } = trace;
+  // Cor da marca no fundo só quando o texto claro continua legível; senão, vira uma faixa no topo.
+  const brandBackground = isDarkColor(brand.color) ? brand.color : null;
+  const brandStripe = brand.color && !brandBackground ? brand.color : null;
   const dateLabel =
     lot.productType === 'GREEN'
       ? 'Recebido em'
@@ -82,15 +87,35 @@ function TraceView({ trace }: { trace: PublicTrace }) {
   return (
     <>
       <title>{`${lot.productName} · ${lot.code} — TraceFlow`}</title>
-      <header className="relative overflow-hidden bg-sidebar text-sidebar-foreground">
+      <header
+        className="relative overflow-hidden bg-sidebar text-sidebar-foreground"
+        style={brandBackground ? { backgroundColor: brandBackground } : undefined}
+      >
+        {brandStripe && (
+          <div aria-hidden className="h-1.5 w-full" style={{ backgroundColor: brandStripe }} />
+        )}
         <div
           aria-hidden
           className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-sidebar-primary/20 blur-3xl"
         />
         <div className="relative mx-auto max-w-2xl space-y-5 px-4 pt-8 pb-10 sm:px-6">
-          <p className="text-xs font-semibold tracking-[0.18em] text-sidebar-primary uppercase">
-            {trace.companyName}
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs font-semibold tracking-[0.18em] text-sidebar-primary uppercase">
+              {trace.companyName}
+            </p>
+            {brand.tagline && <p className="text-sm text-sidebar-foreground/80">{brand.tagline}</p>}
+            {brand.website && (
+              <a
+                href={brand.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-sidebar-foreground/80 underline-offset-4 hover:text-sidebar-accent-foreground hover:underline"
+              >
+                {brand.website.replace(/^https:\/\//, '').replace(/\/$/, '')}
+                <ExternalLinkIcon className="size-3" aria-hidden />
+              </a>
+            )}
+          </div>
           <div className="space-y-3">
             <h1 className="text-3xl leading-tight font-semibold tracking-tight text-sidebar-accent-foreground sm:text-4xl">
               {lot.productName}

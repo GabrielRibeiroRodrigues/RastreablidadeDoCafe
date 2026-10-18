@@ -71,8 +71,18 @@ export class PublicTraceStep {
   origin!: PublicOriginResponse | null;
 }
 
+/** Identidade da empresa na página pública (tudo opcional). */
+export class PublicBrandResponse {
+  @ApiProperty({ type: String, nullable: true, example: '#5b3a29' }) color!: string | null;
+  @ApiProperty({ type: String, nullable: true, example: 'Cafés especiais da Mantiqueira' })
+  tagline!: string | null;
+  @ApiProperty({ type: String, nullable: true, example: 'https://serraazul.com.br' })
+  website!: string | null;
+}
+
 export class PublicTraceResponse {
   @ApiProperty({ example: 'Torrefação Serra Azul' }) companyName!: string;
+  @ApiProperty({ type: PublicBrandResponse }) brand!: PublicBrandResponse;
   @ApiProperty({ type: PublicLotResponse }) lot!: PublicLotResponse;
   @ApiProperty({ type: [PublicOriginResponse], description: 'Fazendas/regiões de origem' })
   origins!: PublicOriginResponse[];

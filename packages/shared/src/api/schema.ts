@@ -695,6 +695,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/labels/batch': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['LabelBatchController_generateBatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/dashboard': {
     parameters: {
       query?: never;
@@ -1201,12 +1217,27 @@ export interface components {
        * @example CAF
        */
       lotPrefix: string;
+      /**
+       * @description Cor da marca
+       * @example #5b3a29
+       */
+      brandColor: string | null;
+      /** @example Cafés especiais da Mantiqueira */
+      tagline: string | null;
+      /** @example https://serraazul.com.br */
+      website: string | null;
       /** Format: date-time */
       createdAt: string;
     };
     UpdateCompanyDto: {
       /** @example Torrefação Serra Azul */
-      name: string;
+      name?: string;
+      /** @example #5b3a29 */
+      brandColor?: string | null;
+      /** @example Cafés especiais da Mantiqueira */
+      tagline?: string | null;
+      /** @example https://serraazul.com.br */
+      website?: string | null;
     };
     PageMeta: {
       /** @example 1 */
@@ -2250,6 +2281,21 @@ export interface components {
        */
       publicUrl: string;
     };
+    LabelBatchDto: {
+      /** @description Lotes a imprimir, na ordem das páginas (até 50) */
+      lotIds: string[];
+    };
+    LabelBatchResponse: {
+      /** @description URL pré-assinada (GET) do PDF com todas as etiquetas */
+      url: string;
+      /** Format: date-time */
+      expiresAt: string;
+      /**
+       * @description Etiquetas no PDF (lotes repetidos contam uma vez)
+       * @example 12
+       */
+      count: number;
+    };
     LotStatusCounts: {
       /** @example 12 */
       available: number;
@@ -2812,6 +2858,14 @@ export interface components {
       /** @description Lotes com saldo que vencem na janela (inclui vencidos), por data */
       data: components['schemas']['ExpiringLot'][];
     };
+    PublicBrandResponse: {
+      /** @example #5b3a29 */
+      color: string | null;
+      /** @example Cafés especiais da Mantiqueira */
+      tagline: string | null;
+      /** @example https://serraazul.com.br */
+      website: string | null;
+    };
     PublicLotResponse: {
       /** @example CAF-2026-000013 */
       code: string;
@@ -2880,6 +2934,7 @@ export interface components {
     PublicTraceResponse: {
       /** @example Torrefação Serra Azul */
       companyName: string;
+      brand: components['schemas']['PublicBrandResponse'];
       lot: components['schemas']['PublicLotResponse'];
       /** @description Fazendas/regiões de origem */
       origins: components['schemas']['PublicOriginResponse'][];
@@ -4669,6 +4724,43 @@ export interface operations {
         };
       };
       /** @description Lote não encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  LabelBatchController_generateBatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LabelBatchDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LabelBatchResponse'];
+        };
+      };
+      /** @description Algum lote não foi encontrado na empresa */
       404: {
         headers: {
           [name: string]: unknown;

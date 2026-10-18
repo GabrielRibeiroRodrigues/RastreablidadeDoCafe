@@ -2961,6 +2961,46 @@
         "tags": ["labels"]
       }
     },
+    "/v1/labels/batch": {
+      "post": {
+        "operationId": "LabelBatchController_generateBatch",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelBatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelBatchResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Algum lote não foi encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["labels"]
+      }
+    },
     "/v1/dashboard": {
       "get": {
         "operationId": "DashboardController_summary",
@@ -4483,12 +4523,37 @@
             "description": "Prefixo dos códigos de lote",
             "example": "CAF"
           },
+          "brandColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#5b3a29",
+            "description": "Cor da marca"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cafés especiais da Mantiqueira"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://serraazul.com.br"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
           }
         },
-        "required": ["id", "name", "taxId", "lotPrefix", "createdAt"]
+        "required": [
+          "id",
+          "name",
+          "taxId",
+          "lotPrefix",
+          "brandColor",
+          "tagline",
+          "website",
+          "createdAt"
+        ]
       },
       "UpdateCompanyDto": {
         "type": "object",
@@ -4496,9 +4561,23 @@
           "name": {
             "type": "string",
             "example": "Torrefação Serra Azul"
+          },
+          "brandColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#5b3a29"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cafés especiais da Mantiqueira"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://serraazul.com.br"
           }
-        },
-        "required": ["name"]
+        }
       },
       "PageMeta": {
         "type": "object",
@@ -7051,6 +7130,41 @@
         },
         "required": ["url", "expiresAt", "publicUrl"]
       },
+      "LabelBatchDto": {
+        "type": "object",
+        "properties": {
+          "lotIds": {
+            "minItems": 1,
+            "maxItems": 50,
+            "description": "Lotes a imprimir, na ordem das páginas (até 50)",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": ["lotIds"]
+      },
+      "LabelBatchResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL pré-assinada (GET) do PDF com todas as etiquetas"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "count": {
+            "type": "number",
+            "example": 12,
+            "description": "Etiquetas no PDF (lotes repetidos contam uma vez)"
+          }
+        },
+        "required": ["url", "expiresAt", "count"]
+      },
       "LotStatusCounts": {
         "type": "object",
         "properties": {
@@ -8509,6 +8623,27 @@
         },
         "required": ["days", "referenceDate", "expiredCount", "data"]
       },
+      "PublicBrandResponse": {
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": "string",
+            "nullable": true,
+            "example": "#5b3a29"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cafés especiais da Mantiqueira"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://serraazul.com.br"
+          }
+        },
+        "required": ["color", "tagline", "website"]
+      },
       "PublicLotResponse": {
         "type": "object",
         "properties": {
@@ -8693,6 +8828,9 @@
             "type": "string",
             "example": "Torrefação Serra Azul"
           },
+          "brand": {
+            "$ref": "#/components/schemas/PublicBrandResponse"
+          },
           "lot": {
             "$ref": "#/components/schemas/PublicLotResponse"
           },
@@ -8715,7 +8853,7 @@
             "description": "true se a cadeia foi cortada pelo limite de profundidade"
           }
         },
-        "required": ["companyName", "lot", "origins", "chain", "truncated"]
+        "required": ["companyName", "brand", "lot", "origins", "chain", "truncated"]
       },
       "ClientErrorDto": {
         "type": "object",

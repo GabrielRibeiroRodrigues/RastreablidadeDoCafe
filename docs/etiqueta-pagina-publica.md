@@ -26,6 +26,18 @@ flowchart LR
 
 Na tela do lote, o botão **Etiqueta** gera o PDF, abre numa nova aba e mostra o link público com botão de copiar.
 
+### Etiquetas em lote
+
+`POST /v1/labels/batch` (`{ "lotIds": [...] }`, 1 a 50, admin e operador) gera **um PDF com uma etiqueta por página**, na ordem pedida (repetidos contam uma vez). Cria o token público dos lotes que ainda não têm. Um lote de outra empresa faz o pedido inteiro responder 404. Na tela **Lotes**, marque os lotes (a seleção vale entre páginas e filtros) e use **Imprimir etiquetas**.
+
+### Identidade da empresa
+
+Em **Gestão → Empresa** (admin; `PATCH /v1/companies/me`): cor da marca (`#RRGGBB`), frase curta (até 140 caracteres) e site (`https://`).
+
+- **Etiqueta:** a faixa superior usa a cor da marca, com texto claro ou escuro escolhido pelo contraste.
+- **Página pública:** se a cor for escura o bastante para texto claro (contraste ≥ 4,5:1), ela vira o fundo do topo; se for clara, aparece como uma faixa acima do topo, para o texto continuar legível. A frase e o site aparecem abaixo do nome da empresa.
+- Não há logo por enquanto: o arquivo precisaria ser servido publicamente, e o bucket é privado.
+
 ## Token público
 
 - Gerado **na primeira etiqueta** do lote: 16 bytes aleatórios (`crypto.randomBytes`) em base64url → 22 caracteres, 128 bits de entropia.

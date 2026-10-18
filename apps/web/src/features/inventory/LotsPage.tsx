@@ -1,12 +1,15 @@
 import { PageHeader } from '@/components/layout/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import {
   BoxesIcon,
   CalendarClockIcon,
   Loader2Icon,
   PackagePlusIcon,
   SearchXIcon,
+  TagIcon,
 } from 'lucide-react';
 import { Link } from 'react-router';
 import { useInventoryPermissions } from '@/auth/permissions';
@@ -25,6 +28,7 @@ import { isUuid } from './url-filters';
 import { daysUntil, formatDateTime } from '@/lib/quantity';
 import { ALERT_DAYS, useExpiringLots, type ExpiringLot } from '@/features/alerts/api';
 import { countOf, plural } from '@/lib/plural';
+import { getErrorMessage } from '@/lib/api';
 
 const LIST_CONFIG: ListParamsConfig = {
   sorts: ['-receivedAt', 'receivedAt', 'code', '-code', 'expiresAt', '-expiresAt'],
@@ -195,6 +199,68 @@ export function LotsPage() {
     enabled: !expiringWindow,
   });
 
+  // Seleção para imprimir etiquetas em lote (persiste entre páginas e filtros).
+  const [selected, setSelected] = useState<Map<string, string>>(() => new Map());
+  const toggle = (lot: Lot, on: boolean) =>
+    setSelected((current) => {
+      const next = new Map(current);
+      if (on) next.set(lot.id, lot.code);
+      else next.delete(lot.id);
+      return next;
+    });
+  const pageRows = query.data?.data ?? [];
+  const selectPage = () =>
+    setSelected((current) => {
+      const next = new Map(current);
+      for (const lot of pageRows) next.set(lot.id, lot.code);
+      return next;
+    });
+  const printLabels = useMutation({
+    mutationFn: (args: { ids: string[]; tab: Window | null }) =>
+      inventoryApi.generateLabelsBatch(args.ids),
+    onSuccess: (result, { tab }) => {
+      if (tab) tab.location.href = result.url;
+      else window.open(result.url, '_blank', 'noopener');
+      toast.success(`${countOf(result.count, 'etiqueta gerada', 'etiquetas geradas')}`);
+      setSelected(new Map());
+    },
+    onError: (error, { tab }) => {
+      tab?.close();
+      toast.error(getErrorMessage(error));
+    },
+  });
+  const startPrint = () => {
+    // A aba abre no clique (antes do await) para o navegador não bloquear o pop-up.
+    const tab = window.open('', '_blank');
+    if (tab) tab.opener = null;
+    printLabels.mutate({ ids: [...selected.keys()], tab });
+  };
+
+  const tableColumns = useMemo<Column<Lot>[]>(
+    () =>
+      canOperate
+        ? [
+            {
+              id: 'select',
+              header: '',
+              className: 'w-8',
+              mobile: 'hidden',
+              cell: (lot) => (
+                <input
+                  type="checkbox"
+                  className="size-4 cursor-pointer accent-primary"
+                  aria-label={`Selecionar ${lot.code}`}
+                  checked={selected.has(lot.id)}
+                  onChange={(event) => toggle(lot, event.target.checked)}
+                />
+              ),
+            },
+            ...columns,
+          ]
+        : columns,
+    [canOperate, selected],
+  );
+
   const newReceipt = canOperate && (
     <Button asChild>
       <Link to="/recebimento">
@@ -343,9 +409,37 @@ export function LotsPage() {
             )}
           </div>
 
+          {canOperate && selected.size > 0 && (
+            <div
+              role="region"
+              aria-label="Lotes selecionados"
+              className="flex flex-wrap items-center gap-2 rounded-lg border bg-accent/50 px-3 py-2 text-sm"
+            >
+              <span className="font-medium">
+                {countOf(selected.size, 'lote selecionado', 'lotes selecionados')}
+              </span>
+              <Button variant="ghost" size="sm" onClick={selectPage}>
+                Selecionar a página
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setSelected(new Map())}>
+                Limpar
+              </Button>
+              <Button
+                size="sm"
+                className="ml-auto"
+                onClick={startPrint}
+                disabled={printLabels.isPending || selected.size > 50}
+                title={selected.size > 50 ? 'No máximo 50 etiquetas por vez' : undefined}
+              >
+                {printLabels.isPending ? <Loader2Icon className="animate-spin" /> : <TagIcon />}
+                Imprimir etiquetas
+              </Button>
+            </div>
+          )}
+
           <DataTable
             caption="Lista de lotes"
-            columns={columns}
+            columns={tableColumns}
             rows={query.data?.data}
             isLoading={query.isPending}
             error={query.isError ? query.error : null}
