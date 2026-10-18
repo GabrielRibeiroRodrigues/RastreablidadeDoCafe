@@ -26,7 +26,13 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true, cache: true, validate: validateEnv }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      validate: validateEnv,
+      // Testes não dependem do .env de quem os roda (ex.: MinIO local): só do ambiente explícito.
+      ignoreEnvFile: process.env['NODE_ENV'] === 'test',
+    }),
     LoggingModule,
     SecurityModule,
     PrismaModule,
