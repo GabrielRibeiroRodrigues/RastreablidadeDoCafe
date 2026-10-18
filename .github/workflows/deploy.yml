@@ -240,6 +240,7 @@ jobs:
           VITE_COGNITO_DOMAIN: ${{ steps.outputs.outputs.cognito_domain }}
           VITE_COGNITO_REDIRECT_URI: ${{ steps.outputs.outputs.web_url }}/auth/callback
           VITE_COGNITO_LOGOUT_URI: ${{ steps.outputs.outputs.web_url }}/login
+          VITE_RELEASE: ${{ github.sha }}
         run: |
           pnpm --filter @traceflow/shared build
           pnpm --filter @traceflow/web build

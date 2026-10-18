@@ -5,6 +5,7 @@ import type { Env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { rateLimitStorage } from '../security/security.module.js';
 import { TraceModule } from '../modules/trace/trace.module.js';
+import { ClientErrorsController } from './client-errors.controller.js';
 import { PublicTraceController } from './public-trace.controller.js';
 import { PublicTraceService } from './public-trace.service.js';
 
@@ -25,7 +26,7 @@ import { PublicTraceService } from './public-trace.service.js';
       }),
     }),
   ],
-  controllers: [PublicTraceController],
+  controllers: [PublicTraceController, ClientErrorsController],
   providers: [PublicTraceService],
 })
 export class PublicModule {}

@@ -2,6 +2,8 @@
 
 interface ImportMetaEnv {
   readonly VITE_API_URL?: string;
+  /** Versão do build (ex.: SHA do commit), enviada com os erros do navegador. */
+  readonly VITE_RELEASE?: string;
   readonly VITE_AUTH_MODE?: 'mock' | 'cognito';
   readonly VITE_COGNITO_AUTHORITY?: string;
   readonly VITE_COGNITO_CLIENT_ID?: string;

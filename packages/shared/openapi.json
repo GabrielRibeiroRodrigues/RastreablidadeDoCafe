@@ -4035,6 +4035,31 @@
         "tags": ["public"]
       }
     },
+    "/v1/client-errors": {
+      "post": {
+        "operationId": "ClientErrorsController_report",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientErrorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "tags": ["public"]
+      }
+    },
     "/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -8186,6 +8211,35 @@
           }
         },
         "required": ["companyName", "lot", "origins", "chain", "truncated"]
+      },
+      "ClientErrorDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["render", "route", "unhandled", "rejection"],
+            "description": "Onde o erro foi capturado"
+          },
+          "message": {
+            "type": "string",
+            "example": "Cannot read properties of undefined (reading 'code')"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://app.traceflow.dev/lotes/0190…"
+          },
+          "release": {
+            "type": "string",
+            "description": "Versão do front (hash do build)"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
+        "required": ["kind", "message"]
       },
       "HealthResponse": {
         "type": "object",

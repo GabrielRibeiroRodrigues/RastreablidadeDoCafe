@@ -36,20 +36,20 @@ As Lambdas rodam **fora da VPC** e o RDS tem endpoint público com TLS obrigató
 
 ### Módulos Terraform
 
-| Módulo            | O que cria                                                                                                                   |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `network`         | VPC, subnets, IGW, gateway endpoint S3, SGs (Lambda → RDS 5432), endpoints de interface opcionais                            |
-| `database`        | RDS PG 17 `db.t4g.micro`, gp3 20 GB, criptografado, backup 7 dias, `rds.force_ssl`, senha e `DATABASE_URL` no SSM            |
-| `auth`            | User Pool (login por e-mail, MFA TOTP opcional, só convite), grupos `admin`/`operator`/`auditor`, app client PKCE, Hosted UI |
-| `storage`         | Bucket privado de arquivos: CORS do front, SSE-S3, versionamento, ciclo de vida, TLS obrigatório                             |
-| `lambda-function` | Base de toda Lambda: role própria, log group (14 dias), X-Ray, DLQ opcional                                                  |
-| `api`             | Lambda da API (Node 24, arm64, 1024 MB, 29 s, concorrência reservada 5) + HTTP API com CORS e throttling                     |
-| `jobs`            | Lambdas `migrate`, `expiry-alert` (Scheduler diário 07:00 America/Sao_Paulo) e `recall-step`; DLQ SQS                        |
-| `workflow`        | Tópico SNS (e-mails) e state machine do recall (BLOCK_LOTS → REPORT → NOTIFY, retry + catch)                                 |
-| `web`             | Bucket privado + CloudFront com OAC, fallback SPA, cache por tipo de arquivo, headers de segurança                           |
-| `observability`   | Dashboard (API, Lambdas, RDS, DLQ) e ~10 alarmes → SNS                                                                       |
-| `github-oidc`     | Provider OIDC do GitHub e role de deploy restrita ao repositório (main, tags `v*`, environment `production`)                 |
-| `ecs-alternative` | **Não usado.** API em ECS Fargate + ALB + WAF, só validado (`terraform validate`)                                            |
+| Módulo            | O que cria                                                                                                                                                                         |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `network`         | VPC, subnets, IGW, gateway endpoint S3, SGs (Lambda → RDS 5432), endpoints de interface opcionais                                                                                  |
+| `database`        | RDS PG 17 `db.t4g.micro`, gp3 20 GB, criptografado, backup 7 dias, `rds.force_ssl`, senha e `DATABASE_URL` no SSM                                                                  |
+| `auth`            | User Pool (login por e-mail, MFA TOTP opcional, só convite), grupos `admin`/`operator`/`auditor`, app client PKCE, Hosted UI                                                       |
+| `storage`         | Bucket privado de arquivos: CORS do front, SSE-S3, versionamento, ciclo de vida, TLS obrigatório                                                                                   |
+| `lambda-function` | Base de toda Lambda: role própria, log group (14 dias), X-Ray, DLQ opcional                                                                                                        |
+| `api`             | Lambda da API (Node 24, arm64, 1024 MB, 29 s, concorrência reservada 5) + HTTP API com CORS e throttling                                                                           |
+| `jobs`            | Lambdas `migrate`, `expiry-alert` (Scheduler diário 07:00 America/Sao_Paulo) e `recall-step`; DLQ SQS                                                                              |
+| `workflow`        | Tópico SNS (e-mails) e state machine do recall (BLOCK_LOTS → REPORT → NOTIFY, retry + catch)                                                                                       |
+| `web`             | Bucket privado + CloudFront com OAC, fallback SPA, cache por tipo de arquivo, headers de segurança                                                                                 |
+| `observability`   | Dashboard (API, Lambdas, RDS, DLQ, erros do navegador) e ~10 alarmes → SNS. Erros do front: `POST /v1/client-errors` → log `event=client_error` → métrica `TraceFlow/ClientErrors` |
+| `github-oidc`     | Provider OIDC do GitHub e role de deploy restrita ao repositório (main, tags `v*`, environment `production`)                                                                       |
+| `ecs-alternative` | **Não usado.** API em ECS Fargate + ALB + WAF, só validado (`terraform validate`)                                                                                                  |
 
 ### Configuração da aplicação na AWS
 
@@ -256,7 +256,7 @@ O seed de desenvolvimento (`db:seed`) **não** deve rodar em produção: os usu�
 curl -s "$(terraform output -raw api_url)/v1/health/ready"   # {"status":"ok","database":"up"}
 ```
 
-Abra `terraform output -raw web_url`, faça login (o Cognito pede para trocar a senha temporária) e confira o dashboard: `terraform output -raw dashboard_url`.
+Abra `terraform output -raw web_url`, faça login (o Cognito pede para trocar a senha temporária) e confira o dashboard: `terraform output -raw dashboard_url`. Para ver os erros do navegador: CloudWatch Logs Insights no log group da API com `filter event = "client_error" | fields @timestamp, kind, message, url, release`.
 
 ### Domínio próprio (opcional)
 

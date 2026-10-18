@@ -107,6 +107,21 @@ resource "aws_cloudwatch_metric_alarm" "this" {
   tags                = var.tags
 }
 
+# Erros do navegador (POST /v1/client-errors → log `event=client_error`) viram métrica: filtro de
+# log não conta no limite de alarmes do free tier e aparece no dashboard.
+resource "aws_cloudwatch_log_metric_filter" "client_errors" {
+  name           = "${var.name_prefix}-client-errors"
+  log_group_name = "/aws/lambda/${var.api_function_name}"
+  pattern        = "{ $.event = \"client_error\" }"
+
+  metric_transformation {
+    name          = "ClientErrors"
+    namespace     = "TraceFlow"
+    value         = "1"
+    default_value = "0"
+  }
+}
+
 resource "aws_cloudwatch_dashboard" "this" {
   dashboard_name = var.name_prefix
   dashboard_body = jsonencode({
@@ -181,6 +196,18 @@ resource "aws_cloudwatch_dashboard" "this" {
           stat   = "Maximum"
           metrics = [
             ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", var.dlq_name],
+          ]
+        }
+      },
+      {
+        type = "metric", x = 0, y = 18, width = 12, height = 6
+        properties = {
+          title  = "Web: browser errors (ClientErrors)"
+          region = local.region
+          period = 300
+          stat   = "Sum"
+          metrics = [
+            ["TraceFlow", "ClientErrors"],
           ]
         }
       },

@@ -999,6 +999,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/client-errors': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ClientErrorsController_report'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/health': {
     parameters: {
       query?: never;
@@ -2666,6 +2682,21 @@ export interface components {
       chain: components['schemas']['PublicTraceStep'][];
       /** @description true se a cadeia foi cortada pelo limite de profundidade */
       truncated: boolean;
+    };
+    ClientErrorDto: {
+      /**
+       * @description Onde o erro foi capturado
+       * @enum {string}
+       */
+      kind: 'render' | 'route' | 'unhandled' | 'rejection';
+      /** @example Cannot read properties of undefined (reading 'code') */
+      message: string;
+      stack?: string;
+      /** @example https://app.traceflow.dev/lotes/0190… */
+      url?: string;
+      /** @description Versão do front (hash do build) */
+      release?: string;
+      userAgent?: string;
     };
     HealthResponse: {
       /** @example ok */
@@ -5048,6 +5079,33 @@ export interface operations {
         content?: never;
       };
       /** @description Limite de requisições por IP excedido */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ClientErrorsController_report: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ClientErrorDto'];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
       429: {
         headers: {
           [name: string]: unknown;
