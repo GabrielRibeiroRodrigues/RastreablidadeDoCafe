@@ -48,7 +48,7 @@ describe('Recall, quality and audit (e2e)', () => {
     it('simulation is read-only', async () => {
       const res = await s.http.post('/v1/recalls/simulate', { lotId: lots['g'] }, 'auditor');
       expect(res.status).toBe(200);
-      expect((await s.lot(lots['g'])).status).toBe('AVAILABLE');
+      expect((await s.lot(lots['g']!)).status).toBe('AVAILABLE');
       expect(await testApp.prisma.recall.count()).toBe(0);
     });
 

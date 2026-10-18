@@ -143,8 +143,8 @@ describe('Tenant isolation across business resources (e2e)', () => {
     }
 
     // B continua exatamente como estava.
-    expect(await b.lot(ids['roasted'])).toMatchObject({ balance: '31.000', status: 'BLOCKED' });
-    expect((await b.lot(ids['ncLot'])).status).toBe('QUARANTINE');
+    expect(await b.lot(ids['roasted']!)).toMatchObject({ balance: '31.000', status: 'BLOCKED' });
+    expect((await b.lot(ids['ncLot']!)).status).toBe('QUARANTINE');
     const nc = await b.http.get(`/v1/non-conformities/${ids['nc']}`).expect(200);
     expect((nc.body as { status: string }).status).toBe('OPEN');
     const recall = await b.http.get(`/v1/recalls/${ids['recall']}`).expect(200);
@@ -190,8 +190,8 @@ describe('Tenant isolation across business resources (e2e)', () => {
   });
 
   it('CSV reports only contain the requesting company', async () => {
-    const own = await a.lot(ids['ownLot']);
-    const other = await b.lot(ids['green']);
+    const own = await a.lot(ids['ownLot']!);
+    const other = await b.lot(ids['green']!);
 
     for (const report of ['stock', 'movements', 'production', 'shipments']) {
       const res = await a.http.get(`/v1/reports/${report}.csv`).expect(200);
