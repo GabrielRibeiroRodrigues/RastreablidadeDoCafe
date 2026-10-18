@@ -43,6 +43,11 @@ export default tseslint.config(
     },
   },
   {
+    // Scripts clássicos servidos como estão (ex.: tema antes do primeiro paint).
+    files: ['apps/web/public/**/*.js'],
+    languageOptions: { sourceType: 'script', globals: { ...globals.browser } },
+  },
+  {
     // Componentes gerados pelo shadcn/ui exportam variantes junto com os componentes.
     files: ['apps/web/src/components/ui/**/*.tsx'],
     rules: { 'react-refresh/only-export-components': 'off' },

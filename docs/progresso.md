@@ -232,4 +232,4 @@ API: de 175 para **264 testes** (Postgres real via Testcontainers), em `apps/api
 - Seguir o checklist de [go-live.md](go-live.md) (passos na conta AWS são humanos).
 - Testes que faltam: anexos/etiqueta com MinIO no Testcontainers, Lambda handler, Playwright na CI.
 - Gravar o vídeo do MVP.
-- Pendências conhecidas: mensagens de erro da API em inglês (o front traduz pelos códigos); CSP do front desligada até validar o login do Cognito; RDS público por custo (ADR 0010).
+- Pendências conhecidas: mensagens de erro da API em inglês (o front traduz pelos códigos); RDS público por custo (ADR 0010).

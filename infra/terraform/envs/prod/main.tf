@@ -22,6 +22,34 @@ locals {
 
   web_url = module.web.url
 
+  # CSP do front (ADR 0010 / docs/seguranca.md). Origens conhecidas sem depender de recursos que
+  # já dependem da URL do front (CORS da API e do bucket): a API vai por wildcard do API Gateway
+  # da região — ou pelo domínio próprio em `web_csp_extra_connect`.
+  files_bucket_name = "${local.name}-files-${local.account_id}"
+  web_csp_default = join("; ", [
+    "default-src 'self'",
+    "script-src 'self'",
+    # Radix/shadcn posicionam popovers com atributos style.
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob: https://${local.files_bucket_name}.s3.${var.aws_region}.amazonaws.com",
+    "font-src 'self' data:",
+    join(" ", concat([
+      "connect-src 'self'",
+      "https://*.execute-api.${var.aws_region}.amazonaws.com",
+      "https://cognito-idp.${var.aws_region}.amazonaws.com",
+      module.auth.hosted_ui_url,
+      "https://${local.files_bucket_name}.s3.${var.aws_region}.amazonaws.com",
+      "https://${local.files_bucket_name}.s3.amazonaws.com",
+    ], var.web_csp_extra_connect)),
+    "frame-src 'none'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "manifest-src 'self'",
+  ])
+  web_csp = var.web_content_security_policy == "off" ? "" : coalesce(var.web_content_security_policy, local.web_csp_default)
+
   # Modo padrão (private_networking = false): Lambdas fora da VPC, RDS com endpoint público + TLS.
   lambda_vpc_config = var.private_networking ? {
     subnet_ids         = module.network.private_subnet_ids
@@ -77,7 +105,7 @@ module "web" {
   bucket_name             = "${local.name}-web-${local.account_id}"
   aliases                 = var.web_aliases
   acm_certificate_arn     = var.web_certificate_arn
-  content_security_policy = var.web_content_security_policy
+  content_security_policy = local.web_csp
 }
 
 module "auth" {
@@ -93,7 +121,7 @@ module "auth" {
 module "storage" {
   source = "../../modules/storage"
 
-  bucket_name          = "${local.name}-files-${local.account_id}"
+  bucket_name          = local.files_bucket_name
   cors_allowed_origins = concat([local.web_url], var.extra_cors_origins)
   force_destroy        = !var.db_deletion_protection
 }
