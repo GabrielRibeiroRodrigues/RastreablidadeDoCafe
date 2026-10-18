@@ -4,6 +4,8 @@ import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { Env } from '../config/env.js';
+import { PrismaService } from '../prisma/prisma.service.js';
+import { PostgresThrottlerStorage } from './postgres-throttler.storage.js';
 import { TimeoutInterceptor } from './timeout.interceptor.js';
 
 /** Health checks (load balancer, monitoração) nunca são limitados. */
@@ -11,7 +13,8 @@ const HEALTH_PATH = /^\/v1\/health(\/|\?|$)/;
 
 /**
  * Proteções transversais da API (docs/seguranca.md):
- * - rate limit global por IP (`RATE_LIMIT_PER_MINUTE`), em memória por instância;
+ * - rate limit global por IP (`RATE_LIMIT_PER_MINUTE`), com contadores em memória ou no Postgres
+ *   (`RATE_LIMIT_STORE=postgres`, compartilhado entre as instâncias da Lambda);
  * - tempo máximo por requisição (`REQUEST_TIMEOUT_MS`).
  *
  * A rota pública de rastreio mantém o seu próprio limite, mais estrito (PublicModule).
@@ -20,8 +23,9 @@ const HEALTH_PATH = /^\/v1\/health(\/|\?|$)/;
 @Module({
   imports: [
     ThrottlerModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService<Env, true>) => ({
+      inject: [ConfigService, PrismaService],
+      useFactory: (config: ConfigService<Env, true>, prisma: PrismaService) => ({
+        ...rateLimitStorage(config, prisma),
         throttlers: [
           {
             name: 'global',
@@ -40,3 +44,13 @@ const HEALTH_PATH = /^\/v1\/health(\/|\?|$)/;
   ],
 })
 export class SecurityModule {}
+
+/** Armazenamento dos contadores conforme `RATE_LIMIT_STORE` (também usado pela rota pública). */
+export function rateLimitStorage(
+  config: ConfigService<Env, true>,
+  prisma: PrismaService,
+): { storage?: PostgresThrottlerStorage } {
+  return config.get('RATE_LIMIT_STORE', { infer: true }) === 'postgres'
+    ? { storage: new PostgresThrottlerStorage(prisma) }
+    : {};
+}

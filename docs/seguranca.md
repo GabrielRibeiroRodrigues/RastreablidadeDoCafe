@@ -20,7 +20,7 @@ Código: `apps/api/src/bootstrap.ts`, `apps/api/src/security/`, `apps/api/src/co
 
 Limitações conhecidas:
 
-- O rate limit é **em memória, por instância**. Na Lambda cada ambiente de execução tem seu contador: protege contra abuso simples, não contra ataque distribuído. Para isso, use o throttling do API Gateway (por rota/stage) e, se necessário, AWS WAF.
+- Os contadores do rate limit ficam **no Postgres em produção** (`RATE_LIMIT_STORE=postgres`, tabela `rate_limits`): todas as instâncias da Lambda dividem o mesmo contador, com uma única instrução atômica por requisição (janela fixa de 1 minuto). Localmente o padrão é `memory`. Se o banco falhar, a requisição passa: o rate limit não derruba a API. Contra ataque distribuído (muitos IPs), o limite por IP não basta: use o throttling do API Gateway (já configurado) e, se necessário, AWS WAF.
 - Compressão de resposta não está ligada: na AWS o API Gateway/CloudFront pode comprimir, e a Lambda não ganha com isso.
 
 ## Validação do ambiente no boot
@@ -38,12 +38,13 @@ Limitações conhecidas:
 
 ### Variáveis novas
 
-| Variável                | Padrão  | Uso                                          |
-| ----------------------- | ------- | -------------------------------------------- |
-| `TRUST_PROXY`           | `0`     | Proxies confiáveis (1 atrás de API GW/ALB)   |
-| `RATE_LIMIT_PER_MINUTE` | `300`   | Limite global por IP                         |
-| `REQUEST_TIMEOUT_MS`    | `25000` | Tempo máximo por requisição                  |
-| `SWAGGER_ENABLED`       | depende | `true` fora de produção, `false` em produção |
+| Variável                | Padrão   | Uso                                             |
+| ----------------------- | -------- | ----------------------------------------------- |
+| `TRUST_PROXY`           | `0`      | Proxies confiáveis (1 atrás de API GW/ALB)      |
+| `RATE_LIMIT_PER_MINUTE` | `300`    | Limite global por IP                            |
+| `RATE_LIMIT_STORE`      | `memory` | `postgres` em produção (contador compartilhado) |
+| `REQUEST_TIMEOUT_MS`    | `25000`  | Tempo máximo por requisição                     |
+| `SWAGGER_ENABLED`       | depende  | `true` fora de produção, `false` em produção    |
 
 ## Isolamento entre empresas (resumo)
 

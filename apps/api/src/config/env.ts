@@ -28,6 +28,11 @@ export const envSchema = z
     TRUST_PROXY: z.coerce.number().int().min(0).max(10).default(0),
     /** Limite global de requisições por minuto por IP (rotas `/v1/health*` ficam de fora). */
     RATE_LIMIT_PER_MINUTE: z.coerce.number().int().min(1).max(100_000).default(300),
+    /**
+     * Onde ficam os contadores do rate limit: `memory` (por instância, padrão local) ou `postgres`
+     * (compartilhado entre as instâncias da Lambda — use em produção).
+     */
+    RATE_LIMIT_STORE: z.enum(['memory', 'postgres']).default('memory'),
     /** Tempo máximo de uma requisição antes de responder 503 (fica abaixo dos 30 s do API Gateway). */
     REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1000).max(900_000).default(25_000),
     DATABASE_URL: z
@@ -123,6 +128,9 @@ export function productionWarnings(env: Env): string[] {
   if (env.SWAGGER_ENABLED) warnings.push('SWAGGER_ENABLED=true in production exposes /docs');
   if (env.TRUST_PROXY === 0) {
     warnings.push('TRUST_PROXY=0 in production: set 1 behind API Gateway/ALB');
+  }
+  if (env.RATE_LIMIT_STORE === 'memory') {
+    warnings.push('RATE_LIMIT_STORE=memory in production: each instance counts on its own');
   }
   return warnings;
 }

@@ -30,9 +30,11 @@ locals {
 
   # Configuração da aplicação compartilhada entre API e jobs (apps/api/src/config/env.ts).
   app_environment = {
-    NODE_ENV             = "production"
-    LOG_LEVEL            = "info"
-    TRUST_PROXY          = "1"
+    NODE_ENV    = "production"
+    LOG_LEVEL   = "info"
+    TRUST_PROXY = "1"
+    # Contadores do rate limit no Postgres: compartilhados entre as instâncias da Lambda.
+    RATE_LIMIT_STORE     = "postgres"
     AUTH_MODE            = "cognito"
     COGNITO_REGION       = var.aws_region
     COGNITO_USER_POOL_ID = module.auth.user_pool_id
