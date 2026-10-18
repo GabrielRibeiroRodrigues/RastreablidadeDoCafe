@@ -64,9 +64,21 @@ O Terraform monta as variáveis de `apps/api/src/config/env.ts`. Segredos **não
 | `DATABASE_URL_SSM_PARAMETER`                                  | `/traceflow/prod/db/url` (SecureString, `sslmode=verify-full`) |
 | `DATABASE_POOL_MAX`                                           | `2` (5 instâncias × 2 = 10 conexões no máximo)                 |
 | `S3_BUCKET`, `S3_REGION`                                      | bucket de arquivos                                             |
-| `NOTIFICATIONS_TOPIC_ARN`                                     | tópico SNS (API e jobs)                                        |
+| `SNS_TOPIC_ARN`                                               | tópico SNS (API e jobs)                                        |
+| `TRUST_PROXY` / `RATE_LIMIT_STORE`                            | `1` / `postgres` (rate limit compartilhado entre instâncias)   |
 | `RECALL_STATE_MACHINE_ARN`                                    | state machine do recall (só API)                               |
 | `NODE_EXTRA_CA_CERTS`                                         | `/var/runtime/ca-cert.pem` (CA do RDS no runtime da Lambda)    |
+
+**Orçamento de conexões no RDS** (`db.t4g.micro`, `max_connections` ≈ 80, sem RDS Proxy por custo):
+
+| Quem                               | Limite                            | Conexões |
+| ---------------------------------- | --------------------------------- | -------: |
+| API                                | concorrência reservada 5 × pool 2 |       10 |
+| Etapas do recall (`recall-step`)   | 1 por recall em execução × pool 2 |      2–6 |
+| Alerta de validade, migrations     | 1 execução por vez × pool 2       |    2 + 2 |
+| Folga (console, `psql`, monitoria) |                                   |      ~10 |
+
+O alarme `rds-connections` dispara em 60. Os jobs não têm concorrência reservada de propósito: contas novas têm limite total de 10 execuções simultâneas e a AWS exige 10 sem reserva. Se a conta tiver limite maior e o volume de recalls crescer, reserve 2 para `recall-step`.
 
 > Os jobs da Semana 4 devem ler exatamente `NOTIFICATIONS_TOPIC_ARN`, `RECALL_STATE_MACHINE_ARN` e `S3_BUCKET`. Se usarem outros nomes, ajuste `app_environment` em `infra/terraform/envs/prod/main.tf`.
 
