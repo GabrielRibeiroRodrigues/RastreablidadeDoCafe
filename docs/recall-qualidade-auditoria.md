@@ -103,6 +103,21 @@ Tabela `audit_logs` (só inclusão: trigger no banco + extensão de tenant): emp
 - **Retenção** (`AUDIT_RETENTION_DAYS`, padrão 1825 dias = 5 anos, mínimo 366): o job mensal `audit-retention` (Scheduler, dia 1 às 03:00) arquiva os registros mais antigos no bucket, em `<empresa>/audit-archive/<data>_<último id>.jsonl.gz` (JSON Lines + gzip, lotes de 5.000), e só depois os remove, na mesma transação. O trigger continua proibindo `UPDATE` sempre e só aceita `DELETE` com a flag `traceflow.audit_retention` ligada na transação **e** para registros com mais de 1 ano. Sem bucket configurado, nada é apagado; se o upload falhar, nada é apagado.
 - `GET /v1/audit-logs` (admin, auditor): paginado, filtros `entityType`, `entityId`, `userId`, `action` (exata, ou prefixo terminado em ponto, ex.: `recall.`), `from`/`to`; inclui o nome do usuário.
 
+## Central de avisos (no app)
+
+Os avisos de `recall.executed`, `recall.failed` e `lots.expiring` (que também saem pelo SNS) e o de `non_conformity.opened` (só no app) ficam na **central de avisos** do cabeçalho: um registro por destinatário na tabela `notifications`.
+
+| Categoria | Eventos                            | Quem recebe               |
+| --------- | ---------------------------------- | ------------------------- |
+| `recall`  | `recall.executed`, `recall.failed` | admin, operador e auditor |
+| `expiry`  | `lots.expiring` (job diário)       | admin e operador          |
+| `quality` | `non_conformity.opened`            | admin e operador          |
+
+- Cada usuário vê só os próprios avisos (`GET /v1/notifications`, `unread-count`, `POST /{id}/read`, `read-all`); aviso de outro usuário ou empresa responde 404.
+- Cada usuário pode silenciar categorias (`GET/PUT /v1/notifications/preferences`, coluna `users.muted_notifications`).
+- O sino mostra os não lidos e atualiza a cada minuto; no topo da lista fica o resumo **ao vivo** dos lotes vencendo em 30 dias.
+- E-mail continua pelo tópico SNS da operação (`notification_emails` no Terraform). E-mail individual por usuário exigiria o SES com domínio verificado, que fica fora do free tier deste projeto.
+
 ## Variáveis de ambiente
 
 | Variável                   | Padrão | Uso                                                   |

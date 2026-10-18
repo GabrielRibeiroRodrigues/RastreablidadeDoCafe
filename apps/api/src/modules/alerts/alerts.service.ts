@@ -1,3 +1,4 @@
+import { countOf } from '../../common/text/plural.js';
 import { Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../../config/env.js';
@@ -103,13 +104,13 @@ export class AlertsService {
       (lot) =>
         `- ${lot.code} (${lot.product.name}): ${lot.balance} ${lot.unit}, ` +
         (lot.expired
-          ? `VENCIDO há ${-lot.daysToExpiry} dia(s) (${lot.expiresAt})`
-          : `vence em ${lot.daysToExpiry} dia(s) (${lot.expiresAt})`),
+          ? `VENCIDO há ${countOf(-lot.daysToExpiry, 'dia', 'dias')} (${lot.expiresAt})`
+          : `vence em ${countOf(lot.daysToExpiry, 'dia', 'dias')} (${lot.expiresAt})`),
     );
     await this.notifier.notify({
       event: 'lots.expiring',
       companyId,
-      subject: `TraceFlow: ${result.data.length} lote(s) vencendo em ${days} dias`,
+      subject: `TraceFlow: ${countOf(result.data.length, 'lote vencendo', 'lotes vencendo')} em ${days} dias`,
       body:
         `Lotes com saldo vencidos ou vencendo nos próximos ${days} dias ` +
         `(referência ${result.referenceDate}):\n\n${lines.join('\n')}`,

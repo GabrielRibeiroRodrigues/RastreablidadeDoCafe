@@ -1,3 +1,4 @@
+import { countOf } from '../../common/text/plural.js';
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   LotStatus,
@@ -307,7 +308,7 @@ export class RecallStepsService {
     await this.notifier.notify({
       event: 'recall.executed',
       companyId: this.tenant.requireCompanyId(),
-      subject: `TraceFlow: recall ${recall.number} (${SEVERITY_PT[recall.severity]}) - ${recall.lots.length} lote(s) bloqueado(s)`,
+      subject: `TraceFlow: recall ${recall.number} (${SEVERITY_PT[recall.severity]}) - ${countOf(recall.lots.length, 'lote bloqueado', 'lotes bloqueados')}`,
       body: [
         `Recall ${recall.number} - gravidade ${SEVERITY_PT[recall.severity]}`,
         `Lote de origem: ${recall.originLot.code}`,

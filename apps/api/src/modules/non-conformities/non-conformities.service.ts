@@ -1,4 +1,5 @@
-import { HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { InboxService } from '../../notifications/inbox.service.js';
+import { HttpStatus, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DomainProblemException } from '../../common/http/domain-problem.exception.js';
 import { pageArgs, toPage, type Page } from '../../common/http/pagination.js';
 import {
@@ -46,12 +47,15 @@ type NcRow = Prisma.NonConformityGetPayload<{ include: typeof NC_INCLUDE }>;
  */
 @Injectable()
 export class NonConformitiesService {
+  private readonly logger = new Logger(NonConformitiesService.name);
+
   constructor(
     private readonly db: TenantPrismaService,
     private readonly tenant: TenantContext,
     private readonly ledger: StockLedgerService,
     private readonly numbers: DocumentNumberService,
     private readonly audit: AuditService,
+    private readonly inbox: InboxService,
   ) {}
 
   async open(dto: OpenNonConformityDto): Promise<NonConformityResponse> {
@@ -100,7 +104,27 @@ export class NonConformitiesService {
       );
       return nc.id;
     });
+    await this.notifyOpened(id);
     return this.get(id);
+  }
+
+  /** Aviso na central (admin e operador). Falha aqui não desfaz a NC, que já foi gravada. */
+  private async notifyOpened(id: string): Promise<void> {
+    try {
+      const nc = await this.db.client.nonConformity.findUniqueOrThrow({
+        where: { id },
+        select: { number: true, description: true, lot: { select: { code: true } } },
+      });
+      await this.inbox.deliver({
+        event: 'non_conformity.opened',
+        companyId: this.tenant.requireCompanyId(),
+        subject: `Não conformidade ${nc.number} no lote ${nc.lot.code}`,
+        body: nc.description,
+        data: { nonConformityId: id, number: nc.number, lot: nc.lot.code },
+      });
+    } catch (error) {
+      this.logger.error({ err: error, id }, 'Failed to notify the opened non-conformity');
+    }
   }
 
   async release(id: string, dto: ResolveNonConformityDto): Promise<NonConformityResponse> {

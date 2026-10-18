@@ -167,7 +167,7 @@ export async function buildLabelPdf(data: LabelData): Promise<Uint8Array> {
   }
   const hidden = data.origins.length - origins.length;
   if (hidden > 0 && y - 6 > qrTop) {
-    text.draw(`+ ${hidden} outra(s) origem(ns)`, {
+    text.draw(`+ ${hidden === 1 ? 'outra origem' : `${hidden} outras origens`}`, {
       x: MARGIN,
       y,
       size: 8,

@@ -94,6 +94,7 @@ model Company {
   sequences        DocumentSequence[]
   attachments      Attachment[]
   auditLogs        AuditLog[]
+  notifications    Notification[]
   nonConformities  NonConformity[]
   recalls          Recall[]
   recallSteps      RecallStep[]
@@ -106,18 +107,21 @@ model Company {
 /// Usuário pertence a uma única empresa. A autorização usa os grupos do token (Cognito);
 /// `role` é o perfil provisionado, usado pelo emissor simulado e para sincronizar grupos.
 model User {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  companyId  String   @map("company_id") @db.Uuid
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  companyId          String   @map("company_id") @db.Uuid
   /// `sub` do Cognito (ou do emissor simulado)
-  cognitoSub String   @unique @map("cognito_sub")
-  email      String   @unique
-  name       String
-  role       Role
-  isActive   Boolean  @default(true) @map("is_active")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  cognitoSub         String   @unique @map("cognito_sub")
+  email              String   @unique
+  name               String
+  role               Role
+  isActive           Boolean  @default(true) @map("is_active")
+  /// Categorias de aviso que o usuário silenciou na central (ex.: expiry, quality).
+  mutedNotifications String[] @default([]) @map("muted_notifications")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   company          Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  notifications    Notification[]
   movements        StockMovement[]
   attachments      Attachment[]
   productionOrders ProductionOrder[]
@@ -754,4 +758,26 @@ model RateLimit {
 
   @@index([expiresAt])
   @@map("rate_limits")
+}
+
+/// Aviso na central do app (um registro por destinatário). Os mesmos eventos também saem pelo SNS.
+model Notification {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  companyId String    @map("company_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// Ex.: recall.executed, recall.failed, lots.expiring, non_conformity.opened
+  event     String    @db.VarChar(60)
+  title     String    @db.VarChar(200)
+  body      String    @db.VarChar(2000)
+  /// Rota do front para abrir o assunto (ex.: /recall/{id}).
+  link      String?   @db.VarChar(300)
+  readAt    DateTime? @map("read_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user    User    @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+
+  @@index([companyId, userId, createdAt])
+  @@index([companyId, userId, readAt])
+  @@map("notifications")
 }
