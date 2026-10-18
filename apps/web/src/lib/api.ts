@@ -156,7 +156,22 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
       ? 'O arquivo está vazio: a primeira linha deve ser o cabeçalho.'
       : `CSV malformado${typeof ext.line === 'number' ? ` na linha ${ext.line}` : ''}: confira aspas e separadores.`,
   '/problems/import-too-large': () => 'O arquivo tem mais de 5.000 linhas: divida-o em partes.',
+  '/problems/last-admin': () =>
+    'A empresa precisa de pelo menos um administrador ativo. Promova outra pessoa antes.',
+  '/problems/own-role': () => 'Você não pode mudar o seu próprio perfil.',
+  '/problems/own-account': () => 'Você não pode desativar a sua própria conta.',
+  '/problems/request-timeout': () =>
+    'A operação demorou demais e foi interrompida. Tente de novo; se continuar, filtre um período menor.',
 };
+
+/**
+ * Tipos de problema tratados pelo status HTTP (mensagem genérica + erros por campo), sem texto
+ * próprio. Qualquer outro tipo que a API emitir precisa estar em `PROBLEM_MESSAGES` (há um teste).
+ */
+export const GENERIC_PROBLEMS = ['/problems/validation-error', '/problems/conflict'] as const;
+
+/** Tipos com mensagem própria em pt-BR (usado pelo teste de cobertura das traduções). */
+export const TRANSLATED_PROBLEMS: readonly string[] = Object.keys(PROBLEM_MESSAGES);
 
 const STAGE_TEXT: Record<string, string> = {
   PROCESSING: 'Beneficiamento',
