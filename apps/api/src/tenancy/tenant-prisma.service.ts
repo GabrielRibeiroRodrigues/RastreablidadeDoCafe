@@ -54,15 +54,25 @@ export class TenantPrismaService {
   ): Promise<T> {
     const companyId = this.tenant.requireCompanyId();
     return this.client.$transaction(
-      (tx) =>
-        fn(
-          Object.assign(tx, {
-            sql: <R>(build: (companyId: string) => Prisma.Sql) => tx.$queryRaw<R>(build(companyId)),
-          }),
-        ),
+      (tx) => fn(withSql(tx, (build) => tx.$queryRaw(build(companyId)))),
       { timeout: 10_000, maxWait: 5_000, ...options },
     );
   }
+}
+
+/**
+ * Acrescenta `sql()` ao cliente da transação **sem alterá-lo**. Os clientes de transação do Prisma
+ * estendido compartilham o mesmo alvo: um `Object.assign` faria o `sql()` de uma transação rodar
+ * na última aberta (outra requisição, até de outra empresa) — `FOR UPDATE` e saldo no lugar errado.
+ */
+function withSql(
+  tx: TransactionClient,
+  sql: (build: (companyId: string) => Prisma.Sql) => Promise<unknown>,
+): TenantTransaction {
+  return new Proxy(tx, {
+    get: (target, property) =>
+      property === 'sql' ? sql : (Reflect.get(target, property) as unknown),
+  }) as TenantTransaction;
 }
 
 type TransactionClient = Parameters<Parameters<TenantPrismaClient['$transaction']>[0]>[0];

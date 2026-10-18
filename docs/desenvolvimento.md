@@ -104,8 +104,11 @@ Como funciona a integração (`apps/api/test/support/`):
 3. `test-app.ts` (`createTestApp`) sobe a aplicação completa com a mesma configuração HTTP de produção; requisições via supertest.
 4. `database.ts` (`resetDatabase`) faz `TRUNCATE` de todas as tabelas — use em `beforeEach`.
 5. `factories.ts` cria empresas, usuários e produtos com valores únicos.
+6. `scenario.ts` (`createScenario`) monta uma empresa completa (três perfis, produtos, locais, fornecedor, cliente) com atalhos HTTP autenticados e helpers `receive`, `produce`, `ship` — base dos testes de regra de negócio e de concorrência.
 
-Os arquivos de integração rodam em série (compartilham o banco). Execução completa local: ~15 s.
+Com `NODE_ENV=test` a API ignora o `.env`: os testes dependem só do ambiente explícito (sem bucket, por exemplo, as etapas que usam S3 são puladas), igual à CI.
+
+Os arquivos de integração rodam em série (compartilham o banco). Os testes de concorrência disparam requisições simultâneas pelo supertest: as transações disputam as travas no Postgres de verdade.
 
 ## Convenções
 

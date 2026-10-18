@@ -28,7 +28,7 @@
 | 4   | Anexos com S3 (MinIO local)                                        | ✅ concluída |
 | 5   | Telas de lotes, recebimento e movimentações                        | ✅ concluída |
 
-**Testes pendentes (Semana 2):** saídas simultâneas no mesmo lote (só passam as que cabem no saldo), corrida de `Idempotency-Key`, trigger de imutabilidade, códigos de lote sob concorrência, regras de status/direção por tipo, isolamento entre empresas nos novos recursos, anexos.
+**Testes (Semana 2):** ✅ feitos na rodada de testes (ver Registro), exceto anexos. Lista original: saídas simultâneas no mesmo lote (só passam as que cabem no saldo), corrida de `Idempotency-Key`, trigger de imutabilidade, códigos de lote sob concorrência, regras de status/direção por tipo, isolamento entre empresas nos novos recursos, anexos.
 
 ## Semana 3 — Produção, expedição e rastreabilidade (MVP v0.1)
 
@@ -43,7 +43,7 @@
 | 7   | Teste de ponta a ponta do fluxo completo                             | ✅ concluída |
 | 8   | Publicação: PR #2 (CI verde), tag `v0.1`                             | ✅ concluída |
 
-**Testes pendentes (Semana 3):** produção concorrente sobre o mesmo insumo, grafo em diamante e limite de profundidade, isolamento por empresa nas consultas recursivas, expedição concorrente, página pública (nenhum dado sensível, rate limit), etiqueta.
+**Testes (Semana 3):** ✅ feitos na rodada de testes, exceto a geração da etiqueta (precisa de bucket). Lista original: produção concorrente sobre o mesmo insumo, grafo em diamante e limite de profundidade, isolamento por empresa nas consultas recursivas, expedição concorrente, página pública (nenhum dado sensível, rate limit), etiqueta.
 
 ## Semanas 4 a 6 — Pronto para produção
 
@@ -60,7 +60,7 @@ Feito de forma autônoma, em paralelo, a pedido ("aplicação pronta para entrar
 
 **Nada foi aplicado na AWS** — o primeiro `terraform apply` é um passo humano ([go-live.md](go-live.md)).
 
-**Testes pendentes (Semanas 4–6):** recall (impacto, bloqueio, retomada idempotente das etapas, recall concorrente no mesmo lote), descarte de NC (baixa de todo o saldo), auditoria (append-only, interceptor sem duplicar), importação (tudo ou nada, duplicados), relatórios CSV (escape contra fórmula), rate limit, Lambda handler e job de migrations.
+**Testes (Semanas 4–6):** ✅ feitos na rodada de testes, exceto Lambda handler e job de migrations. Lista original: recall (impacto, bloqueio, retomada idempotente das etapas, recall concorrente no mesmo lote), descarte de NC (baixa de todo o saldo), auditoria (append-only, interceptor sem duplicar), importação (tudo ou nada, duplicados), relatórios CSV (escape contra fórmula), rate limit, Lambda handler e job de migrations.
 
 ## Registro
 
@@ -204,9 +204,32 @@ Feito de forma autônoma, em paralelo, a pedido ("aplicação pronta para entrar
 - Corrigido nesta rodada: aviso de lote bloqueado/em quarentena e "Movimentar" desativado em lote bloqueado, fonte monoespaçada (Geist Mono), layout do detalhe do recall, plurais ("lote(s)" → concordância real), rótulos da auditoria.
 - Limitação: o MCP do Playwright só carrega numa sessão nova do Claude Code; a QA usou o Playwright (playwright-core) diretamente contra a aplicação.
 
+### Rodada de testes das regras críticas
+
+API: de 175 para **264 testes** (Postgres real via Testcontainers), em `apps/api/test/`:
+
+| Arquivo                          | O que garante                                                                                                                                                                                                                        |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `stock-concurrency.e2e-spec.ts`  | 10 saídas simultâneas → só as que cabem; lote consumido uma vez; `Idempotency-Key` simultânea e reaproveitada; estorno em corrida; códigos de lote; razão e auditoria append-only                                                    |
+| `stock-rules.e2e-spec.ts`        | direção por tipo, ajuste só admin e com motivo, status (bloqueado, quarentena, consumido), perfis, estornos                                                                                                                          |
+| `tenancy-resources.e2e-spec.ts`  | outra empresa: 404 em leituras e escritas de lote, rastreio, movimentação, produção, expedição, NC, recall; listas, painel, auditoria e CSV sem vazamento                                                                            |
+| `production-trace.e2e-spec.ts`   | torras e expedições concorrentes, travas em ordem cruzada sem deadlock, expedição tudo ou nada, diamante, limite de 20 níveis, página pública (sem dados sensíveis, 404, rate limit)                                                 |
+| `recall-quality.e2e-spec.ts`     | recall bloqueia origem e derivados, um recall aberto por lote (concorrente), retomada sem refazer etapas, encerramento e liberação; NC (quarentena, descarte em todos os locais, resolução única em corrida); auditoria sem duplicar |
+| `imports-reports.e2e-spec.ts`    | importação tudo ou nada, duplicados no arquivo e no banco, importações simultâneas, só admin; CSV com fórmula neutralizada                                                                                                           |
+| `tenant-transaction.e2e-spec.ts` | `tx.sql()` roda na própria transação com 12 transações simultâneas de duas empresas                                                                                                                                                  |
+
+**Bugs encontrados e corrigidos:**
+
+- **Crítico — `tx.sql()` na transação errada sob concorrência.** O `Object.assign(tx, { sql })` alterava um objeto compartilhado entre as transações do Prisma estendido: com requisições simultâneas, o `SELECT ... FOR UPDATE` e o cálculo de saldo de uma requisição rodavam na transação de outra (até de outra empresa). Efeitos observados: 404 "Lot not found" em recebimentos simultâneos, timeouts e 500 em estornos concorrentes — e a garantia de saldo nunca negativo deixava de valer sob carga. Corrigido com um `Proxy` (sem alterar o `tx`) e teste de regressão.
+- `ConditionalModule` do login simulado com prazo de 5 s contado desde o import: com imports lentos (cold start, CI) o timer derrubava o processo com exceção não tratada. Prazo de 60 s.
+- Falha de rede numa etapa do recall gravava `lastError` vazio ("REPORT: "): `AggregateError` não tem mensagem. Agora usa as mensagens internas ou o código do erro.
+- Os testes liam o `.env` local (ex.: MinIO): agora, com `NODE_ENV=test`, só o ambiente explícito vale — igual à CI.
+
+**Ainda sem teste automatizado:** anexos e etiqueta (precisam de bucket S3/MinIO no teste), Lambda handler e job de migrations, testes de navegador na CI.
+
 ## Próximos passos
 
 - Seguir o checklist de [go-live.md](go-live.md) (passos na conta AWS são humanos).
-- Rodada de testes adiada (Semanas 2–6), quando for pedida.
+- Testes que faltam: anexos/etiqueta com MinIO no Testcontainers, Lambda handler, Playwright na CI.
 - Gravar o vídeo do MVP.
 - Pendências conhecidas: mensagens de erro da API em inglês (o front traduz pelos códigos); CSP do front desligada até validar o login do Cognito; RDS público por custo (ADR 0010).

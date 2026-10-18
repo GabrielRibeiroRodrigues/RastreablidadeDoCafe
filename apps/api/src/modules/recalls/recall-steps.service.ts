@@ -120,7 +120,7 @@ export class RecallStepsService {
     name: RecallStepName | 'START',
     error: unknown,
   ): Promise<void> {
-    const message = (error instanceof Error ? error.message : String(error)).slice(0, 1000);
+    const message = describeError(error).slice(0, 1000);
     this.logger.error({ err: error, recallId, step: name }, 'Recall step failed');
 
     if (stepId) {
@@ -377,4 +377,18 @@ function quantitiesText(value: Prisma.JsonValue): string {
       .filter(Boolean)
       .join(' + ') || '-'
   );
+}
+
+/**
+ * Texto do erro para a etapa e o aviso. Falhas de rede (ex.: conexão recusada pelo S3) chegam como
+ * `AggregateError` com `message` vazia: usa as mensagens internas ou o código do erro.
+ */
+export function describeError(error: unknown): string {
+  if (!(error instanceof Error)) return String(error);
+  if (error.message) return error.message;
+  if (error instanceof AggregateError && error.errors.length) {
+    return [...new Set(error.errors.map(describeError))].join('; ');
+  }
+  const code = (error as { code?: unknown }).code;
+  return typeof code === 'string' ? `${error.name} (${code})` : error.name;
 }
