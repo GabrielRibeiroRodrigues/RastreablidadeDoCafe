@@ -44,4 +44,4 @@ Free tier: ~US$ 0–1/mês. Depois do free tier: ~US$ 18–20/mês (quase tudo R
 
 ## Rollback
 
-Ver [deploy.md — Rollback](deploy.md#rollback): reimplantar a tag anterior pelo workflow; migrations são só aditivas até aqui; snapshot do RDS antes de cada deploy com migration.
+Ver [deploy.md — Rollback](deploy.md#rollback) e o runbook [restauracao.md](restauracao.md) (faça o ensaio de restauração antes de abrir para clientes): reimplantar a tag anterior pelo workflow; migrations são só aditivas até aqui; snapshot do RDS antes de cada deploy com migration.

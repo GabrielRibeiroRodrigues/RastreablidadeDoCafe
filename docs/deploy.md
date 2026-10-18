@@ -272,7 +272,7 @@ Abra `terraform output -raw web_url`, faça login (o Cognito pede para trocar a 
   aws rds restore-db-instance-to-point-in-time --source-db-instance-identifier traceflow-prod \
     --target-db-instance-identifier traceflow-prod-restore --restore-time 2026-10-16T12:00:00Z
   ```
-  Depois, atualize o parâmetro `/traceflow/prod/db/url` com o novo endpoint (ou importe a instância no Terraform) e reinicie as Lambdas (qualquer novo deploy ou mudança de configuração força um novo init).
+  Passo a passo completo (conferir, recuperar só o que se perdeu ou voltar o banco inteiro sem trocar a instância do Terraform) e o ensaio: [restauracao.md](restauracao.md).
 - **Infraestrutura**: `git revert` do commit Terraform + novo deploy. O state é versionado no S3 (dá para recuperar uma versão anterior em último caso).
 
 ## Segredos
