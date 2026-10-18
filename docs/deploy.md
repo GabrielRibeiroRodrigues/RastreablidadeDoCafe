@@ -44,7 +44,7 @@ As Lambdas rodam **fora da VPC** e o RDS tem endpoint público com TLS obrigató
 | `storage`         | Bucket privado de arquivos: CORS do front, SSE-S3, versionamento, ciclo de vida, TLS obrigatório                                                                                   |
 | `lambda-function` | Base de toda Lambda: role própria, log group (14 dias), X-Ray, DLQ opcional                                                                                                        |
 | `api`             | Lambda da API (Node 24, arm64, 1024 MB, 29 s, concorrência reservada 5) + HTTP API com CORS e throttling                                                                           |
-| `jobs`            | Lambdas `migrate`, `expiry-alert` (Scheduler diário 07:00 America/Sao_Paulo) e `recall-step`; DLQ SQS                                                                              |
+| `jobs`            | Lambdas `migrate`, `expiry-alert` (Scheduler diário 07:00 America/Sao_Paulo), `recall-step` e `audit-retention` (mensal: arquiva a auditoria antiga no bucket); DLQ SQS            |
 | `workflow`        | Tópico SNS (e-mails) e state machine do recall (BLOCK_LOTS → REPORT → NOTIFY, retry + catch)                                                                                       |
 | `web`             | Bucket privado + CloudFront com OAC, fallback SPA, cache por tipo de arquivo, headers de segurança                                                                                 |
 | `observability`   | Dashboard (API, Lambdas, RDS, DLQ, erros do navegador) e ~10 alarmes → SNS. Erros do front: `POST /v1/client-errors` → log `event=client_error` → métrica `TraceFlow/ClientErrors` |

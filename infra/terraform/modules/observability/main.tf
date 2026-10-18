@@ -72,7 +72,9 @@ locals {
       statistic   = "Sum"
       threshold   = key == "api" ? 5 : 1
       period      = 300
-    } if key != "migrate" },
+    } if !contains(["migrate", "audit-retention"], key) },
+    # migrate é invocada pelo deploy (falha aparece no workflow); audit-retention é assíncrona e
+    # mensal (falha cai na DLQ, que já tem alarme) — assim os alarmes ficam no limite do free tier.
     !var.enable_recall_alarm ? {} : {
       recall-failed = {
         description = "Recall executions failed"

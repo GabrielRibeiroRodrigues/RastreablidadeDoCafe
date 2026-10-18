@@ -212,6 +212,7 @@ module "observability" {
     { migrate = module.jobs.migrate_function_name },
     var.enable_expiry_alert ? { expiry-alert = module.jobs.expiry_alert_function_name } : {},
     var.enable_recall ? { recall-step = module.jobs.recall_step_function_name } : {},
+    { audit-retention = module.jobs.audit_retention_function_name },
   )
   db_instance_id      = module.database.instance_id
   dlq_name            = module.jobs.dlq_name

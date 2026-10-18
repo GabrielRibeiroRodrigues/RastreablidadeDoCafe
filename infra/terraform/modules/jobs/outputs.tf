@@ -27,3 +27,8 @@ output "dlq_arn" {
   description = "Dead-letter queue ARN."
   value       = aws_sqs_queue.dlq.arn
 }
+
+output "audit_retention_function_name" {
+  description = "Audit retention Lambda (null when disabled)."
+  value       = var.enable_audit_retention ? module.audit_retention[0].function_name : null
+}

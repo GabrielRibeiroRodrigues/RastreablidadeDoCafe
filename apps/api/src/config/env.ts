@@ -79,6 +79,11 @@ export const envSchema = z
     RECALL_STATE_MACHINE_ARN: z.string().startsWith('arn:').optional(),
     /** Janela padrão do alerta de validade, em dias. */
     ALERT_EXPIRY_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+    /**
+     * Retenção da auditoria em dias (padrão: 5 anos; mínimo: 1 ano, o banco também exige).
+     * Registros mais antigos são arquivados no bucket (JSON Lines + gzip) e removidos pelo job.
+     */
+    AUDIT_RETENTION_DAYS: z.coerce.number().int().min(366).max(36_500).default(1825),
   })
   .superRefine((env, ctx) => {
     if (env.AUTH_MODE === 'mock' && env.NODE_ENV === 'production') {
