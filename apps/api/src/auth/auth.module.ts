@@ -13,7 +13,11 @@ import { MockKeyModule } from './mock-key.module.js';
     PassportModule,
     MockKeyModule,
     // Endpoints do emissor simulado só existem em AUTH_MODE=mock (e o env proíbe mock em produção).
-    ConditionalModule.registerWhen(DevAuthModule, (env) => env['AUTH_MODE'] === 'mock'),
+    // O prazo conta desde a importação deste arquivo: com imports lentos (cold start, CI) os 5 s
+    // padrão estouram e o timer lança uma exceção não tratada que derruba o processo.
+    ConditionalModule.registerWhen(DevAuthModule, (env) => env['AUTH_MODE'] === 'mock', {
+      timeout: 60_000,
+    }),
   ],
   controllers: [MeController],
   providers: [
