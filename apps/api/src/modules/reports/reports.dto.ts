@@ -1,10 +1,14 @@
 import { ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
 import { MovementType, ProductionStage } from '../../generated/prisma/client.js';
+import { ListLotsQueryDto } from '../inventory/lots.dto.js';
 import { StockQueryDto } from '../inventory/stock.controller.js';
 
 /** Mesmos filtros e ordenação de `GET /stock`, sem paginação. */
 export class StockReportQueryDto extends OmitType(StockQueryDto, ['page', 'pageSize'] as const) {}
+
+/** Mesmos filtros e ordenação de `GET /lots`, sem paginação. */
+export class LotsReportQueryDto extends OmitType(ListLotsQueryDto, ['page', 'pageSize'] as const) {}
 
 class PeriodQueryDto {
   @ApiPropertyOptional({ description: 'A partir de (inclusive), ISO 8601', example: '2026-10-01' })

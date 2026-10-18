@@ -320,6 +320,8 @@ model Lot {
   @@index([companyId, status])
   @@index([companyId, productId])
   @@index([companyId, expiresAt])
+  /// Ordem padrão da tela Lotes (mais recentes primeiro).
+  @@index([companyId, receivedAt])
   @@map("lots")
 }
 

@@ -12,8 +12,10 @@ import type {
 import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
 import { fromDateOnly } from '../inventory/inventory.mappers.js';
 import { Quantity } from '../inventory/quantity.js';
+import { LotsService } from '../inventory/lots.service.js';
 import { StockService } from '../inventory/stock.controller.js';
 import type {
+  LotsReportQueryDto,
   MovementsReportQueryDto,
   ProductionReportQueryDto,
   ShipmentsReportQueryDto,
@@ -98,7 +100,47 @@ export class ReportsService {
   constructor(
     private readonly db: TenantPrismaService,
     private readonly stock: StockService,
+    private readonly lots: LotsService,
   ) {}
+
+  async lotsReport(query: LotsReportQueryDto): Promise<CsvReport> {
+    const { data, total } = await this.lots.listForExport(query, REPORT_MAX_ROWS);
+    const header = [
+      'Lote',
+      'Produto (SKU)',
+      'Produto',
+      'Tipo',
+      'Situação',
+      'Fornecedor',
+      'Fazenda',
+      'Saldo',
+      'Quantidade inicial',
+      'Unidade',
+      'Recebido em',
+      'Validade',
+      'Safra',
+      'Variedade',
+      'Pontuação SCA',
+    ];
+    const rows = data.map((lot): CsvValue[] => [
+      lot.code,
+      lot.product.sku,
+      lot.product.name,
+      PRODUCT_TYPE[lot.product.type],
+      LOT_STATUS[lot.status],
+      lot.supplier?.name ?? null,
+      lot.supplier?.farmName ?? null,
+      qty(lot.balance),
+      qty(lot.initialQuantity),
+      UNIT[lot.unit],
+      dateTimeCell(lot.receivedAt),
+      lot.expiresAt ? dateCell(fromDateOnly(lot.expiresAt)) : null,
+      lot.harvest,
+      lot.variety,
+      lot.cuppingScore,
+    ]);
+    return report('lotes', header, rows, total > REPORT_MAX_ROWS);
+  }
 
   async stockReport(query: StockReportQueryDto): Promise<CsvReport> {
     const page = await this.stock.position({ ...query, page: 1, pageSize: REPORT_MAX_ROWS });

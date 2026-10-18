@@ -32,23 +32,7 @@ export class LotsService {
   ) {}
 
   async list(query: ListLotsQueryDto): Promise<Page<LotResponse>> {
-    const where: Prisma.LotWhereInput = {
-      ...(query.status && { status: query.status }),
-      ...(query.productId && { productId: query.productId }),
-      ...(query.supplierId && { supplierId: query.supplierId }),
-      ...(query.q && {
-        OR: [
-          { code: { contains: query.q, mode: 'insensitive' } },
-          { product: { name: { contains: query.q, mode: 'insensitive' } } },
-          { product: { sku: { contains: query.q, mode: 'insensitive' } } },
-          { supplier: { name: { contains: query.q, mode: 'insensitive' } } },
-          { supplier: { farmName: { contains: query.q, mode: 'insensitive' } } },
-        ],
-      }),
-      ...(query.expiresWithinDays !== undefined && {
-        expiresAt: { not: null, lte: new Date(Date.now() + query.expiresWithinDays * DAY_MS) },
-      }),
-    };
+    const where = lotsWhere(query);
 
     const [lots, total] = await Promise.all([
       this.db.client.lot.findMany({
@@ -66,6 +50,28 @@ export class LotsService {
       total,
       query,
     );
+  }
+
+  /**
+   * Mesmos filtros e ordem da listagem, sem paginação (exportação CSV). Devolve até `limit` lotes
+   * e o total, para o relatório avisar quando cortou.
+   */
+  async listForExport(
+    query: LotsFilter & { sort: ListLotsQueryDto['sort'] },
+    limit: number,
+  ): Promise<{ data: LotResponse[]; total: number }> {
+    const where = lotsWhere(query);
+    const [lots, total] = await Promise.all([
+      this.db.client.lot.findMany({
+        where,
+        include: LOT_INCLUDE,
+        orderBy: orderBy(query.sort),
+        take: limit,
+      }),
+      this.db.client.lot.count({ where }),
+    ]);
+    const balances = await this.totalBalances(lots.map((lot) => lot.id));
+    return { data: lots.map((lot) => toLotResponse(lot, balances.get(lot.id))), total };
   }
 
   async get(id: string): Promise<LotDetailResponse> {
@@ -212,4 +218,30 @@ export async function assertNotUnderOpenRecall(
 
 function pick(source: Record<string, unknown>, fields: string[]): Record<string, unknown> {
   return Object.fromEntries(fields.map((field) => [field, source[field] ?? null]));
+}
+
+/** Filtros da listagem de lotes (também usados na exportação CSV). */
+export type LotsFilter = Pick<
+  ListLotsQueryDto,
+  'status' | 'productId' | 'supplierId' | 'q' | 'expiresWithinDays'
+>;
+
+export function lotsWhere(query: LotsFilter): Prisma.LotWhereInput {
+  return {
+    ...(query.status && { status: query.status }),
+    ...(query.productId && { productId: query.productId }),
+    ...(query.supplierId && { supplierId: query.supplierId }),
+    ...(query.q && {
+      OR: [
+        { code: { contains: query.q, mode: 'insensitive' } },
+        { product: { name: { contains: query.q, mode: 'insensitive' } } },
+        { product: { sku: { contains: query.q, mode: 'insensitive' } } },
+        { supplier: { name: { contains: query.q, mode: 'insensitive' } } },
+        { supplier: { farmName: { contains: query.q, mode: 'insensitive' } } },
+      ],
+    }),
+    ...(query.expiresWithinDays !== undefined && {
+      expiresAt: { not: null, lte: new Date(Date.now() + query.expiresWithinDays * DAY_MS) },
+    }),
+  };
 }

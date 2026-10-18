@@ -53,6 +53,12 @@ Todos os perfis. Quatro consultas em paralelo (contadores num único `SELECT`, v
 
 Quantidades são strings com 3 casas, como no resto da API. O fuso `America/Sao_Paulo` é fixo enquanto a empresa não tiver fuso próprio.
 
+## Lotes — `GET /v1/reports/lots.csv`
+
+Mesmos filtros e ordem da tela **Lotes** (`status`, `productId`, `supplierId`, `q`, `expiresWithinDays`, `sort`): código, produto, situação, fornecedor e fazenda, saldo, quantidade inicial, unidade, recebimento, validade, safra, variedade e pontuação. O botão **Exportar CSV** da tela baixa exatamente o que está filtrado.
+
+Na mesma tela, **Salvar filtros** guarda a combinação atual com um nome (no navegador, por usuário, até 8); a visão aparece como um chip ao lado de "Vencendo". A ordem padrão (mais recentes primeiro) tem índice próprio (`company_id, received_at`), e a paginação continua por página com total.
+
 ## Desempenho por período — `GET /v1/dashboard/performance?days=30|90|180|365`
 
 Seção **Desempenho** do painel, com seletor de período (guardado na URL, `?periodo=90`):

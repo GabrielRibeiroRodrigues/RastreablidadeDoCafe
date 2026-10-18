@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button';
 import { toOptions } from '@/lib/options';
 import { inventoryApi, type Lot, type LotsQuery } from './api';
 import { ExpiryText, LotStatusBadge, Quantity } from './components';
+import { ExportLotsButton, SavedViews } from './LotListTools';
 import { useProducts } from './hooks';
 import { EXPIRY_WINDOWS, LOT_STATUSES, LOT_STATUS_LABELS } from './labels';
 import { isUuid } from './url-filters';
@@ -325,6 +326,7 @@ export function LotsPage() {
             </span>
           )}
         </Button>
+        <SavedViews />
       </div>
 
       {expiringWindow ? (
@@ -403,10 +405,21 @@ export function LotsPage() {
             />
             {query.isFetching && !query.isPending && (
               <Loader2Icon
-                className="size-4 animate-spin text-muted-foreground sm:ml-auto"
+                className="size-4 animate-spin text-muted-foreground"
                 aria-label="Atualizando"
               />
             )}
+            <div className="sm:ml-auto">
+              <ExportLotsButton
+                query={{
+                  sort: params.sort,
+                  q: params.q || undefined,
+                  status: params.filters.lotStatus,
+                  productId: params.filters.productId,
+                  expiresWithinDays: params.filters.expiresWithinDays,
+                }}
+              />
+            </div>
           </div>
 
           {canOperate && selected.size > 0 && (

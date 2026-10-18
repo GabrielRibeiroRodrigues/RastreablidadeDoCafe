@@ -142,6 +142,25 @@ describe('CSV imports and reports (e2e)', () => {
   });
 
   describe('reports', () => {
+    it('exports lots with the same filters as the list', async () => {
+      const kept = await s.receive('10');
+      const blocked = await s.receive('20');
+      await s.http
+        .patch(`/v1/lots/${blocked}/status`, { status: 'BLOCKED', reason: 'Teste de filtro' })
+        .expect(200);
+      const [keptCode, blockedCode] = [(await s.lot(kept)).code, (await s.lot(blocked)).code];
+
+      const all = await s.http.get('/v1/reports/lots.csv').expect(200);
+      expect(all.headers['content-disposition']).toMatch(/lotes/);
+      expect(all.text).toContain(keptCode);
+      expect(all.text).toContain(blockedCode);
+
+      const onlyBlocked = await s.http.get('/v1/reports/lots.csv?status=BLOCKED').expect(200);
+      expect(onlyBlocked.text).toContain(blockedCode);
+      expect(onlyBlocked.text).not.toContain(keptCode);
+      expect(onlyBlocked.text).toContain('Bloqueado');
+    });
+
     it('neutralizes spreadsheet formulas in user-provided text', async () => {
       await testApp.prisma.customer.update({
         where: { id: s.customer.id },
