@@ -69,7 +69,7 @@ export async function buildRecallReportPdf(data: RecallReportData): Promise<Uint
   writer.title(`Relatório de recall ${data.number}`, data.companyName);
   writer.fields([
     ['Gravidade', data.severity],
-    ['Situação', data.status],
+    ['Situação na emissão', data.status],
     ['Aberto em', `${data.createdAt} por ${data.createdBy}`],
     ['Gerado em', data.generatedAt],
     ['Lote de origem', `${data.originLot.code} - ${data.originLot.product}`],

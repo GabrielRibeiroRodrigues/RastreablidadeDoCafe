@@ -12,7 +12,7 @@ import { StorageService } from '../../storage/storage.service.js';
 import { TenantContext } from '../../tenancy/tenant-context.js';
 import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
 import { AuditService, type AuditEntry } from '../audit/audit.service.js';
-import { formatQuantity } from '../inventory/quantity.js';
+import { formatQuantityPt } from '../inventory/quantity.js';
 import { StockLedgerService } from '../inventory/stock-ledger.service.js';
 import { TraceService } from '../trace/trace.service.js';
 import { buildRecallReportPdf } from './recall-report.js';
@@ -268,7 +268,7 @@ export class RecallStepsService {
         code: item.lot.code,
         product: item.lot.product.name,
         depth: item.depth,
-        balance: `${formatQuantity(item.balance)} ${item.lot.unit}`,
+        balance: formatQuantityPt(item.balance, item.lot.unit),
         previousStatus: item.previousStatus ? STATUS_PT[item.previousStatus] : '-',
         status: STATUS_PT[item.lot.status],
       })),
@@ -366,14 +366,14 @@ export class RecallStepsService {
   }
 }
 
-/** `[{ unit: "KG", quantity: "12.000" }]` → `12.000 KG`. */
+/** `[{ unit: "KG", quantity: "12.000" }, { unit: "BAG_60KG", … }]` → `12 kg + 3 sc`. */
 function quantitiesText(value: Prisma.JsonValue): string {
   if (!Array.isArray(value)) return '-';
   return (
     value
       .map((item) => {
         const { unit, quantity } = (item ?? {}) as { unit?: string; quantity?: string };
-        return unit && quantity ? `${quantity} ${unit}` : '';
+        return unit && quantity ? formatQuantityPt(quantity, unit) : '';
       })
       .filter(Boolean)
       .join(' + ') || '-'
