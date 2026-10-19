@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { formatQuantityRaw } from './quantity';
+import { formatQuantity } from './quantity';
 
 /**
  * Modelo de erro da API: RFC 9457 (`application/problem+json`). As chamadas em si
@@ -104,7 +104,7 @@ const text = (value: unknown): string => (typeof value === 'string' ? value : ''
 /** Problemas de domínio (campo `type` do RFC 9457) com mensagem própria em pt-BR. */
 const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
   '/problems/insufficient-stock': ({ extensions: ext }) =>
-    `Saldo insuficiente em ${text(ext.location) || 'origem'}: disponível ${formatQuantityRaw(
+    `Saldo insuficiente em ${text(ext.location) || 'origem'}: disponível ${formatQuantity(
       text(ext.available) || '0',
     )}`,
   '/problems/lot-not-movable': ({ extensions: ext, detail }) => {
@@ -118,6 +118,10 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
     return 'Lote em quarentena/bloqueado não pode ser movimentado.';
   },
   '/problems/already-reversed': () => 'Esta movimentação já foi estornada.',
+  '/problems/already-cancelled': ({ extensions: ext }) =>
+    `${text(ext.document) || 'Esta operação'} já foi cancelada. Recarregue a página.`,
+  '/problems/use-cancellation': ({ extensions: ext }) =>
+    `Esta movimentação faz parte da ${text(ext.document) || 'ordem de produção'}: para desfazê-la, cancele a ordem inteira (na tela da ordem).`,
   '/problems/invalid-reversal': () =>
     'Um estorno não pode ser estornado; lance uma nova movimentação.',
   '/problems/idempotency-key-reused': () =>
@@ -195,7 +199,7 @@ const typeList = (text: string): string =>
 function translateProductionDetail(detail: string): string {
   let m = /Output \(([\d.,]+) kg\) cannot exceed the input mass \(([\d.,]+) kg\)/i.exec(detail);
   if (m) {
-    return `A massa de saída (${formatQuantityRaw(m[1] ?? '')} kg) não pode exceder a de entrada (${formatQuantityRaw(m[2] ?? '')} kg).`;
+    return `A massa de saída (${formatQuantity(m[1] ?? '')} kg) não pode exceder a de entrada (${formatQuantity(m[2] ?? '')} kg).`;
   }
   m = /^(\w+) must produce (.+), not (\w+)\.?$/.exec(detail);
   if (m) {

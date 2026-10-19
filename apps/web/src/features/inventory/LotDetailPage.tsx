@@ -110,7 +110,8 @@ export function LotDetailPage() {
   const columns = movementColumns({ unit: lot.unit });
   const rowActions = permissions.canReverse
     ? (movement: Movement) =>
-        movement.type !== 'REVERSAL' && !movement.reversedById ? (
+        // Produção só se desfaz cancelando a ordem inteira (tela da ordem de produção).
+        movement.type !== 'REVERSAL' && movement.type !== 'PRODUCTION' && !movement.reversedById ? (
           <Button
             variant="ghost"
             size="sm"

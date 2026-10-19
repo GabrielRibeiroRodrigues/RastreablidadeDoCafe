@@ -11,6 +11,7 @@ import { PeriodFilter } from '@/components/catalog/PeriodFilter';
 import { SearchInput } from '@/components/catalog/SearchInput';
 import { useListParams, type ListParamsConfig } from '@/components/catalog/use-list-params';
 import { EntityCombobox } from '@/components/form/EntityCombobox';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { inventoryApi, type Lot } from '@/features/inventory/api';
 import { isDateParam, isUuid } from '@/features/inventory/url-filters';
@@ -39,6 +40,18 @@ const columns: Column<Shipment>[] = [
         {shipment.number}
       </Link>
     ),
+  },
+  {
+    id: 'status',
+    header: 'Situação',
+    cell: (shipment) =>
+      shipment.cancellation ? (
+        <Badge variant="destructive">Cancelada</Badge>
+      ) : shipment.reversedItemsCount > 0 ? (
+        <Badge variant="outline">Estorno parcial</Badge>
+      ) : (
+        <Badge variant="secondary">Expedida</Badge>
+      ),
   },
   {
     id: 'customer',

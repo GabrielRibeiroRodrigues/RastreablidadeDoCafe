@@ -32,6 +32,8 @@ export interface TreeLink {
   order?: { number: string; stage: ProductionStage };
   /** A ligação toca o lote consultado (destacada). */
   touchesRoot: boolean;
+  /** Desfeita: ordem cancelada ou saída estornada (aparece apagada, só como histórico). */
+  undone?: boolean;
 }
 
 export interface TreeModel {
@@ -47,7 +49,9 @@ const lotItem = (node: TraceNode, rootId: string): TreeItem => ({
 });
 
 const farmId = (supplierId: string) => `farm:${supplierId}`;
-const shipmentItemId = (s: TraceShipment) => `shipment:${s.shipmentId}:${s.lotId}`;
+// Itens estornados viram cartão próprio: não se somam ao que de fato foi entregue.
+const shipmentItemId = (s: TraceShipment) =>
+  `shipment:${s.shipmentId}:${s.lotId}${s.reversed ? ':reversed' : ''}`;
 
 function depthTitle(depth: number, direction: 'backward' | 'forward'): string {
   if (depth === 0) return 'Este lote';
@@ -121,6 +125,7 @@ function productionLinks(trace: BackwardTrace | ForwardTrace): TreeLink[] {
     quantity: edge.quantity,
     unit: nodes.get(edge.parentLotId)?.unit ?? 'KG',
     order: { number: edge.productionOrder.number, stage: edge.productionOrder.stage },
+    undone: edge.productionOrder.cancelled,
     touchesRoot: edge.parentLotId === trace.rootLotId || edge.childLotId === trace.rootLotId,
   }));
 }
@@ -219,6 +224,7 @@ export function forwardModel(trace: ForwardTrace): TreeModel {
         quantity: shipment.quantity,
         unit: shipment.unit,
         touchesRoot: shipment.lotId === trace.rootLotId,
+        undone: shipment.reversed,
       });
     }
   }

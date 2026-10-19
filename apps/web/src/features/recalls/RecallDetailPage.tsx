@@ -106,7 +106,9 @@ export function RecallDetailPage() {
     enabled: Boolean(originLotId) && (query.data?.customers.length ?? 0) > 0,
     staleTime: 60_000,
   });
-  const shipments = new Map((forward.data?.shipments ?? []).map((s) => [s.number, s]));
+  const shipments = new Map(
+    (forward.data?.shipments ?? []).filter((s) => !s.reversed).map((s) => [s.number, s]),
+  );
 
   const onSettled = async (recall: RecallDetail) => {
     queryClient.setQueryData(['recalls', 'detail', id], recall);

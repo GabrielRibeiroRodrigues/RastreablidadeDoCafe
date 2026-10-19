@@ -9,6 +9,7 @@ import { FilterSelect } from '@/components/catalog/FilterSelect';
 import { PaginationBar } from '@/components/catalog/PaginationBar';
 import { SearchInput } from '@/components/catalog/SearchInput';
 import { useListParams, type ListParamsConfig } from '@/components/catalog/use-list-params';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { isDateParam } from '@/features/inventory/url-filters';
 import { toOptions } from '@/lib/options';
@@ -36,6 +37,16 @@ const columns: Column<ProductionOrder>[] = [
         {order.number}
       </Link>
     ),
+  },
+  {
+    id: 'status',
+    header: 'Situação',
+    cell: (order) =>
+      order.cancellation ? (
+        <Badge variant="destructive">Cancelada</Badge>
+      ) : (
+        <Badge variant="secondary">Concluída</Badge>
+      ),
   },
   { id: 'stage', header: 'Etapa', cell: (order) => <StageBadge stage={order.stage} /> },
   {

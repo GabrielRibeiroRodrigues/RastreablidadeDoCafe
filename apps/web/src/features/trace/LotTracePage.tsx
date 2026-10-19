@@ -14,6 +14,7 @@ import { useMemo, type ReactNode } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { cn } from 'cn';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -184,7 +185,9 @@ function BackwardView({ trace }: { trace: BackwardTrace }) {
 
 function ForwardView({ trace }: { trace: ForwardTrace }) {
   const model = useMemo(() => forwardModel(trace), [trace]);
-  const shipments = new Set(trace.shipments.map((s) => s.shipmentId)).size;
+  // Só o que foi entregue: itens estornados aparecem na árvore e na tabela, mas não contam.
+  const shipments = new Set(trace.shipments.filter((s) => !s.reversed).map((s) => s.shipmentId))
+    .size;
   const empty = trace.edges.length === 0 && trace.shipments.length === 0;
   return (
     <div className="space-y-4">
@@ -228,7 +231,10 @@ function ForwardView({ trace }: { trace: ForwardTrace }) {
               </TableHeader>
               <TableBody>
                 {trace.shipments.map((s, index) => (
-                  <TableRow key={`${s.shipmentId}:${s.lotId}:${index}`}>
+                  <TableRow
+                    key={`${s.shipmentId}:${s.lotId}:${index}`}
+                    className={s.reversed ? 'text-muted-foreground opacity-70' : undefined}
+                  >
                     <TableCell>
                       <Link
                         to={`/expedicao/${s.shipmentId}`}
@@ -256,6 +262,11 @@ function ForwardView({ trace }: { trace: ForwardTrace }) {
                       </Link>
                     </TableCell>
                     <TableCell className="text-right tabular-nums">
+                      {s.reversed && (
+                        <Badge variant="outline" className="mr-2 text-muted-foreground">
+                          Estornado
+                        </Badge>
+                      )}
                       {formatQuantity(s.quantity, s.unit)}
                     </TableCell>
                   </TableRow>

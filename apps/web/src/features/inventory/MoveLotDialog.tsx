@@ -22,13 +22,7 @@ import {
 import { Field, FieldLabel } from '@/components/ui/field';
 import { LOCATION_TYPE_LABELS } from '@/features/locations/api';
 import { ApiError, getErrorMessage } from '@/lib/api';
-import {
-  UNIT_SHORT,
-  formatQuantity,
-  formatQuantityRaw,
-  parseQuantityInput,
-  toMilli,
-} from '@/lib/quantity';
+import { UNIT_SHORT, formatQuantity, parseQuantityInput, toMilli } from '@/lib/quantity';
 import { inventoryApi, type LotDetail, type ManualMovementType, type MovementInput } from './api';
 import { useIdempotencyKey, useInvalidateInventory, useLocations } from './hooks';
 import { LOT_STATUS_LABELS, MOVEMENT_TYPE_LABELS } from './labels';
@@ -104,7 +98,7 @@ function buildSchema(lot: LotDetail) {
           ctx.addIssue({
             code: 'custom',
             path: ['quantity'],
-            message: `Saldo insuficiente em ${row?.location.code ?? 'origem'}: disponível ${formatQuantityRaw(max)}`,
+            message: `Saldo insuficiente em ${row?.location.code ?? 'origem'}: disponível ${formatQuantity(max)}`,
           });
         }
       }
