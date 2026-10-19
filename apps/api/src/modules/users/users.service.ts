@@ -77,27 +77,36 @@ export class UsersService {
   async invite(dto: InviteUserDto, current: AuthUser): Promise<UserResponse> {
     // E-mail de login é único entre empresas: o Cognito (username) e o índice único do banco
     // recusam duplicados; os dois viram 409 com o erro no campo `email`.
-    const user = await this.db.transaction(async (tx) => {
-      const cognitoSub = await this.directory.invite(dto.email, dto.name, dto.role);
-      const created = await tx.user.create({
-        data: {
-          cognitoSub,
-          email: dto.email,
-          name: dto.name,
-          role: APP_TO_DB_ROLE[dto.role],
-        } as Prisma.UserUncheckedCreateInput,
+    // O diretório não participa da transação: se o banco falhar depois do convite, a conta é
+    // apagada, senão a pessoa receberia uma senha para um login que a API recusa.
+    let invitedSub: string | undefined;
+    const user = await this.db
+      .transaction(async (tx) => {
+        const cognitoSub = await this.directory.invite(dto.email, dto.name, dto.role);
+        invitedSub = cognitoSub;
+        const created = await tx.user.create({
+          data: {
+            cognitoSub,
+            email: dto.email,
+            name: dto.name,
+            role: APP_TO_DB_ROLE[dto.role],
+          } as Prisma.UserUncheckedCreateInput,
+        });
+        await this.audit.record(
+          {
+            action: 'user.invited',
+            entityType: 'user',
+            entityId: created.id,
+            after: { email: dto.email, name: dto.name, role: dto.role },
+          },
+          tx,
+        );
+        return created;
+      })
+      .catch(async (error: unknown) => {
+        if (invitedSub) await this.directory.remove(invitedSub);
+        throw error;
       });
-      await this.audit.record(
-        {
-          action: 'user.invited',
-          entityType: 'user',
-          entityId: created.id,
-          after: { email: dto.email, name: dto.name, role: dto.role },
-        },
-        tx,
-      );
-      return created;
-    });
     return toResponse(user, current);
   }
 

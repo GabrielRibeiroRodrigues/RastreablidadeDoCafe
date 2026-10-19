@@ -1,6 +1,7 @@
 import {
   AdminAddUserToGroupCommand,
   AdminCreateUserCommand,
+  AdminDeleteUserCommand,
   AdminDisableUserCommand,
   AdminEnableUserCommand,
   AdminRemoveUserFromGroupCommand,
@@ -28,6 +29,8 @@ export interface UserDirectory {
   /** Bloqueia o login e encerra as sessões abertas. */
   disable(sub: string): Promise<void>;
   enable(sub: string): Promise<void>;
+  /** Apaga a conta. Só para desfazer um convite cuja gravação no banco falhou. */
+  remove(sub: string): Promise<void>;
 }
 
 export const USER_DIRECTORY = Symbol('USER_DIRECTORY');
@@ -47,6 +50,9 @@ export class MockUserDirectory implements UserDirectory {
   enable(): Promise<void> {
     return Promise.resolve();
   }
+  remove(): Promise<void> {
+    return Promise.resolve();
+  }
 }
 
 export class CognitoUserDirectory implements UserDirectory {
@@ -59,6 +65,7 @@ export class CognitoUserDirectory implements UserDirectory {
   ) {}
 
   async invite(email: string, name: string, role: AppRole): Promise<string> {
+    let created = false;
     try {
       const out = await this.client.send(
         new AdminCreateUserCommand({
@@ -73,6 +80,7 @@ export class CognitoUserDirectory implements UserDirectory {
           ],
         }),
       );
+      created = true;
       const sub = out.User?.Attributes?.find((attribute) => attribute.Name === 'sub')?.Value;
       if (!sub) throw new Error('Cognito did not return the user sub');
       await this.addGroup(email, role);
@@ -81,7 +89,20 @@ export class CognitoUserDirectory implements UserDirectory {
       if (error instanceof UsernameExistsException) {
         throw emailTaken();
       }
+      // Conta criada sem grupo: apaga para o convite poder ser refeito (senão daria "e-mail em uso").
+      if (created) await this.remove(email);
       throw error;
+    }
+  }
+
+  async remove(username: string): Promise<void> {
+    try {
+      await this.client.send(
+        new AdminDeleteUserCommand({ UserPoolId: this.userPoolId, Username: username }),
+      );
+    } catch (error) {
+      // Não mascara o erro original do convite; a conta órfã fica registrada no log.
+      this.logger.error({ err: error, username }, 'Could not remove the Cognito account');
     }
   }
 

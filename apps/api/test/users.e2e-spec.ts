@@ -1,4 +1,5 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { USER_DIRECTORY, type UserDirectory } from '../src/modules/users/user-directory.js';
 import { resetDatabase } from './support/database.js';
 import { createScenario, type Problem, type Scenario } from './support/scenario.js';
 import { createTestApp, type TestApp } from './support/test-app.js';
@@ -71,6 +72,24 @@ describe('Users (e2e)', () => {
     });
     expect(res.status).toBe(409);
     expect(res.body).toMatchObject({ errors: [{ field: 'email' }] });
+  });
+
+  it('removes the directory account when the database rejects the invite', async () => {
+    const directory = testApp.app.get<UserDirectory>(USER_DIRECTORY);
+    const remove = vi.spyOn(directory, 'remove');
+    const invite = vi.spyOn(directory, 'invite').mockResolvedValueOnce('sub-orphan');
+    try {
+      const res = await s.http.post('/v1/users', {
+        email: s.users.operator.email,
+        name: 'Repetido',
+        role: 'auditor',
+      });
+      expect(res.status).toBe(409);
+      expect(remove).toHaveBeenCalledWith('sub-orphan');
+    } finally {
+      remove.mockRestore();
+      invite.mockRestore();
+    }
   });
 
   it('role changes take effect on the next request (no token refresh)', async () => {

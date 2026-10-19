@@ -52,6 +52,24 @@ describe('CognitoUserDirectory', () => {
     });
   });
 
+  it('deletes the new account when adding the role group fails, so the invite can be retried', async () => {
+    const { client, calls } = fakeClient((name) => {
+      if (name === 'AdminCreateUserCommand') {
+        return { User: { Attributes: [{ Name: 'sub', Value: 'sub-123' }] } };
+      }
+      return name === 'AdminAddUserToGroupCommand' ? new Error('throttled') : {};
+    });
+    const directory = new CognitoUserDirectory('pool-1', client);
+
+    await expect(directory.invite('ana@x.dev', 'Ana', 'admin')).rejects.toThrow('throttled');
+    expect(calls.map((c) => c.name)).toEqual([
+      'AdminCreateUserCommand',
+      'AdminAddUserToGroupCommand',
+      'AdminDeleteUserCommand',
+    ]);
+    expect(calls[2]!.input).toMatchObject({ Username: 'ana@x.dev' });
+  });
+
   it('keeps exactly the role group when the role changes', async () => {
     const { client, calls } = fakeClient();
     await new CognitoUserDirectory('pool-1', client).setRole('sub-1', 'auditor');
