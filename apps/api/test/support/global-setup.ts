@@ -29,8 +29,37 @@ export async function setup(project: TestProject): Promise<void> {
     env: { ...process.env, DATABASE_URL: databaseUrl },
     stdio: 'pipe',
   });
+  assertNoSchemaDrift(prismaCli, databaseUrl);
 
   project.provide('databaseUrl', databaseUrl);
+}
+
+/**
+ * O banco migrado precisa bater com o `schema.prisma`: mudar o schema sem escrever a migration
+ * (ou uma migration escrita à mão que diverge dele) falha aqui, antes de qualquer teste.
+ */
+function assertNoSchemaDrift(prismaCli: string, databaseUrl: string): void {
+  try {
+    execFileSync(
+      process.execPath,
+      [
+        prismaCli,
+        'migrate',
+        'diff',
+        '--from-config-datasource',
+        '--to-schema',
+        'prisma/schema.prisma',
+        '--exit-code',
+      ],
+      { env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: 'pipe' },
+    );
+  } catch (error) {
+    const output = (error as { stdout?: Buffer }).stdout?.toString() ?? String(error);
+    throw new Error(
+      `prisma/schema.prisma differs from the migrations; create one with \`pnpm --filter @traceflow/api db:migrate\`.\n${output}`,
+      { cause: error },
+    );
+  }
 }
 
 export async function teardown(): Promise<void> {
