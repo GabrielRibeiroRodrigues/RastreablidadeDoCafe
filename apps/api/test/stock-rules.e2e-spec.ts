@@ -254,4 +254,50 @@ describe('Stock movement rules (e2e)', () => {
       expect(res.status).toBe(403);
     });
   });
+  describe('dates', () => {
+    const tomorrow = () => new Date(Date.now() + 86_400_000).toISOString();
+
+    it('refuses operations dated in the future, in the field', async () => {
+      const receipt = await s.http.post('/v1/receipts', {
+        productId: s.products.green.id,
+        locationId: s.locations.warehouse.id,
+        quantity: '10',
+        receivedAt: tomorrow(),
+      });
+      expect(receipt.status).toBe(400);
+      expect(receipt.body).toMatchObject({ errors: [{ field: 'receivedAt' }] });
+
+      const issue = await move({
+        type: 'ISSUE',
+        fromLocationId: s.locations.warehouse.id,
+        quantity: '1',
+        occurredAt: tomorrow(),
+      });
+      expect(issue.status).toBe(400);
+      expect(issue.body).toMatchObject({ errors: [{ field: 'occurredAt' }] });
+    });
+
+    it('refuses a movement dated before the lot existed', async () => {
+      const res = await move({
+        type: 'ISSUE',
+        fromLocationId: s.locations.warehouse.id,
+        quantity: '1',
+        occurredAt: '2020-01-01T12:00:00.000Z',
+      });
+      expect(res.status).toBe(400);
+      expect((res.body as Problem).type).toBe('/problems/invalid-movement');
+      expect((await s.lot(lotId)).balance).toBe('100.000');
+    });
+
+    it('still accepts a backdated receipt (loading past history)', async () => {
+      const res = await s.http.post('/v1/receipts', {
+        productId: s.products.green.id,
+        locationId: s.locations.warehouse.id,
+        quantity: '10',
+        receivedAt: '2025-06-01T12:00:00.000Z',
+      });
+      expect(res.status).toBe(201);
+      expect((res.body as { code: string }).code).toMatch(/-2025-/);
+    });
+  });
 });

@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotFuture } from '../../common/validation/not-future.js';
 import { Transform } from 'class-transformer';
 import {
   IsDateString,
@@ -56,6 +57,7 @@ export class CreateMovementDto {
   @ApiPropertyOptional({ description: 'Quando aconteceu (padrão: agora)' })
   @IsOptional()
   @IsDateString()
+  @IsNotFuture()
   occurredAt?: string;
 
   @ApiPropertyOptional({ type: String, nullable: true, example: 'Pedido 2026-0457' })

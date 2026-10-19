@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotFuture } from '../../common/validation/not-future.js';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -56,6 +57,7 @@ export class CreateShipmentDto {
   @ApiPropertyOptional({ description: 'Data/hora da expedição (padrão: agora)' })
   @IsOptional()
   @IsDateString()
+  @IsNotFuture()
   shippedAt?: string;
 
   @ApiPropertyOptional({ type: String, nullable: true })

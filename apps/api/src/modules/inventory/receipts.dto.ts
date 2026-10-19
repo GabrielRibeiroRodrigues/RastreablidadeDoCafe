@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotFuture } from '../../common/validation/not-future.js';
 import { Transform } from 'class-transformer';
 import { IsDateString, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { trimToNull } from '../../common/http/transforms.js';
@@ -30,6 +31,7 @@ export class CreateReceiptDto extends LotQualityDto {
   @ApiPropertyOptional({ description: 'Data/hora do recebimento (padrão: agora)' })
   @IsOptional()
   @IsDateString()
+  @IsNotFuture()
   receivedAt?: string;
 
   @ApiPropertyOptional({ type: String, nullable: true, example: 'NF 004512' })

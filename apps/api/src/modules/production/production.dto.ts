@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotFuture } from '../../common/validation/not-future.js';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -63,6 +64,7 @@ export class CreateProductionOrderDto {
   @ApiPropertyOptional({ description: 'Quando foi produzido (padrão: agora)' })
   @IsOptional()
   @IsDateString()
+  @IsNotFuture()
   performedAt?: string;
 
   @ApiPropertyOptional({

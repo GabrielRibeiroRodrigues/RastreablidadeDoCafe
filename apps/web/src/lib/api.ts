@@ -126,14 +126,16 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
     'Um estorno não pode ser estornado; lance uma nova movimentação.',
   '/problems/idempotency-key-reused': () =>
     'Esta operação já foi enviada com outros dados. Recarregue a página e tente de novo.',
-  '/problems/invalid-movement': ({ detail }) =>
-    /adjustment requires a reason/i.test(detail ?? '')
-      ? 'Informe o motivo do ajuste.'
-      : /different locations/i.test(detail ?? '')
-        ? 'Origem e destino devem ser locais diferentes.'
-        : /exactly one/i.test(detail ?? '')
-          ? 'O ajuste deve ter só origem (perda) ou só destino (sobra).'
-          : 'Movimentação inválida: confira origem, destino e quantidade.',
+  '/problems/invalid-movement': ({ detail, extensions: ext }) =>
+    /before lot .* was received/i.test(detail ?? '')
+      ? `A data não pode ser anterior ao recebimento (ou à produção) do lote ${text(ext.lot)}.`
+      : /adjustment requires a reason/i.test(detail ?? '')
+        ? 'Informe o motivo do ajuste.'
+        : /different locations/i.test(detail ?? '')
+          ? 'Origem e destino devem ser locais diferentes.'
+          : /exactly one/i.test(detail ?? '')
+            ? 'O ajuste deve ter só origem (perda) ou só destino (sobra).'
+            : 'Movimentação inválida: confira origem, destino e quantidade.',
   '/problems/lot-consumed': () => 'Lote consumido (sem saldo): o status não pode ser alterado.',
   '/problems/inactive-product': () => 'O produto está inativo.',
   '/problems/inactive-location': () => 'O local de destino está inativo.',
@@ -257,6 +259,7 @@ export function getErrorMessage(error: unknown): string {
 
 const FIELD_MESSAGES: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
   [/must be unique/i, () => 'Já existe um cadastro com este valor.'],
+  [/cannot be in the future/i, () => 'A data não pode estar no futuro.'],
   [/should not be empty|must not be empty/i, () => 'Campo obrigatório.'],
   [/longer than or equal to (\d+)/i, (m) => `Informe pelo menos ${m[1]} caracteres.`],
   [/shorter than or equal to (\d+)/i, (m) => `Informe no máximo ${m[1]} caracteres.`],
