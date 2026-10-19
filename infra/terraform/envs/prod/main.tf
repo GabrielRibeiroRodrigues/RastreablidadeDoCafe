@@ -184,6 +184,7 @@ module "api" {
         sid = "ManageUsers"
         actions = [
           "cognito-idp:AdminCreateUser",
+          "cognito-idp:AdminDeleteUser", # desfaz um convite cuja gravação no banco falhou
           "cognito-idp:AdminAddUserToGroup",
           "cognito-idp:AdminRemoveUserFromGroup",
           "cognito-idp:AdminDisableUser",

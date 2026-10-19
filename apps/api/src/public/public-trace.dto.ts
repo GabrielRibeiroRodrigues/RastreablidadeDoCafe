@@ -80,6 +80,13 @@ export class PublicBrandResponse {
   website!: string | null;
 }
 
+/** Recolhimento em vigor: o lote está num recall executado e continua bloqueado. */
+export class PublicRecallNotice {
+  @ApiProperty({ description: 'Quando o lote foi bloqueado pelo recall' }) since!: Date;
+  @ApiProperty({ enum: ['LOW', 'MEDIUM', 'HIGH'], example: 'HIGH' }) severity!:
+    'LOW' | 'MEDIUM' | 'HIGH';
+}
+
 export class PublicTraceResponse {
   @ApiProperty({ example: 'Torrefação Serra Azul' }) companyName!: string;
   @ApiProperty({ type: PublicBrandResponse }) brand!: PublicBrandResponse;
@@ -93,4 +100,11 @@ export class PublicTraceResponse {
   chain!: PublicTraceStep[];
   @ApiProperty({ description: 'true se a cadeia foi cortada pelo limite de profundidade' })
   truncated!: boolean;
+  @ApiProperty({
+    type: PublicRecallNotice,
+    nullable: true,
+    description:
+      'Aviso ao consumidor: lote recolhido (recall executado e lote ainda bloqueado). O motivo interno não é exposto.',
+  })
+  recall!: PublicRecallNotice | null;
 }

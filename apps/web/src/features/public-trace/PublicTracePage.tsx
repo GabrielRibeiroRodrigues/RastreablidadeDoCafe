@@ -11,6 +11,7 @@ import {
   PackageIcon,
   RefreshCwIcon,
   SearchXIcon,
+  SirenIcon,
   SproutIcon,
   type LucideIcon,
 } from 'lucide-react';
@@ -141,7 +142,7 @@ function TraceView({ trace }: { trace: PublicTrace }) {
                     lot.available ? 'bg-emerald-300' : 'bg-sidebar-muted',
                   )}
                 />
-                {lot.available ? 'Disponível' : 'Indisponível'}
+                {trace.recall ? 'Recolhido' : lot.available ? 'Disponível' : 'Indisponível'}
               </span>
             </div>
           </div>
@@ -158,6 +159,32 @@ function TraceView({ trace }: { trace: PublicTrace }) {
           </dl>
         </div>
       </header>
+
+      {trace.recall && (
+        <section
+          role="alert"
+          aria-labelledby="recall-aviso"
+          className="border-b-4 border-red-700 bg-red-50 text-red-950 dark:bg-red-950 dark:text-red-50"
+        >
+          <div className="mx-auto flex max-w-2xl gap-3 px-4 py-5 sm:px-6">
+            <SirenIcon
+              className="mt-0.5 size-6 shrink-0 text-red-700 dark:text-red-300"
+              aria-hidden
+            />
+            <div className="space-y-1.5">
+              <h2 id="recall-aviso" className="text-lg font-semibold">
+                Produto recolhido — não consuma
+              </h2>
+              <p className="text-sm">
+                {trace.companyName} recolheu este lote em {formatDay(trace.recall.since)}. Se você
+                tem este produto, não o consuma e entre em contato com a empresa
+                {brand.website ? ' pelo site indicado acima' : ''} para orientações sobre troca ou
+                devolução.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
 
       <main className="mx-auto w-full max-w-2xl flex-1 space-y-10 px-4 py-8 sm:px-6">
         <section aria-labelledby="origem" className="space-y-4">

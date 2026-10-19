@@ -16,3 +16,5 @@ Formato curto: contexto, decisão, consequências. Uma decisão nunca é apagada
 | 0010 | [Rede na AWS: Lambdas fora da VPC e RDS público com TLS](0010-rede-e-custos-aws.md)                        | Aceito |
 | 0011 | [API na Lambda: esbuild sobre o tsc e job de migrations](0011-lambda-esbuild-migrations.md)                | Aceito |
 | 0012 | [Perfil do banco como fonte de verdade e gestão de usuários](0012-perfil-do-banco-e-gestao-de-usuarios.md) | Aceito |
+| 0013 | [Cancelamento de ordens e expedições; estornos fora do recall](0013-cancelamento-de-operacoes.md)          | Aceito |
+| 0014 | [Aviso de recall na página pública do QR code](0014-aviso-de-recall-na-pagina-publica.md)                  | Aceito |

@@ -53,14 +53,15 @@ Não há empresa no contexto de uma requisição anônima, e o cliente escopado 
 
 ### O que é público e o que não é
 
-| Público                                                              | Nunca exposto                                         |
-| -------------------------------------------------------------------- | ----------------------------------------------------- |
-| Nome da empresa, produto e tipo, código do lote                      | `id`s internos (só códigos de lote)                   |
-| Safra, variedade, torra, data de produção, validade, pontuação SCA   | Quantidades, saldos, locais de estoque                |
-| Status como **Disponível / Indisponível**                            | Motivo do status (quarentena, bloqueio, recall)       |
-| Cadeia de lotes: tipo de produto, etapa, data, safra, variedade      | Ordens de produção, rendimento, usuários, observações |
-| Origem: nome da **fazenda**/cooperativa, região, cidade/UF, altitude | Nome pessoal de produtor, CPF/CNPJ, e-mail, telefone  |
-| —                                                                    | Clientes e expedições                                 |
+| Público                                                                                                                                                  | Nunca exposto                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Nome da empresa, produto e tipo, código do lote                                                                                                          | `id`s internos (só códigos de lote)                   |
+| Safra, variedade, torra, data de produção, validade, pontuação SCA                                                                                       | Quantidades, saldos, locais de estoque                |
+| Status como **Disponível / Indisponível**                                                                                                                | Motivo do status (quarentena, bloqueio, recall)       |
+| Aviso **“Produto recolhido”** (recall executado, lote ainda bloqueado), com data e gravidade — [ADR 0014](adr/0014-aviso-de-recall-na-pagina-publica.md) | Motivo e número do recall, clientes, quantidades      |
+| Cadeia de lotes: tipo de produto, etapa, data, safra, variedade                                                                                          | Ordens de produção, rendimento, usuários, observações |
+| Origem: nome da **fazenda**/cooperativa, região, cidade/UF, altitude                                                                                     | Nome pessoal de produtor, CPF/CNPJ, e-mail, telefone  |
+| —                                                                                                                                                        | Clientes e expedições                                 |
 
 **Por que (LGPD):** produtor rural (`SupplierType.PRODUCER`) é pessoa física. O nome dele é dado pessoal e não tem por que sair da empresa: a página mostra o nome da fazenda (`farmName`); sem fazenda cadastrada, mostra só a região/cidade (“Produtor de Mantiqueira de Minas”). Fornecedores pessoa jurídica (fazenda, cooperativa, trader) sem `farmName` aparecem pelo nome. Documentos e contatos nunca são copiados — a regra está em um só lugar (`toPublicOrigin`), usada pela etiqueta e pela página.
 

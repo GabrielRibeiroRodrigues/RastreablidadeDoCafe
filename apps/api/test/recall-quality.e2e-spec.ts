@@ -156,6 +156,32 @@ describe('Recall, quality and audit (e2e)', () => {
       expect((await recall(lots['g']!)).status).toBe(201);
     });
 
+    it('warns consumers on the public page while the recalled lot stays blocked', async () => {
+      const TOKEN = 'recallNoticeToken_0001';
+      await testApp.prisma.lot.update({ where: { id: lots['r'] }, data: { publicToken: TOKEN } });
+      const page = async () =>
+        (await testApp.http().get(`/v1/public/trace/${TOKEN}`).expect(200)).body as {
+          recall: { severity: string; since: string } | null;
+        };
+
+      expect((await page()).recall).toBeNull();
+
+      const created = (await recall(lots['g']!).expect(201)).body as RecallBody;
+      const notice = (await page()).recall;
+      expect(notice).toMatchObject({ severity: 'HIGH' });
+      expect(JSON.stringify(notice)).not.toContain('Ocratoxina'); // motivo interno não vaza
+
+      await s.http
+        .post(`/v1/recalls/${created.id}/close`, { notes: 'Análise concluída: sem risco' })
+        .expect(200);
+      expect((await page()).recall).not.toBeNull(); // encerrado, mas o lote segue bloqueado
+
+      await s.http
+        .patch(`/v1/lots/${lots['r']}/status`, { status: 'AVAILABLE', reason: 'Laudo negativo' })
+        .expect(200);
+      expect((await page()).recall).toBeNull();
+    });
+
     it('only admins create, retry or close recalls', async () => {
       expect(
         (

@@ -9108,6 +9108,22 @@
           "origin"
         ]
       },
+      "PublicRecallNotice": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Quando o lote foi bloqueado pelo recall"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["LOW", "MEDIUM", "HIGH"],
+            "example": "HIGH"
+          }
+        },
+        "required": ["since", "severity"]
+      },
       "PublicTraceResponse": {
         "type": "object",
         "properties": {
@@ -9138,9 +9154,19 @@
           "truncated": {
             "type": "boolean",
             "description": "true se a cadeia foi cortada pelo limite de profundidade"
+          },
+          "recall": {
+            "nullable": true,
+            "description": "Aviso ao consumidor: lote recolhido (recall executado e lote ainda bloqueado). O motivo interno não é exposto.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicRecallNotice"
+              }
+            ]
           }
         },
-        "required": ["companyName", "brand", "lot", "origins", "chain", "truncated"]
+        "required": ["companyName", "brand", "lot", "origins", "chain", "truncated", "recall"]
       },
       "ClientErrorDto": {
         "type": "object",

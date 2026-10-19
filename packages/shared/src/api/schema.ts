@@ -3012,6 +3012,18 @@ export interface components {
       inputs: string[];
       origin: components['schemas']['PublicOriginResponse'] | null;
     };
+    PublicRecallNotice: {
+      /**
+       * Format: date-time
+       * @description Quando o lote foi bloqueado pelo recall
+       */
+      since: string;
+      /**
+       * @example HIGH
+       * @enum {string}
+       */
+      severity: 'LOW' | 'MEDIUM' | 'HIGH';
+    };
     PublicTraceResponse: {
       /** @example Torrefação Serra Azul */
       companyName: string;
@@ -3023,6 +3035,8 @@ export interface components {
       chain: components['schemas']['PublicTraceStep'][];
       /** @description true se a cadeia foi cortada pelo limite de profundidade */
       truncated: boolean;
+      /** @description Aviso ao consumidor: lote recolhido (recall executado e lote ainda bloqueado). O motivo interno não é exposto. */
+      recall: components['schemas']['PublicRecallNotice'] | null;
     };
     ClientErrorDto: {
       /**
