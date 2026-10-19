@@ -195,9 +195,11 @@ export function NonConformityDetailPage() {
                 </p>
               </>
             )}
-            <p className="text-xs">
-              Lote em quarentena não sai do local (exceto para uma área de quarentena).
-            </p>
+            {(lot.data?.status ?? nc.lot.status) === 'QUARANTINE' && (
+              <p className="text-xs">
+                Lote em quarentena não sai do local (exceto para uma área de quarentena).
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
