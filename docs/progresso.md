@@ -227,9 +227,16 @@ API: de 175 para **264 testes** (Postgres real via Testcontainers), em `apps/api
 
 **Ainda sem teste automatizado:** anexos e etiqueta (precisam de bucket S3/MinIO no teste), Lambda handler e job de migrations, testes de navegador na CI.
 
+### Manual do cliente e guia de produção (2026-10-18)
+
+- [manual_cliente.md](manual_cliente.md): apresentação e uso passo a passo para usuários não técnicos, com 55 capturas reais em `docs/images/` (Playwright, dados fictícios numa stack local isolada).
+- [guia_producao.md](guia_producao.md): diagnóstico, checklist por item, 17 etapas até a produção, segurança, plano de testes, publicação e rollback.
+- Verificado nesta rodada: lint, typecheck, build, 264 + 41 testes, `pnpm audit --prod` (7 achados em ferramentas transitivas), backup/restauração lógica local.
+- Achados novos: quantidades do PDF do recall sem formatação pt-BR (`15.000 BAG_60KG`), "disponível 12,000" no diálogo de movimentação, "expedição(ões)" no recall, `NOTIFICATIONS_TOPIC_ARN` desatualizado no deploy.md, sem alarme de espaço livre do RDS.
+
 ## Próximos passos
 
-- Seguir o checklist de [go-live.md](go-live.md) (passos na conta AWS são humanos).
+- Seguir o [guia de produção](guia_producao.md) (passos na conta AWS são humanos).
 - Testes que faltam: anexos/etiqueta com MinIO no Testcontainers, Lambda handler, Playwright na CI.
 - Gravar o vídeo do MVP.
 - Pendências conhecidas: mensagens de erro da API em inglês (o front traduz pelos códigos); RDS público por custo (ADR 0010).
