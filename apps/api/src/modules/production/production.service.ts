@@ -15,6 +15,12 @@ import {
   type TenantTransaction,
 } from '../../tenancy/tenant-prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import {
+  CancellationProblems,
+  lockRow,
+  toCancellation,
+  type CancelOperationDto,
+} from '../inventory/cancellation.js';
 import { DOCUMENT_KINDS, DocumentNumberService } from '../inventory/document-number.service.js';
 import {
   assertSameRequest,
@@ -62,6 +68,7 @@ const ORDER_INCLUDE = {
     orderBy: { createdAt: 'asc' },
   },
   user: { select: { id: true, name: true } },
+  cancelledBy: { select: { id: true, name: true } },
 } as const satisfies Prisma.ProductionOrderInclude;
 
 type OrderWithRelations = Prisma.ProductionOrderGetPayload<{ include: typeof ORDER_INCLUDE }>;
@@ -256,6 +263,76 @@ export class ProductionService {
     return order.id;
   }
 
+  /**
+   * Cancela a ordem: estorna a produção do lote gerado e os consumos dos insumos, numa transação.
+   * O lote gerado precisa ter todo o saldo — se já foi usado ou expedido, o razão recusa com saldo
+   * insuficiente e nada muda (cancele antes as operações que o usaram).
+   */
+  async cancel(id: string, dto: CancelOperationDto): Promise<ProductionOrderResponse> {
+    await this.db.transaction(
+      async (tx) => {
+        const order = await lockRow(tx, 'production_orders', id);
+        if (order.cancelled_at) throw CancellationProblems.alreadyCancelled(order.number);
+
+        const { outputLotId, origins } = await tx.productionOrder.findUniqueOrThrow({
+          where: { id },
+          select: { outputLotId: true, origins: { select: { parentLotId: true } } },
+        });
+        const movements = await tx.stockMovement.findMany({
+          where: {
+            documentRef: order.number,
+            reversedBy: { is: null },
+            OR: [
+              { type: MovementType.PRODUCTION, lotId: outputLotId },
+              {
+                type: MovementType.CONSUMPTION,
+                lotId: { in: origins.map((origin) => origin.parentLotId) },
+              },
+            ],
+          },
+        });
+
+        // Trava todos os lotes em ordem fixa antes de estornar: outra produção que use os mesmos
+        // lotes trava na mesma ordem, sem deadlock.
+        for (const lotId of [...new Set(movements.map((m) => m.lotId))].sort()) {
+          await this.ledger.lockLot(tx, lotId);
+        }
+        // Produção primeiro: confirma que o lote gerado ainda tem o saldo antes de devolver insumos.
+        const ordered = [...movements].sort(
+          (a, b) =>
+            Number(b.type === MovementType.PRODUCTION) -
+              Number(a.type === MovementType.PRODUCTION) ||
+            a.lotId.localeCompare(b.lotId) ||
+            a.id.localeCompare(b.id),
+        );
+        for (const movement of ordered) {
+          await this.ledger.reverse(tx, movement, `Cancelamento da ${order.number}: ${dto.reason}`);
+        }
+
+        await tx.productionOrder.update({
+          where: { id },
+          data: {
+            cancelledAt: new Date(),
+            cancelReason: dto.reason,
+            cancelledById: this.tenant.requireUserId(),
+          },
+        });
+        await this.audit.record(
+          {
+            action: 'production_order.cancelled',
+            entityType: 'production_order',
+            entityId: id,
+            before: { cancelled: false },
+            after: { cancelled: true, reason: dto.reason, reversedMovements: ordered.length },
+          },
+          tx,
+        );
+      },
+      { timeout: 20_000 },
+    );
+    return this.get(id);
+  }
+
   async list(query: ListProductionOrdersQueryDto): Promise<Page<ProductionOrderResponse>> {
     const where: Prisma.ProductionOrderWhereInput = {
       ...(query.stage && { stage: query.stage }),
@@ -391,6 +468,7 @@ function toResponse(order: OrderWithRelations): ProductionOrderResponse {
     lossKg: order.lossKg ? formatQuantity(order.lossKg) : null,
     notes: order.notes,
     user: order.user,
+    cancellation: toCancellation(order),
     createdAt: order.createdAt,
   };
 }

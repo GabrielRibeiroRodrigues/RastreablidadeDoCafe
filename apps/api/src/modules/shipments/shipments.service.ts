@@ -8,6 +8,12 @@ import {
   type TenantTransaction,
 } from '../../tenancy/tenant-prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import {
+  CancellationProblems,
+  lockRow,
+  toCancellation,
+  type CancelOperationDto,
+} from '../inventory/cancellation.js';
 import { DOCUMENT_KINDS, DocumentNumberService } from '../inventory/document-number.service.js';
 import {
   assertSameRequest,
@@ -35,12 +41,14 @@ const USER_SELECT = { select: { id: true, name: true } } as const;
 const LIST_INCLUDE = {
   customer: { select: { id: true, name: true } },
   user: USER_SELECT,
-  _count: { select: { items: true } },
+  cancelledBy: USER_SELECT,
+  items: { select: { movement: { select: { reversedBy: { select: { id: true } } } } } },
 } as const satisfies Prisma.ShipmentInclude;
 
 const DETAIL_INCLUDE = {
   customer: { select: { id: true, name: true, document: true, city: true, state: true } },
   user: USER_SELECT,
+  cancelledBy: USER_SELECT,
   items: {
     orderBy: { createdAt: 'asc' },
     include: {
@@ -54,6 +62,7 @@ const DETAIL_INCLUDE = {
         },
       },
       location: { select: { id: true, code: true, name: true, type: true } },
+      movement: { select: { reversedBy: { select: { id: true, occurredAt: true } } } },
     },
   },
 } as const satisfies Prisma.ShipmentInclude;
@@ -92,6 +101,51 @@ export class ShipmentsService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Cancela a expedição (devolução total, cliente errado): estorna a saída de cada item ainda não
+   * estornado, numa transação. O café volta ao local de onde saiu.
+   */
+  async cancel(id: string, dto: CancelOperationDto): Promise<ShipmentDetailResponse> {
+    await this.db.transaction(async (tx) => {
+      const shipment = await lockRow(tx, 'shipments', id);
+      if (shipment.cancelled_at) throw CancellationProblems.alreadyCancelled(shipment.number);
+
+      const items = await tx.shipmentItem.findMany({
+        where: { shipmentId: id, movement: { reversedBy: { is: null } } },
+        include: { movement: true },
+      });
+      // Mesma ordem de travamento da criação (lote, depois local): sem deadlock.
+      const ordered = [...items].sort(byLotThenLocation);
+      for (const item of ordered) {
+        await this.ledger.reverse(
+          tx,
+          item.movement,
+          `Cancelamento da ${shipment.number}: ${dto.reason}`,
+        );
+      }
+
+      await tx.shipment.update({
+        where: { id },
+        data: {
+          cancelledAt: new Date(),
+          cancelReason: dto.reason,
+          cancelledById: this.tenant.requireUserId(),
+        },
+      });
+      await this.audit.record(
+        {
+          action: 'shipment.cancelled',
+          entityType: 'shipment',
+          entityId: id,
+          before: { cancelled: false },
+          after: { cancelled: true, reason: dto.reason, reversedItems: ordered.length },
+        },
+        tx,
+      );
+    });
+    return this.get(id);
   }
 
   async list(query: ListShipmentsQueryDto): Promise<Page<ShipmentResponse>> {
@@ -233,7 +287,10 @@ function assertDistinctItems(items: CreateShipmentItemDto[]): void {
   }
 }
 
-const byLotThenLocation = (a: CreateShipmentItemDto, b: CreateShipmentItemDto): number =>
+const byLotThenLocation = (
+  a: Pick<CreateShipmentItemDto, 'lotId' | 'locationId'>,
+  b: Pick<CreateShipmentItemDto, 'lotId' | 'locationId'>,
+): number =>
   a.lotId === b.lotId ? a.locationId.localeCompare(b.locationId) : a.lotId.localeCompare(b.lotId);
 
 function toShipmentResponse(row: ShipmentListRow): ShipmentResponse {
@@ -243,8 +300,10 @@ function toShipmentResponse(row: ShipmentListRow): ShipmentResponse {
     customer: row.customer,
     orderRef: row.orderRef,
     shippedAt: row.shippedAt,
-    itemsCount: row._count.items,
+    itemsCount: row.items.length,
+    reversedItemsCount: row.items.filter((item) => item.movement.reversedBy).length,
     user: row.user,
+    cancellation: toCancellation(row),
   };
 }
 
@@ -263,8 +322,10 @@ function toShipmentDetail(row: ShipmentDetailRow): ShipmentDetailResponse {
       quantity: formatQuantity(item.quantity),
       unit: item.lot.unit,
       movementId: item.movementId,
+      reversal: item.movement.reversedBy,
     })),
     user: row.user,
+    cancellation: toCancellation(row),
     createdAt: row.createdAt,
   };
 }

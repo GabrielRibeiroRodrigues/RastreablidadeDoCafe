@@ -567,6 +567,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/shipments/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ShipmentsController_cancel'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/lots/{lotId}/attachments': {
     parameters: {
       query?: never;
@@ -641,6 +657,22 @@ export interface paths {
     get: operations['ProductionController_get'];
     put?: never;
     post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/production-orders/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ProductionController_cancel'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1940,6 +1972,13 @@ export interface components {
       /** @example Cafeteria Grão Fino */
       name: string;
     };
+    CancellationResponse: {
+      /** Format: date-time */
+      cancelledAt: string;
+      /** @example Ordem lançada com o lote errado */
+      reason: string;
+      user: components['schemas']['UserSummary'];
+    };
     ShipmentResponse: {
       /** Format: uuid */
       id: string;
@@ -1952,7 +1991,13 @@ export interface components {
       shippedAt: string;
       /** @example 2 */
       itemsCount: number;
+      /**
+       * @description Itens cuja saída foi estornada; igual a itemsCount = expedição toda estornada
+       * @example 0
+       */
+      reversedItemsCount: number;
       user: components['schemas']['UserSummary'];
+      cancellation: components['schemas']['CancellationResponse'] | null;
     };
     CustomerDetailSummary: {
       /** Format: uuid */
@@ -1965,6 +2010,12 @@ export interface components {
       city: string | null;
       /** @example MG */
       state: string | null;
+    };
+    ShipmentItemReversal: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      occurredAt: string;
     };
     ShipmentItemResponse: {
       lot: components['schemas']['LotSummary'];
@@ -1979,6 +2030,8 @@ export interface components {
        * @description Saída (ISSUE) no razão; estorne-a para corrigir
        */
       movementId: string;
+      /** @description Estorno da saída (o café não chegou ao cliente); null se vale */
+      reversal: components['schemas']['ShipmentItemReversal'] | null;
     };
     ShipmentDetailResponse: {
       /** Format: uuid */
@@ -1993,6 +2046,8 @@ export interface components {
       notes: string | null;
       items: components['schemas']['ShipmentItemResponse'][];
       user: components['schemas']['UserSummary'];
+      /** @description Cancelamento (todas as saídas estornadas); null se a expedição vale */
+      cancellation: components['schemas']['CancellationResponse'] | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -2020,6 +2075,10 @@ export interface components {
       notes?: string | null;
       /** @description Um item por par (lote, local); pares repetidos são rejeitados */
       items: components['schemas']['CreateShipmentItemDto'][];
+    };
+    CancelOperationDto: {
+      /** @example Ordem lançada com o lote errado */
+      reason: string;
     };
     CreateAttachmentDto: {
       /** @example laudo-classificacao.pdf */
@@ -2114,6 +2173,8 @@ export interface components {
       lossKg: string | null;
       notes: string | null;
       user: components['schemas']['UserSummary'];
+      /** @description Cancelamento (produção e consumos estornados); null se a ordem vale */
+      cancellation: components['schemas']['CancellationResponse'] | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -2227,6 +2288,8 @@ export interface components {
       stage: components['schemas']['ProductionStage'];
       /** Format: date-time */
       performedAt: string;
+      /** @description Ordem cancelada: os consumos e a produção foram estornados (ligação histórica) */
+      cancelled: boolean;
     };
     TraceEdge: {
       /** Format: uuid */
@@ -2272,6 +2335,8 @@ export interface components {
       /** @example 12.000 */
       quantity: string;
       unit: components['schemas']['Unit'];
+      /** @description A saída do item foi estornada (devolução, cliente errado): o café não chegou ao cliente */
+      reversed: boolean;
     };
     ForwardTraceResponse: {
       /** Format: uuid */
@@ -2281,9 +2346,9 @@ export interface components {
       edges: components['schemas']['TraceEdge'][];
       /** @description true se o limite de profundidade cortou o grafo */
       truncated: boolean;
-      /** @description Expedições do lote e de todos os derivados */
+      /** @description Expedições do lote e de todos os derivados, inclusive itens estornados */
       shipments: components['schemas']['TraceShipment'][];
-      /** @description Clientes afetados (distintos) */
+      /** @description Clientes afetados (distintos), só por itens não estornados */
       customers: components['schemas']['TraceCustomer'][];
     };
     LabelResponse: {
@@ -4409,6 +4474,44 @@ export interface operations {
       };
     };
   };
+  ShipmentsController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelOperationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShipmentDetailResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Expedição já cancelada */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   AttachmentsController_list: {
     parameters: {
       query?: never;
@@ -4659,6 +4762,44 @@ export interface operations {
         };
       };
       404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ProductionController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelOperationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductionOrderResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Ordem já cancelada ou lote gerado já usado/expedido (saldo insuficiente) */
+      409: {
         headers: {
           [name: string]: unknown;
         };

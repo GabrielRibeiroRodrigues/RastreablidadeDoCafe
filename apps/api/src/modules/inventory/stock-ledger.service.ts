@@ -141,6 +141,23 @@ export class StockLedgerService {
     return movement;
   }
 
+  /**
+   * Estorno: nova linha com origem e destino trocados; a original continua intacta. O banco
+   * garante um estorno por movimentação (`reversal_of_id` único).
+   */
+  reverse(tx: TenantTransaction, original: StockMovement, reason: string): Promise<StockMovement> {
+    return this.record(tx, {
+      type: MovementType.REVERSAL,
+      lotId: original.lotId,
+      fromLocationId: original.toLocationId,
+      toLocationId: original.fromLocationId,
+      quantity: original.quantity,
+      documentRef: original.documentRef,
+      reason,
+      reversalOfId: original.id,
+    });
+  }
+
   /** CONSUMED quando o saldo total zera; volta a AVAILABLE se um estorno repõe saldo. */
   private async syncConsumedStatus(
     tx: TenantTransaction,

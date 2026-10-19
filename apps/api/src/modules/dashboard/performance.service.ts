@@ -99,12 +99,14 @@ export class PerformanceService {
                  SUM(output_mass_kg) AS output_kg,
                  COALESCE(SUM(loss_kg), 0) AS loss_kg
           FROM production_orders
-          WHERE company_id = ${companyId}::uuid AND performed_at >= ${from} AND performed_at < ${to}
+          WHERE company_id = ${companyId}::uuid
+            AND cancelled_at IS NULL AND performed_at >= ${from} AND performed_at < ${to}
         ) po,
         (
           SELECT COUNT(*)::int AS shipments, COUNT(DISTINCT customer_id)::int AS customers
           FROM shipments
-          WHERE company_id = ${companyId}::uuid AND shipped_at >= ${from} AND shipped_at < ${to}
+          WHERE company_id = ${companyId}::uuid
+            AND cancelled_at IS NULL AND shipped_at >= ${from} AND shipped_at < ${to}
         ) s`;
     });
     if (!row) throw new Error('Performance totals query returned no rows');
@@ -130,6 +132,7 @@ export class PerformanceService {
                SUM(output_mass_kg) AS output_kg
         FROM production_orders
         WHERE company_id = ${companyId}::uuid
+          AND cancelled_at IS NULL
           AND performed_at >= now() - ${days} * interval '1 day'
         GROUP BY 1
         ORDER BY 1`,

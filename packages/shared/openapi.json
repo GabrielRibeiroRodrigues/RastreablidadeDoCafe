@@ -2457,6 +2457,55 @@
         "tags": ["shipments"]
       }
     },
+    "/v1/shipments/{id}/cancel": {
+      "post": {
+        "operationId": "ShipmentsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Expedição já cancelada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["shipments"]
+      }
+    },
     "/v1/lots/{lotId}/attachments": {
       "post": {
         "operationId": "AttachmentsController_requestUpload",
@@ -2840,6 +2889,55 @@
           },
           "404": {
             "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["production"]
+      }
+    },
+    "/v1/production-orders/{id}/cancel": {
+      "post": {
+        "operationId": "ProductionController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionOrderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Ordem já cancelada ou lote gerado já usado/expedido (saldo insuficiente)"
           }
         },
         "security": [
@@ -6290,6 +6388,23 @@
         },
         "required": ["id", "name"]
       },
+      "CancellationResponse": {
+        "type": "object",
+        "properties": {
+          "cancelledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Ordem lançada com o lote errado"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          }
+        },
+        "required": ["cancelledAt", "reason", "user"]
+      },
       "ShipmentResponse": {
         "type": "object",
         "properties": {
@@ -6317,11 +6432,35 @@
             "type": "number",
             "example": 2
           },
+          "reversedItemsCount": {
+            "type": "number",
+            "example": 0,
+            "description": "Itens cuja saída foi estornada; igual a itemsCount = expedição toda estornada"
+          },
           "user": {
             "$ref": "#/components/schemas/UserSummary"
+          },
+          "cancellation": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CancellationResponse"
+              }
+            ]
           }
         },
-        "required": ["id", "number", "customer", "orderRef", "shippedAt", "itemsCount", "user"]
+        "required": [
+          "id",
+          "number",
+          "customer",
+          "orderRef",
+          "shippedAt",
+          "itemsCount",
+          "reversedItemsCount",
+          "user",
+          "cancellation"
+        ]
       },
       "CustomerDetailSummary": {
         "type": "object",
@@ -6352,6 +6491,20 @@
         },
         "required": ["id", "name", "document", "city", "state"]
       },
+      "ShipmentItemReversal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["id", "occurredAt"]
+      },
       "ShipmentItemResponse": {
         "type": "object",
         "properties": {
@@ -6380,9 +6533,19 @@
             "type": "string",
             "format": "uuid",
             "description": "Saída (ISSUE) no razão; estorne-a para corrigir"
+          },
+          "reversal": {
+            "nullable": true,
+            "description": "Estorno da saída (o café não chegou ao cliente); null se vale",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentItemReversal"
+              }
+            ]
           }
         },
-        "required": ["lot", "product", "location", "quantity", "unit", "movementId"]
+        "required": ["lot", "product", "location", "quantity", "unit", "movementId", "reversal"]
       },
       "ShipmentDetailResponse": {
         "type": "object",
@@ -6420,6 +6583,16 @@
           "user": {
             "$ref": "#/components/schemas/UserSummary"
           },
+          "cancellation": {
+            "nullable": true,
+            "description": "Cancelamento (todas as saídas estornadas); null se a expedição vale",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CancellationResponse"
+              }
+            ]
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -6434,6 +6607,7 @@
           "notes",
           "items",
           "user",
+          "cancellation",
           "createdAt"
         ]
       },
@@ -6488,6 +6662,16 @@
           }
         },
         "required": ["customerId", "items"]
+      },
+      "CancelOperationDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Ordem lançada com o lote errado"
+          }
+        },
+        "required": ["reason"]
       },
       "CreateAttachmentDto": {
         "type": "object",
@@ -6721,6 +6905,16 @@
           "user": {
             "$ref": "#/components/schemas/UserSummary"
           },
+          "cancellation": {
+            "nullable": true,
+            "description": "Cancelamento (produção e consumos estornados); null se a ordem vale",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CancellationResponse"
+              }
+            ]
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -6739,6 +6933,7 @@
           "lossKg",
           "notes",
           "user",
+          "cancellation",
           "createdAt"
         ]
       },
@@ -7018,9 +7213,13 @@
           "performedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "cancelled": {
+            "type": "boolean",
+            "description": "Ordem cancelada: os consumos e a produção foram estornados (ligação histórica)"
           }
         },
-        "required": ["id", "number", "stage", "performedAt"]
+        "required": ["id", "number", "stage", "performedAt", "cancelled"]
       },
       "TraceEdge": {
         "type": "object",
@@ -7139,6 +7338,10 @@
                 "$ref": "#/components/schemas/Unit"
               }
             ]
+          },
+          "reversed": {
+            "type": "boolean",
+            "description": "A saída do item foi estornada (devolução, cliente errado): o café não chegou ao cliente"
           }
         },
         "required": [
@@ -7150,7 +7353,8 @@
           "lotId",
           "lotCode",
           "quantity",
-          "unit"
+          "unit",
+          "reversed"
         ]
       },
       "ForwardTraceResponse": {
@@ -7178,14 +7382,14 @@
             "description": "true se o limite de profundidade cortou o grafo"
           },
           "shipments": {
-            "description": "Expedições do lote e de todos os derivados",
+            "description": "Expedições do lote e de todos os derivados, inclusive itens estornados",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TraceShipment"
             }
           },
           "customers": {
-            "description": "Clientes afetados (distintos)",
+            "description": "Clientes afetados (distintos), só por itens não estornados",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TraceCustomer"

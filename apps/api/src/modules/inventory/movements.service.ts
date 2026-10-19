@@ -4,7 +4,11 @@ import { DomainProblemException } from '../../common/http/domain-problem.excepti
 import { orderBy, pageArgs, toPage, type Page } from '../../common/http/pagination.js';
 import { MovementType, type Prisma, type StockMovement } from '../../generated/prisma/client.js';
 import { AuditService } from '../audit/audit.service.js';
-import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
+import {
+  TenantPrismaService,
+  type TenantTransaction,
+} from '../../tenancy/tenant-prisma.service.js';
+import { CancellationProblems } from './cancellation.js';
 import type { MovementResponse } from './inventory.dto.js';
 import { MOVEMENT_INCLUDE, toMovementResponse } from './inventory.mappers.js';
 import { assertSameRequest, isIdempotencyRace, type IdempotencyToken } from './idempotency.js';
@@ -102,16 +106,9 @@ export class MovementsService {
         );
       }
 
-      const created = await this.ledger.record(tx, {
-        type: MovementType.REVERSAL,
-        lotId: original.lotId,
-        fromLocationId: original.toLocationId,
-        toLocationId: original.fromLocationId,
-        quantity: original.quantity,
-        documentRef: original.documentRef,
-        reason: dto.reason,
-        reversalOfId: original.id,
-      });
+      await this.assertNotPartOfOrder(tx, original);
+
+      const created = await this.ledger.reverse(tx, original, dto.reason);
       await this.audit.record(
         {
           action: 'movement.reversed',
@@ -161,6 +158,33 @@ export class MovementsService {
       include: MOVEMENT_INCLUDE,
     });
     return toMovementResponse(movement);
+  }
+
+  /**
+   * Consumo e produção de uma ordem só se desfazem juntos (cancelamento da ordem): estornar um lado
+   * só deixaria a ordem, a genealogia e o rendimento contando algo que não aconteceu.
+   */
+  private async assertNotPartOfOrder(
+    tx: TenantTransaction,
+    movement: StockMovement,
+  ): Promise<void> {
+    if (movement.type === MovementType.PRODUCTION) {
+      const order = await tx.productionOrder.findFirst({
+        where: { outputLotId: movement.lotId },
+        select: { number: true },
+      });
+      throw CancellationProblems.useCancellation(order?.number ?? movement.documentRef ?? '');
+    }
+    if (movement.type === MovementType.CONSUMPTION && movement.documentRef) {
+      const order = await tx.productionOrder.findFirst({
+        where: {
+          number: movement.documentRef,
+          origins: { some: { parentLotId: movement.lotId } },
+        },
+        select: { number: true },
+      });
+      if (order) throw CancellationProblems.useCancellation(order.number);
+    }
   }
 
   /** Executa `write` uma única vez por chave; repetições devolvem a movimentação original. */

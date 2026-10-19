@@ -249,6 +249,7 @@ export class ReportsService {
         outputMassKg: true,
         yieldPercent: true,
         lossKg: true,
+        cancelledAt: true,
         outputLot: {
           select: {
             code: true,
@@ -282,6 +283,7 @@ export class ReportsService {
       'Rendimento (%)',
       'Perda (kg)',
       'Usuário',
+      'Cancelada em',
     ];
     const rows = orders
       .slice(0, REPORT_MAX_ROWS)
@@ -305,6 +307,7 @@ export class ReportsService {
         o.yieldPercent === null ? null : decimalCell(o.yieldPercent, 2),
         qty(o.lossKg),
         o.user.name,
+        o.cancelledAt ? dateTimeCell(o.cancelledAt) : null,
       ]);
     return report('producao', header, rows, orders.length > REPORT_MAX_ROWS);
   }
@@ -334,6 +337,7 @@ export class ReportsService {
           select: { code: true, unit: true, product: { select: { sku: true, name: true } } },
         },
         location: { select: { code: true } },
+        movement: { select: { reversedBy: { select: { occurredAt: true } } } },
       },
       orderBy: [{ shipment: { shippedAt: 'asc' } }, { shipmentId: 'asc' }, { createdAt: 'asc' }],
       take: REPORT_MAX_ROWS + 1,
@@ -354,6 +358,7 @@ export class ReportsService {
       'Quantidade',
       'Unidade',
       'Usuário',
+      'Estornado em',
     ];
     const rows = items
       .slice(0, REPORT_MAX_ROWS)
@@ -372,6 +377,7 @@ export class ReportsService {
         qty(item.quantity),
         UNIT[item.lot.unit],
         item.shipment.user.name,
+        item.movement.reversedBy ? dateTimeCell(item.movement.reversedBy.occurredAt) : null,
       ]);
     return report('expedicoes', header, rows, items.length > REPORT_MAX_ROWS);
   }
