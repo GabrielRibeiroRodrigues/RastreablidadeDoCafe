@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { businessYear } from '../../common/time/business-time.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { TenantTransaction } from '../../tenancy/tenant-prisma.service.js';
 
@@ -12,7 +13,7 @@ import type { TenantTransaction } from '../../tenancy/tenant-prisma.service.js';
 @Injectable()
 export class LotCodeService {
   async next(tx: TenantTransaction, prefix: string, at: Date = new Date()): Promise<string> {
-    const year = at.getUTCFullYear();
+    const year = businessYear(at);
     const [row] = await tx.sql<Array<{ last_value: number }>>(
       (companyId) => Prisma.sql`
         INSERT INTO lot_sequences (company_id, year, last_value)

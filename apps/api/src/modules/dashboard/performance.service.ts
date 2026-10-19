@@ -3,7 +3,7 @@ import { Prisma, type ProductType, type Unit } from '../../generated/prisma/clie
 import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
 import { toDateOnly } from '../inventory/inventory.mappers.js';
 import { formatQuantity } from '../inventory/quantity.js';
-import { BUSINESS_TIME_ZONE } from './dashboard.service.js';
+import { BUSINESS_TIME_ZONE } from '../../common/time/business-time.js';
 import type {
   PerformancePeriod,
   PerformanceResponse,

@@ -1,3 +1,5 @@
+import { BUSINESS_TIME_ZONE } from '../time/business-time.js';
+
 /**
  * CSV no formato que o Excel em português abre direto: UTF-8 com BOM, separador `;`, decimal com
  * vírgula e quebras de linha CRLF. Também lê CSV (importação) com `;` ou `,`.
@@ -42,7 +44,7 @@ export function toCsv(header: readonly string[], rows: Iterable<readonly CsvValu
   return `${BOM}${lines.join('\r\n')}\r\n`;
 }
 
-const TIME_ZONE = 'America/Sao_Paulo';
+const TIME_ZONE = BUSINESS_TIME_ZONE;
 const DATE_TIME = new Intl.DateTimeFormat('pt-BR', {
   timeZone: TIME_ZONE,
   year: 'numeric',

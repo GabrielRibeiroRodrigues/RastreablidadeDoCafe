@@ -10,7 +10,7 @@ import { formatQuantity } from '../inventory/quantity.js';
 import type { DashboardResponse } from './dashboard.dto.js';
 
 /** Fuso usado para "hoje" e para a janela de vencimento (a empresa não tem fuso próprio ainda). */
-export const BUSINESS_TIME_ZONE = 'America/Sao_Paulo';
+import { BUSINESS_TIME_ZONE } from '../../common/time/business-time.js';
 export const EXPIRING_DAYS = 30;
 const EXPIRING_LIMIT = 5;
 const TOP_PRODUCTS = 8;

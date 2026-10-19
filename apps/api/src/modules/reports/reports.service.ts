@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { BUSINESS_TIME_ZONE } from '../../common/time/business-time.js';
 import { dateCell, dateTimeCell, decimalCell, toCsv, type CsvValue } from '../../common/csv/csv.js';
 import type {
   LocationType,
@@ -82,7 +83,7 @@ function period(from?: string, to?: string) {
 }
 
 /** Sufixo do nome do arquivo: data de hoje em São Paulo ("2026-10-15"). */
-const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: BUSINESS_TIME_ZONE });
 
 /** CPF/CNPJ com pontuação: além de legível, impede o Excel de tratá-lo como número. */
 function formatDocument(document: string | null): string | null {

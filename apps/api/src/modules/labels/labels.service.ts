@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { BUSINESS_TIME_ZONE } from '../../common/time/business-time.js';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../../config/env.js';
 import type { ProductType, RoastLevel } from '../../generated/prisma/client.js';
@@ -31,7 +32,7 @@ const DATE_LABEL: Record<ProductType, string> = {
 };
 
 /** Datas exibidas no fuso da operação (Brasil). */
-const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' });
+const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: BUSINESS_TIME_ZONE });
 /** Colunas `date` chegam como meia-noite UTC: formatar em UTC para não voltar um dia. */
 const dateOnlyFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' });
 

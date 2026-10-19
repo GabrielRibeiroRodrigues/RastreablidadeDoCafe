@@ -1,4 +1,5 @@
 import { countOf } from '../../common/text/plural.js';
+import { BUSINESS_TIME_ZONE } from '../../common/time/business-time.js';
 import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import {
   LotStatus,
@@ -49,7 +50,7 @@ const RECALL_STATUS_PT: Record<RecallStatus, string> = {
   CLOSED: 'Encerrado',
 };
 const dateTime = new Intl.DateTimeFormat('pt-BR', {
-  timeZone: 'America/Sao_Paulo',
+  timeZone: BUSINESS_TIME_ZONE,
   dateStyle: 'short',
   timeStyle: 'short',
 });
