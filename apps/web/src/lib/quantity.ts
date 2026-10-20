@@ -25,6 +25,12 @@ export function parseQuantityInput(text: string): string | null {
   return toMilli(normalized) > 0n ? normalized : null;
 }
 
+/** Como `parseQuantityInput`, mas aceita zero (contagem de inventário que não achou nada). */
+export function parseCountInput(text: string): string | null {
+  const value = text.trim();
+  return QUANTITY_INPUT.test(value) ? value.replace(',', '.') : null;
+}
+
 /** `"12.5"` → `12500n` (milésimos), para comparar sem erro de ponto flutuante. */
 export function toMilli(value: string): bigint {
   const [int = '0', frac = ''] = value.trim().replace(',', '.').split('.');

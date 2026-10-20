@@ -267,10 +267,17 @@ Revisão completa da aplicação ([guia de produção](guia_producao.md) atualiz
 | Infra/CI                         | Teste de saúde ao fim de cada deploy, assets antigos do front preservados, alarme de disco do RDS                                                                                                                        |
 | Testes                           | API 264 → **341** (bucket real com MinIO, handler da Lambda, segredos do SSM, cancelamentos, datas, recall); web 41 → **59**; navegador **51** fluxos/telas; checagem de divergência schema × migrations no setup        |
 
+### Inventário (branch `feat/inventory-count`, 2026-10-20)
+
+- **Contagem física por local** (**Estoque › Inventário**): abre com os lotes que têm saldo no local, operador registra o contado (zero aceito, lote achado a mais), administrador aplica — cada diferença vira um `ADJUSTMENT` numa transação, documento `INV-AAAA-NNNNNN` ([ADR 0015](adr/0015-inventario-contagem-fisica.md), [estoque.md](estoque.md#inventário-contagem-física)).
+- Diferença calculada com o saldo da aplicação (o estoque não congela); uma contagem aberta por local (índice parcial + trava); perda em lote retido aceita.
+- Isolamento: os novos modelos entram em `TENANT_MODELS`, e um teste agora falha se um modelo com `companyId` ficar de fora.
+- Testes: API **356** (+14 e2e de inventário: isolamento 404, perfis, concorrência na abertura e na aplicação, sobra/falta, zero, lote em quarentena); web **67** (+5).
+
 ## Próximos passos
 
 - Seguir o [guia de produção](guia_producao.md) (passos na conta AWS são humanos).
 - Testes que faltam: job de migrations contra o RDS real e o fluxo de login do Cognito (só no ambiente publicado).
-- Evoluções sugeridas: aviso automático aos clientes no recall, inventário (contagem física), RLS no Postgres como segunda camada de isolamento, chaves de API para integrações.
+- Evoluções sugeridas: aviso automático aos clientes no recall, RLS no Postgres como segunda camada de isolamento, chaves de API para integrações.
 - Gravar o vídeo do MVP.
 - Pendências conhecidas: mensagens de erro da API em inglês (o front traduz pelos códigos); RDS público por custo (ADR 0010).

@@ -2243,6 +2243,337 @@
         "tags": ["stock"]
       }
     },
+    "/v1/inventory-counts": {
+      "get": {
+        "operationId": "InventoryCountsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/InventoryCountStatus"
+            }
+          },
+          {
+            "name": "locationId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/InventoryCountResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["inventory-counts"]
+      },
+      "post": {
+        "operationId": "InventoryCountsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateInventoryCountDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Local não encontrado"
+          },
+          "409": {
+            "description": "Já existe contagem aberta no local"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["inventory-counts"]
+      }
+    },
+    "/v1/inventory-counts/{id}": {
+      "get": {
+        "operationId": "InventoryCountsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["inventory-counts"]
+      }
+    },
+    "/v1/inventory-counts/{id}/items/{itemId}": {
+      "put": {
+        "operationId": "InventoryCountsController_countItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "itemId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CountItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Contagem já aplicada ou cancelada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["inventory-counts"]
+      }
+    },
+    "/v1/inventory-counts/{id}/items": {
+      "post": {
+        "operationId": "InventoryCountsController_addItem",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCountItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Lote já está na contagem ou contagem fechada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["inventory-counts"]
+      }
+    },
+    "/v1/inventory-counts/{id}/apply": {
+      "post": {
+        "operationId": "InventoryCountsController_apply",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Contagem incompleta, já aplicada ou cancelada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["inventory-counts"]
+      }
+    },
+    "/v1/inventory-counts/{id}/cancel": {
+      "post": {
+        "operationId": "InventoryCountsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InventoryCountDetailResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Contagem já aplicada ou cancelada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["inventory-counts"]
+      }
+    },
     "/v1/shipments": {
       "get": {
         "operationId": "ShipmentsController_list",
@@ -6424,6 +6755,328 @@
         },
         "required": ["id", "lot", "expiresAt", "product", "location", "unit", "quantity"]
       },
+      "InventoryCountStatus": {
+        "type": "string",
+        "enum": ["OPEN", "APPLIED", "CANCELLED"]
+      },
+      "InventoryCountResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "INV-2026-000001"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InventoryCountStatus"
+              }
+            ]
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationSummary"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemsCount": {
+            "type": "number",
+            "example": 8
+          },
+          "countedCount": {
+            "type": "number",
+            "example": 5,
+            "description": "Itens já contados"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "appliedBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              }
+            ]
+          },
+          "appliedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              }
+            ]
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "location",
+          "notes",
+          "itemsCount",
+          "countedCount",
+          "createdBy",
+          "createdAt",
+          "appliedBy",
+          "appliedAt",
+          "cancelledBy",
+          "cancelledAt",
+          "cancelReason"
+        ]
+      },
+      "CreateInventoryCountDto": {
+        "type": "object",
+        "properties": {
+          "locationId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Local a contar"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true,
+            "example": "Contagem mensal do armazém"
+          }
+        },
+        "required": ["locationId"]
+      },
+      "InventoryCountItemResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lot": {
+            "$ref": "#/components/schemas/LotSummary"
+          },
+          "product": {
+            "$ref": "#/components/schemas/ProductSummary"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "systemQuantity": {
+            "type": "string",
+            "example": "12.000",
+            "description": "Saldo no local quando a contagem foi aberta"
+          },
+          "currentQuantity": {
+            "type": "string",
+            "example": "11.500",
+            "description": "Saldo atual no local (aberta) ou no momento da aplicação (aplicada)"
+          },
+          "countedQuantity": {
+            "type": "string",
+            "nullable": true,
+            "example": "11.500"
+          },
+          "difference": {
+            "type": "string",
+            "nullable": true,
+            "example": "-0.500",
+            "description": "Contado − saldo atual (prévia enquanto aberta; lançado depois de aplicada)"
+          },
+          "countedBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              }
+            ]
+          },
+          "countedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "adjustmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Ajuste no razão"
+          }
+        },
+        "required": [
+          "id",
+          "lot",
+          "product",
+          "unit",
+          "systemQuantity",
+          "currentQuantity",
+          "countedQuantity",
+          "difference",
+          "countedBy",
+          "countedAt",
+          "adjustmentId"
+        ]
+      },
+      "InventoryCountDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "number": {
+            "type": "string",
+            "example": "INV-2026-000001"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InventoryCountStatus"
+              }
+            ]
+          },
+          "location": {
+            "$ref": "#/components/schemas/LocationSummary"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "itemsCount": {
+            "type": "number",
+            "example": 8
+          },
+          "countedCount": {
+            "type": "number",
+            "example": 5,
+            "description": "Itens já contados"
+          },
+          "createdBy": {
+            "$ref": "#/components/schemas/UserSummary"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "appliedBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              }
+            ]
+          },
+          "appliedAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "cancelledBy": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/UserSummary"
+              }
+            ]
+          },
+          "cancelledAt": {
+            "format": "date-time",
+            "type": "string",
+            "nullable": true
+          },
+          "cancelReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InventoryCountItemResponse"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "status",
+          "location",
+          "notes",
+          "itemsCount",
+          "countedCount",
+          "createdBy",
+          "createdAt",
+          "appliedBy",
+          "appliedAt",
+          "cancelledBy",
+          "cancelledAt",
+          "cancelReason",
+          "items"
+        ]
+      },
+      "CountItemDto": {
+        "type": "object",
+        "properties": {
+          "countedQuantity": {
+            "type": "string",
+            "example": "11.5",
+            "description": "Quantidade contada, na unidade do lote (0 = nada)"
+          }
+        },
+        "required": ["countedQuantity"]
+      },
+      "AddCountItemDto": {
+        "type": "object",
+        "properties": {
+          "countedQuantity": {
+            "type": "string",
+            "example": "11.5",
+            "description": "Quantidade contada, na unidade do lote (0 = nada)"
+          },
+          "lotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Lote encontrado no local que não estava na lista"
+          }
+        },
+        "required": ["countedQuantity", "lotId"]
+      },
+      "CancelOperationDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Ordem lançada com o lote errado"
+          }
+        },
+        "required": ["reason"]
+      },
       "CustomerSummary": {
         "type": "object",
         "properties": {
@@ -6712,16 +7365,6 @@
           }
         },
         "required": ["customerId", "items"]
-      },
-      "CancelOperationDto": {
-        "type": "object",
-        "properties": {
-          "reason": {
-            "type": "string",
-            "example": "Ordem lançada com o lote errado"
-          }
-        },
-        "required": ["reason"]
       },
       "CreateAttachmentDto": {
         "type": "object",

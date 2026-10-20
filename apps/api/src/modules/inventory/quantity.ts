@@ -31,6 +31,24 @@ export function formatQuantityPt(value: Prisma.Decimal | string | number, unit?:
   return unit ? `${text} ${UNIT_SHORT[unit] ?? unit}` : text;
 }
 
+/** Como `IsQuantity`, mas aceita zero (ex.: contagem de inventário que não encontrou nada). */
+export function IsQuantityOrZero(options?: ValidationOptions): PropertyDecorator {
+  return (target: object, propertyName: string | symbol) => {
+    registerDecorator({
+      name: 'isQuantityOrZero',
+      target: target.constructor,
+      propertyName: propertyName.toString(),
+      options: {
+        message: '$property must be a decimal string (zero or more) with up to 3 decimal places',
+        ...options,
+      },
+      validator: {
+        validate: (value: unknown) => typeof value === 'string' && QUANTITY_PATTERN.test(value),
+      },
+    });
+  };
+}
+
 /** String decimal positiva com até 3 casas (ex.: "60", "1250.5", "0.250"). */
 export function IsQuantity(options?: ValidationOptions): PropertyDecorator {
   return (target: object, propertyName: string | symbol) => {

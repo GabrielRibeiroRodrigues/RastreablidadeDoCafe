@@ -1,9 +1,24 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { scopeArgs, TenantScopeError } from './tenant-scope.js';
+import { scopeArgs, TENANT_MODELS, TenantScopeError } from './tenant-scope.js';
 
 const A = 'company-a';
 
 describe('scopeArgs', () => {
+  it('registers every schema model that has companyId', () => {
+    const schema = readFileSync(new URL('../../prisma/schema.prisma', import.meta.url), 'utf8');
+    const withCompany = [...schema.matchAll(/^model (\w+) \{([\s\S]*?)^\}/gm)]
+      .filter(([, , body]) => /^\s+companyId\s/m.test(body ?? ''))
+      .map(([, name]) => name);
+    expect(withCompany.length).toBeGreaterThan(10);
+    // Sequências só são tocadas por SQL do helper tenant-aware (ON CONFLICT ... RETURNING).
+    const rawSqlOnly = new Set(['LotSequence', 'DocumentSequence']);
+    const missing = withCompany.filter(
+      (name) => !TENANT_MODELS.has(name!) && !rawSqlOnly.has(name!),
+    );
+    expect(missing).toEqual([]);
+  });
+
   describe('tenant models', () => {
     it.each(['findUnique', 'findUniqueOrThrow', 'update', 'delete'])(
       'adds companyId next to the unique key on %s',

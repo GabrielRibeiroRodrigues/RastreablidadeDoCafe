@@ -24,6 +24,8 @@ export const TENANT_MODELS = new Set([
   'RecallLot',
   'RecallCustomer',
   'Notification',
+  'InventoryCount',
+  'InventoryCountItem',
 ]);
 
 /** Razão, genealogia, itens expedidos e auditoria: só inclusão (o banco também bloqueia por trigger). */
