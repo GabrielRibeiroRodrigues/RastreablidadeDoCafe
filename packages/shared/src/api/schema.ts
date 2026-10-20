@@ -615,6 +615,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/lots/{lotId}/attachments/{id}/remove': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AttachmentsController_remove'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/lots/{lotId}/attachments/{id}/download': {
     parameters: {
       query?: never;
@@ -2095,7 +2111,7 @@ export interface components {
       sizeBytes: number;
     };
     /** @enum {string} */
-    AttachmentStatus: 'PENDING' | 'UPLOADED';
+    AttachmentStatus: 'PENDING' | 'UPLOADED' | 'REMOVED';
     AttachmentResponse: {
       /** Format: uuid */
       id: string;
@@ -2128,6 +2144,10 @@ export interface components {
     CreateAttachmentResponse: {
       attachment: components['schemas']['AttachmentResponse'];
       upload: components['schemas']['UploadInstructions'];
+    };
+    RemoveAttachmentDto: {
+      /** @example Laudo enviado no lote errado */
+      reason: string;
     };
     DownloadUrlResponse: {
       /** @description URL pré-assinada (GET), de curta duração */
@@ -2919,6 +2939,11 @@ export interface components {
     CloseRecallDto: {
       /** @example Clientes contatados; estoque recolhido e destinado à destruição */
       notes: string;
+      /**
+       * @description Libera os lotes ainda bloqueados por este recall (voltam ao status anterior ao bloqueio; sem saldo, ficam consumidos). Lotes em outro recall aberto continuam bloqueados.
+       * @default false
+       */
+      releaseLots: boolean;
     };
     RecallReportResponse: {
       /** @description URL pré-assinada do PDF (curta duração) */
@@ -4629,6 +4654,44 @@ export interface operations {
       };
       /** @description Arquivo ausente no bucket ou diferente do declarado */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemoveAttachmentDto'];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
         headers: {
           [name: string]: unknown;
         };

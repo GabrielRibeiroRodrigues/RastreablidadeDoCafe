@@ -2645,6 +2645,56 @@
         "tags": ["attachments"]
       }
     },
+    "/v1/lots/{lotId}/attachments/{id}/remove": {
+      "post": {
+        "operationId": "AttachmentsController_remove",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveAttachmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      }
+    },
     "/v1/lots/{lotId}/attachments/{id}/download": {
       "get": {
         "operationId": "AttachmentsController_download",
@@ -6697,7 +6747,7 @@
       },
       "AttachmentStatus": {
         "type": "string",
-        "enum": ["PENDING", "UPLOADED"]
+        "enum": ["PENDING", "UPLOADED", "REMOVED"]
       },
       "AttachmentResponse": {
         "type": "object",
@@ -6787,6 +6837,16 @@
           }
         },
         "required": ["attachment", "upload"]
+      },
+      "RemoveAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Laudo enviado no lote errado"
+          }
+        },
+        "required": ["reason"]
       },
       "DownloadUrlResponse": {
         "type": "object",
@@ -8866,6 +8926,11 @@
           "notes": {
             "type": "string",
             "example": "Clientes contatados; estoque recolhido e destinado à destruição"
+          },
+          "releaseLots": {
+            "type": "boolean",
+            "default": false,
+            "description": "Libera os lotes ainda bloqueados por este recall (voltam ao status anterior ao bloqueio; sem saldo, ficam consumidos). Lotes em outro recall aberto continuam bloqueados."
           }
         },
         "required": ["notes"]
