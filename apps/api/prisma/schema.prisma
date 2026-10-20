@@ -127,7 +127,8 @@ model User {
   company            Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
   notifications      Notification[]
   movements          StockMovement[]
-  attachments        Attachment[]
+  attachments        Attachment[]      @relation("AttachmentUploadedBy")
+  removedAttachments Attachment[]      @relation("AttachmentRemovedBy")
   productionOrders   ProductionOrder[] @relation("ProductionOrderUser")
   cancelledOrders    ProductionOrder[] @relation("ProductionOrderCancelledBy")
   shipments          Shipment[]        @relation("ShipmentUser")
@@ -268,6 +269,7 @@ enum MovementType {
 enum AttachmentStatus {
   PENDING // URL de upload emitida, arquivo ainda não confirmado
   UPLOADED
+  REMOVED // retirado da lista (enviado por engano); o registro e o arquivo versionado ficam
 
   @@map("attachment_status")
 }
@@ -392,10 +394,14 @@ model Attachment {
   uploadedById String           @map("uploaded_by_id") @db.Uuid
   createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   uploadedAt   DateTime?        @map("uploaded_at") @db.Timestamptz(3)
+  removedAt    DateTime?        @map("removed_at") @db.Timestamptz(3)
+  removedById  String?          @map("removed_by_id") @db.Uuid
+  removeReason String?          @map("remove_reason")
 
   company    Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
   lot        Lot     @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
-  uploadedBy User    @relation(fields: [companyId, uploadedById], references: [companyId, id], onDelete: Restrict)
+  uploadedBy User    @relation("AttachmentUploadedBy", fields: [companyId, uploadedById], references: [companyId, id], onDelete: Restrict)
+  removedBy  User?   @relation("AttachmentRemovedBy", fields: [companyId, removedById], references: [companyId, id], onDelete: Restrict)
 
   @@index([companyId, lotId])
   @@map("attachments")

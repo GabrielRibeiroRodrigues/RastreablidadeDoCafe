@@ -126,6 +126,15 @@ export const inventoryApi = {
   generateLabelsBatch: (lotIds: string[]) =>
     unwrap(getApiClient().POST('/v1/labels/batch', { body: { lotIds } })),
 
+  /** Retira um anexo enviado por engano (admin; o registro fica na auditoria). */
+  removeAttachment: (lotId: string, id: string, reason: string) =>
+    unwrap(
+      getApiClient().POST('/v1/lots/{lotId}/attachments/{id}/remove', {
+        params: { path: { lotId, id } },
+        body: { reason },
+      }),
+    ),
+
   downloadAttachment: (lotId: string, id: string) =>
     unwrap(
       getApiClient().GET('/v1/lots/{lotId}/attachments/{id}/download', {

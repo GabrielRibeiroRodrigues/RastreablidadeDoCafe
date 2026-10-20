@@ -287,7 +287,11 @@ export function LotDetailPage() {
           </CardContent>
         </Card>
 
-        <AttachmentsCard lotId={lot.id} canUpload={permissions.canOperate} />
+        <AttachmentsCard
+          lotId={lot.id}
+          canUpload={permissions.canOperate}
+          canRemove={permissions.canReverse}
+        />
       </div>
 
       <section className="space-y-3">

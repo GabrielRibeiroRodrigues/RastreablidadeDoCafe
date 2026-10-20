@@ -63,6 +63,15 @@ export class AttachmentResponse {
   uploadedAt!: Date | null;
 }
 
+export class RemoveAttachmentDto {
+  @ApiProperty({ example: 'Laudo enviado no lote errado' })
+  @Transform(trim)
+  @IsString()
+  @MinLength(5)
+  @MaxLength(500)
+  reason!: string;
+}
+
 export class UploadInstructions {
   @ApiProperty({ description: 'URL do formulário (POST multipart/form-data)' })
   url!: string;
