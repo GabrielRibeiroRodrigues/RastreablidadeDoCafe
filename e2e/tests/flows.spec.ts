@@ -71,6 +71,49 @@ test.describe('stock', () => {
   });
 });
 
+test.describe('corrections', () => {
+  test('an admin cancels a shipment and the stock comes back', async ({ page }) => {
+    const lot = await receiveLot('40');
+    const [customer, location] = await Promise.all([
+      first<Ref>('/v1/customers'),
+      first<Ref>('/v1/locations?type=WAREHOUSE'),
+    ]);
+    const shipment = await api<{ id: string; number: string }>('/v1/shipments', {
+      method: 'POST',
+      body: JSON.stringify({
+        customerId: customer.id,
+        items: [{ lotId: lot.id, locationId: location.id, quantity: '10' }],
+      }),
+    });
+
+    await login(page, 'admin');
+    await page.goto(`/expedicao/${shipment.id}`);
+    await page.getByRole('button', { name: 'Cancelar expedição' }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel(/Motivo/).fill('Pedido cancelado pelo cliente (e2e)');
+    await dialog.getByRole('button', { name: 'Cancelar operação' }).click();
+
+    await expect(toast(page, /cancelada/)).toBeVisible();
+    await expect(page.getByText('As saídas foram estornadas', { exact: false })).toBeVisible();
+    const after = await api<{ balance: string }>(`/v1/lots/${lot.id}`);
+    expect(after.balance).toBe('40.000');
+  });
+
+  test('a logged-in user opens a scanned label inside the app', async ({ page }) => {
+    const lot = await receiveLot('10');
+    const label = await api<{ publicUrl: string }>(`/v1/lots/${lot.id}/label`, {
+      method: 'POST',
+    }).catch(() => null);
+    // Sem bucket no ambiente de teste a etiqueta não é gerada: o fluxo não se aplica.
+    test.skip(!label, 'storage not configured');
+
+    await login(page, 'operator');
+    await page.goto(new URL(label!.publicUrl).pathname);
+    await page.getByRole('link', { name: 'Abrir no sistema' }).click();
+    await expect(page).toHaveURL(new RegExp(`/lotes/${lot.id}/rastreabilidade`));
+  });
+});
+
 test.describe('quality', () => {
   test('executes a recall, blocks the lot and notifies in the bell', async ({ page }) => {
     const lot = await receiveLot('30');
