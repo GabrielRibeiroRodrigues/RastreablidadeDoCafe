@@ -91,7 +91,7 @@ test.describe('corrections', () => {
     await page.getByRole('button', { name: 'Cancelar expedição' }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByLabel(/Motivo/).fill('Pedido cancelado pelo cliente (e2e)');
-    await dialog.getByRole('button', { name: 'Cancelar operação' }).click();
+    await dialog.getByRole('button', { name: 'Confirmar cancelamento' }).click();
 
     await expect(toast(page, /cancelada/)).toBeVisible();
     await expect(page.getByText('As saídas foram estornadas', { exact: false })).toBeVisible();

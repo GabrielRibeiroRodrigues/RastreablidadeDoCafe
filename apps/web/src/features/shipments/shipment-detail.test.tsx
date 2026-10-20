@@ -89,11 +89,11 @@ describe('Detalhe da expedição', () => {
 
     // Motivo curto demais: barrado antes da API.
     await user.type(within(dialog).getByLabelText(/Motivo/), 'erro');
-    await user.click(within(dialog).getByRole('button', { name: 'Cancelar operação' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Confirmar cancelamento' }));
     expect(api.find('POST', `/v1/shipments/${ID}/cancel`)).toHaveLength(0);
 
     await user.type(within(dialog).getByLabelText(/Motivo/), ' do pedido');
-    await user.click(within(dialog).getByRole('button', { name: 'Cancelar operação' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Confirmar cancelamento' }));
 
     await waitFor(() => expect(api.find('POST', `/v1/shipments/${ID}/cancel`)).toHaveLength(1));
     expect(await api.find('POST', `/v1/shipments/${ID}/cancel`)[0]!.json()).toEqual({
@@ -124,7 +124,7 @@ describe('Detalhe da expedição', () => {
     await user.click(await screen.findByRole('button', { name: 'Cancelar expedição' }));
     const dialog = await screen.findByRole('dialog', { name: /Cancelar a expedição/ });
     await user.type(within(dialog).getByLabelText(/Motivo/), 'Pedido em dobro');
-    await user.click(within(dialog).getByRole('button', { name: 'Cancelar operação' }));
+    await user.click(within(dialog).getByRole('button', { name: 'Confirmar cancelamento' }));
 
     expect(
       await within(dialog).findByText('EXP-2026-000004 já foi cancelada. Recarregue a página.'),

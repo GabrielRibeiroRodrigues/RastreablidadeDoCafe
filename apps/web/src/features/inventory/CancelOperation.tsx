@@ -85,7 +85,8 @@ export function CancelOperationDialog({
       onOpenChange={(open) => !open && onClose()}
       title={title}
       description={description}
-      confirmLabel="Cancelar operação"
+      confirmLabel="Confirmar cancelamento"
+      dismissLabel="Voltar"
       destructive
       pending={mutation.isPending}
       error={mutation.error}
