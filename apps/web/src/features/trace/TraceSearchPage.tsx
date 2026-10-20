@@ -3,7 +3,7 @@ import { EmptyState, ErrorState } from '@/components/EmptyState';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRightIcon, GitForkIcon, SearchIcon, SearchXIcon } from 'lucide-react';
 import { useId, useState, type FormEvent } from 'react';
-import { Link, Navigate } from 'react-router';
+import { Link, Navigate, useSearchParams } from 'react-router';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -13,11 +13,16 @@ import { ProductTypeBadge } from '@/features/production/components';
 import { Skeleton } from '@/components/ui/skeleton';
 import { countOf } from '@/lib/plural';
 
-/** Busca de lote pelo código; leva à árvore de rastreabilidade. */
+/**
+ * Busca de lote pelo código; leva à árvore de rastreabilidade. `?codigo=CAF-…` já busca ao abrir
+ * (link "Abrir no sistema" da página pública do QR code).
+ */
 export function TraceSearchPage() {
   const inputId = useId();
-  const [text, setText] = useState('');
-  const [q, setQ] = useState('');
+  const [params] = useSearchParams();
+  const initial = (params.get('codigo') ?? '').trim().toUpperCase();
+  const [text, setText] = useState(initial);
+  const [q, setQ] = useState(initial);
 
   const results = useQuery({
     queryKey: ['lots', 'trace-search', q],

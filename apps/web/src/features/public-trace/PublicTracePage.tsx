@@ -10,13 +10,15 @@ import {
   MountainIcon,
   PackageIcon,
   RefreshCwIcon,
+  GitForkIcon,
   SearchXIcon,
   SirenIcon,
   SproutIcon,
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
+import { useAuth } from '@/auth/auth-context';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PRODUCT_TYPE_LABELS, ROAST_LEVEL_LABELS } from '@/features/products/labels';
@@ -75,6 +77,8 @@ export function PublicTracePage() {
 
 function TraceView({ trace }: { trace: PublicTrace }) {
   const { lot, brand } = trace;
+  // Funcionário logado lendo o QR da etiqueta: atalho para o lote dentro do sistema.
+  const { isAuthenticated } = useAuth();
   // Cor da marca no fundo só quando o texto claro continua legível; senão, vira uma faixa no topo.
   const brandBackground = isDarkColor(brand.color) ? brand.color : null;
   const brandStripe = brand.color && !brandBackground ? brand.color : null;
@@ -184,6 +188,20 @@ function TraceView({ trace }: { trace: PublicTrace }) {
             </div>
           </div>
         </section>
+      )}
+
+      {isAuthenticated && (
+        <div className="border-b bg-muted/40">
+          <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm sm:px-6">
+            <span className="text-muted-foreground">Você está conectado ao TraceFlow.</span>
+            <Button size="sm" variant="outline" asChild>
+              <Link to={`/rastreabilidade?codigo=${encodeURIComponent(lot.code)}`}>
+                <GitForkIcon aria-hidden />
+                Abrir no sistema
+              </Link>
+            </Button>
+          </div>
+        </div>
       )}
 
       <main className="mx-auto w-full max-w-2xl flex-1 space-y-10 px-4 py-8 sm:px-6">

@@ -2,6 +2,7 @@ import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { json, mockApi } from '@/test/mock-api';
 import { renderApp } from '@/test/render-app';
+import { signInAs } from '@/test/session';
 import type { PublicTrace } from './api';
 
 const TOKEN = 'lTaAdzF4gELdowsEi1d9iQ';
@@ -38,6 +39,20 @@ describe('Página pública de rastreio', () => {
 
     expect(await screen.findByText('Disponível')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // Visitante anônimo não vê o atalho interno.
+    expect(screen.queryByRole('link', { name: 'Abrir no sistema' })).not.toBeInTheDocument();
+  });
+
+  it('offers a logged-in user a shortcut to the lot inside the app', async () => {
+    signInAs('operator');
+    mockApi({ 'GET /v1/public/trace/:token': () => json(trace()) });
+
+    renderApp({ path: `/rastreio/${TOKEN}` });
+
+    expect(await screen.findByRole('link', { name: 'Abrir no sistema' })).toHaveAttribute(
+      'href',
+      '/rastreabilidade?codigo=CAF-2026-000004',
+    );
   });
 
   it('warns the consumer not to use a recalled lot', async () => {
