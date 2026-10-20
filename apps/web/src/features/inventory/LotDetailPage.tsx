@@ -65,6 +65,17 @@ function InfoItem({ label, children }: { label: string; children: ReactNode }) {
 const num = (value: number | null, suffix = '') =>
   value === null ? null : `${value.toLocaleString('pt-BR')}${suffix}`;
 
+/** Número gerado pela API para ordens de produção (OP-AAAA-NNNNNN). */
+const ORDER_NUMBER = /^OP-d{4}-d{6}$/;
+
+/** Produção, ou consumo lançado por uma ordem: a API recusa o estorno avulso (cancele a ordem). */
+function partOfOrder(movement: Movement): boolean {
+  return (
+    movement.type === 'PRODUCTION' ||
+    (movement.type === 'CONSUMPTION' && ORDER_NUMBER.test(movement.documentRef ?? ''))
+  );
+}
+
 export function LotDetailPage() {
   const { id = '' } = useParams();
   const permissions = useInventoryPermissions();
@@ -110,8 +121,8 @@ export function LotDetailPage() {
   const columns = movementColumns({ unit: lot.unit });
   const rowActions = permissions.canReverse
     ? (movement: Movement) =>
-        // Produção só se desfaz cancelando a ordem inteira (tela da ordem de produção).
-        movement.type !== 'REVERSAL' && movement.type !== 'PRODUCTION' && !movement.reversedById ? (
+        // Produção e consumo de uma ordem só se desfazem cancelando a ordem (tela da ordem).
+        movement.type !== 'REVERSAL' && !partOfOrder(movement) && !movement.reversedById ? (
           <Button
             variant="ghost"
             size="sm"

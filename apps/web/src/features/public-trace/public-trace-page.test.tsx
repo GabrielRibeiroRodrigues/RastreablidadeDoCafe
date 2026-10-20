@@ -39,8 +39,12 @@ describe('Página pública de rastreio', () => {
 
     expect(await screen.findByText('Disponível')).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
-    // Visitante anônimo não vê o atalho interno.
+    // Visitante anônimo: sem a barra interna, só o link discreto que passa pelo login.
     expect(screen.queryByRole('link', { name: 'Abrir no sistema' })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Abrir este lote no sistema' })).toHaveAttribute(
+      'href',
+      '/rastreabilidade?codigo=CAF-2026-000004',
+    );
   });
 
   it('offers a logged-in user a shortcut to the lot inside the app', async () => {

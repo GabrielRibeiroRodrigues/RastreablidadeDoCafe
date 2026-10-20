@@ -248,6 +248,20 @@ function TraceView({ trace }: { trace: PublicTrace }) {
             </p>
           )}
         </section>
+
+        {/* A sessão vive na aba (sessionStorage): quem lê o QR numa aba nova chega deslogado.
+            O link passa pelo login e volta direto para o lote. */}
+        {!isAuthenticated && (
+          <p className="text-center text-xs text-muted-foreground">
+            É da equipe da {trace.companyName}?{' '}
+            <Link
+              to={`/rastreabilidade?codigo=${encodeURIComponent(lot.code)}`}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Abrir este lote no sistema
+            </Link>
+          </p>
+        )}
       </main>
     </>
   );
