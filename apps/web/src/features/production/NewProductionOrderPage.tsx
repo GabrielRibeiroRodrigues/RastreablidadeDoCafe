@@ -188,7 +188,7 @@ function Step({
   children: ReactNode;
 }) {
   return (
-    <Card>
+    <Card className="overflow-visible">
       <CardHeader>
         <div className="flex items-start gap-3">
           <span

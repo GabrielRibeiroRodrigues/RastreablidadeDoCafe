@@ -180,7 +180,7 @@ export function ReceiptPage() {
       <form id={formId} noValidate onSubmit={(event) => void submit(event)} className="space-y-6">
         <FormRootError errors={form.formState.errors} />
 
-        <Card>
+        <Card className="overflow-visible">
           <CardHeader>
             <CardTitle>Recebimento</CardTitle>
             <CardDescription>Campos com * são obrigatórios.</CardDescription>
@@ -301,7 +301,7 @@ export function ReceiptPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-visible">
           <CardHeader>
             <CardTitle>Qualidade</CardTitle>
             <CardDescription>

@@ -224,7 +224,7 @@ export function NewRecallPage() {
         </Alert>
       )}
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>1. Lote de origem</CardTitle>
           <CardDescription>

@@ -185,7 +185,7 @@ export function NewShipmentPage() {
       <form id={formId} noValidate onSubmit={(event) => void submit(event)} className="space-y-6">
         <FormRootError errors={form.formState.errors} />
 
-        <Card>
+        <Card className="overflow-visible">
           <CardHeader>
             <CardTitle>Destino</CardTitle>
             <CardDescription>Campos com * são obrigatórios.</CardDescription>
@@ -240,7 +240,7 @@ export function NewShipmentPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-visible">
           <CardHeader>
             <CardTitle>Itens</CardTitle>
             <CardDescription>
@@ -342,7 +342,7 @@ export function NewShipmentPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="overflow-visible">
           <CardContent>
             <TextareaField
               control={form.control}
