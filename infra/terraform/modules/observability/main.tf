@@ -1,4 +1,4 @@
-# Dashboard e alarmes (-> SNS). Mantido em ~10 alarmes, o limite do free tier do CloudWatch.
+# Dashboard e alarmes (-> SNS). ~10 alarmes (limite do free tier do CloudWatch) + o de disco do RDS.
 
 data "aws_region" "current" {}
 
@@ -54,6 +54,17 @@ locals {
         threshold   = var.db_connections_threshold
         period      = 300
       }
+      # Disco cheio para o banco (gp3 sem autoscaling, ADR 0010): o 11º alarme, ~US$ 0,10/mês.
+      rds-free-storage = {
+        description = "RDS free storage below ${var.db_free_storage_threshold_gb} GB"
+        namespace   = "AWS/RDS"
+        metric      = "FreeStorageSpace"
+        dimensions  = { DBInstanceIdentifier = var.db_instance_id }
+        statistic   = "Minimum"
+        threshold   = var.db_free_storage_threshold_gb * 1024 * 1024 * 1024
+        period      = 300
+        comparison  = "LessThanThreshold"
+      }
       dlq-messages = {
         description = "Failed asynchronous job invocations in the DLQ"
         namespace   = "AWS/SQS"
@@ -102,7 +113,7 @@ resource "aws_cloudwatch_metric_alarm" "this" {
   period              = each.value.period
   evaluation_periods  = 1
   threshold           = each.value.threshold
-  comparison_operator = "GreaterThanOrEqualToThreshold"
+  comparison_operator = try(each.value.comparison, "GreaterThanOrEqualToThreshold")
   treat_missing_data  = "notBreaching"
   alarm_actions       = [var.alarm_topic_arn]
   ok_actions          = [var.alarm_topic_arn]

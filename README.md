@@ -4,7 +4,7 @@ Mini ERP de **rastreabilidade de lotes de café** para pequenas indústrias: rec
 
 Projeto de portfólio para demonstrar arquitetura de aplicação de negócio + AWS (serverless, eventos, IaC), com custo próximo de zero.
 
-> **Status:** pronto para produção — v0.1 (MVP) + recall, qualidade, auditoria, painel, relatórios, importação, segurança e infraestrutura AWS em Terraform. Antes de publicar, siga [docs/go-live.md](docs/go-live.md). Progresso: [docs/progresso.md](docs/progresso.md).
+> **Status:** funcionalidades completas e testadas (v0.1 + recall, qualidade, auditoria, painel, relatórios, importação, gestão de usuários, cancelamento de operações); infraestrutura AWS descrita em Terraform e validada, **ainda não implantada**. Para publicar, siga o [guia de produção](docs/guia_producao.md). Para usuários: [manual do cliente](docs/manual_cliente.md). Progresso: [docs/progresso.md](docs/progresso.md).
 
 ## Por que este domínio?
 

@@ -256,7 +256,9 @@ jobs:
             --cache-control "public, max-age=3600"
           aws s3 cp apps/web/dist/index.html "s3://$BUCKET/index.html" \
             --cache-control "no-cache" --content-type "text/html; charset=utf-8"
-          aws s3 sync apps/web/dist "s3://$BUCKET" --delete --size-only
+          # Remove arquivos que saíram do build, mas mantém os assets antigos (nomes com hash,
+          # poucos KB): uma aba aberta antes do deploy ainda carrega as páginas sob demanda.
+          aws s3 sync apps/web/dist "s3://$BUCKET" --delete --size-only --exclude "assets/*"
 
       - name: Invalidate CloudFront
         env:
@@ -264,3 +266,23 @@ jobs:
         run: |
           aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION" \
             --paths "/index.html" "/" --query Invalidation.Id --output text
+
+      # O deploy só termina verde se a API responder com o banco no ar e o front for servido.
+      - name: Smoke test
+        env:
+          API_URL: ${{ steps.outputs.outputs.api_url }}
+          WEB_URL: ${{ steps.outputs.outputs.web_url }}
+        run: |
+          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+            if curl -fsS --max-time 10 "$API_URL/v1/health/ready"; then echo; break; fi
+            if [ "$attempt" = 10 ]; then
+              echo "::error::$API_URL/v1/health/ready did not answer 200"
+              exit 1
+            fi
+            sleep 6
+          done
+          if ! curl -fsS --max-time 10 "$WEB_URL/" | grep -q 'id="root"'; then
+            echo "::error::$WEB_URL did not serve the web app"
+            exit 1
+          fi
+          echo "API and web are up: $WEB_URL"
