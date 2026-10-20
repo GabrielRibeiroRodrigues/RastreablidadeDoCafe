@@ -90,6 +90,7 @@ Situações típicas: chegada de um caminhão com sacas de café verde; um dia d
 | Recebimento de café e criação de lote                  | ✅ Disponível     |                                                                                                                                   |
 | Lotes, estoque por local e histórico de movimentações  | ✅ Disponível     |                                                                                                                                   |
 | Saída, transferência, consumo, ajuste e estorno        | ✅ Disponível     | Ajuste e estorno só para administrador; ordens e expedições podem ser **canceladas** inteiras                                     |
+| Inventário (contagem física por local)                 | ✅ Disponível     | Operador conta; administrador aplica as diferenças como ajustes                                                                   |
 | Anexos no lote (laudos, notas fiscais, fotos)          | ✅ Disponível     | PDF, JPEG, PNG ou WebP até 10 MB                                                                                                  |
 | Produção: beneficiamento, torra, blend e embalagem     | ✅ Disponível     |                                                                                                                                   |
 | Expedição para clientes                                | ✅ Disponível     |                                                                                                                                   |
@@ -375,6 +376,25 @@ _Razão de movimentações. Cada linha tem o usuário que fez a operação e o d
 | Ajuste        | Correção de inventário (perda ou sobra)            |
 | Estorno       | Movimentação inversa que anula outra               |
 
+#### Inventário (contagem física)
+
+Use **Estoque › Inventário** para conferir o que existe de fato num local e corrigir o sistema de uma vez.
+
+1. Clique em **Nova contagem**, escolha o local e confirme. O sistema lista os lotes que têm saldo ali.
+2. Para cada lote, digite a quantidade encontrada (use **0** se não achou nada). O valor é salvo ao sair do campo ou com Enter, e a coluna **Diferença** mostra a sobra (verde, +) ou a falta (vermelho, −).
+3. Achou um lote que não estava na lista? Clique em **Incluir lote**, escolha o lote e informe a quantidade.
+4. Quando todos os lotes estiverem contados, um **administrador** clica em **Aplicar**. O sistema mostra quantos ajustes serão lançados e, ao confirmar, registra cada diferença como um **Ajuste** nas movimentações, com o número da contagem (`INV-…`) como documento.
+
+O estoque não fica travado durante a contagem: a diferença é calculada com o saldo do momento da aplicação. Se uma expedição sair enquanto a equipe conta, ela não vira falta — basta contar o que ficou. Só pode haver uma contagem aberta por local; uma contagem aberta por engano pode ser **cancelada** (administrador, com motivo) sem mexer no estoque.
+
+![Contagem em andamento com a quantidade contada de cada lote e a diferença em vermelho](images/28-inventario-contagem.png)
+
+_Contagem em andamento: o primeiro lote tem 7 sacas no sistema e 1 contada, uma falta de 6 sacas._
+
+![Contagem aplicada com o saldo no momento da aplicação, o contado e a diferença lançada](images/28-inventario-aplicada.png)
+
+_Depois de aplicada, a contagem fica registrada e o link leva aos ajustes nas movimentações._
+
 ### 3.9 Produção (beneficiamento, torra, blend e embalagem)
 
 Uma **ordem de produção (OP)** consome um ou mais lotes de insumo e gera **um lote novo**, automaticamente ligado aos insumos. É isso que permite rastrear um blend até as fazendas de origem.
@@ -644,6 +664,8 @@ Cada usuário tem um perfil, definido pela equipe técnica ao criar o acesso.
 | Desativar e reativar cadastros                                       |      ✅       |         —          |    —    |
 | Recebimento, movimentação, produção, expedição, anexos               |      ✅       |         ✅         |    —    |
 | Ajuste de inventário e estorno                                       |      ✅       |         —          |    —    |
+| Abrir contagem de inventário e registrar quantidades                 |      ✅       |         ✅         |    —    |
+| Aplicar ou cancelar contagem de inventário                           |      ✅       |         —          |    —    |
 | Alterar status do lote                                               |  ✅ (todos)   | só para quarentena |    —    |
 | Abrir não conformidade                                               |      ✅       |         ✅         |    —    |
 | Liberar ou descartar não conformidade                                |      ✅       |         —          |    —    |
@@ -794,6 +816,8 @@ _Exemplo de erro: tentar dar saída de 20 sacas de um lote que tem 12. O sistema
 | **Sua sessão expirou. Entre novamente.**                                                                                       | Tempo de sessão encerrado                                                                      | Entre de novo; você volta à mesma página                                                                |
 | **Você não tem permissão para esta ação.** / **Acesso restrito**                                                               | Seu perfil não permite a ação                                                                  | Peça a um administrador                                                                                 |
 | **Registro não encontrado.**                                                                                                   | O registro não existe ou não pertence à sua empresa                                            | Confira o código ou o link                                                                              |
+| **Este local já tem uma contagem em aberto**                                                                                   | Só pode haver uma contagem aberta por local                                                    | Continue a contagem existente ou peça a um administrador para aplicá-la ou cancelá-la                   |
+| **Faltam contar N lotes antes de aplicar**                                                                                     | Há lotes sem quantidade na contagem                                                            | Informe a quantidade de cada lote (0 se não encontrou nada)                                             |
 | **Você está sem conexão**                                                                                                      | Internet caiu                                                                                  | Aguarde a conexão voltar; reenviar o mesmo formulário não duplica o registro                            |
 | **Erro inesperado** (com um "ID da requisição")                                                                                | Falha no servidor                                                                              | Tente de novo; se persistir, envie o **ID da requisição** ao suporte — ele permite localizar o problema |
 

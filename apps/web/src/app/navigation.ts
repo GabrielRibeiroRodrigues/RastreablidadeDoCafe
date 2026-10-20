@@ -3,6 +3,7 @@ import {
   Building2Icon,
   BoxesIcon,
   ClipboardCheckIcon,
+  ClipboardListIcon,
   FactoryIcon,
   FileSpreadsheetIcon,
   GitForkIcon,
@@ -94,6 +95,12 @@ export const STOCK_ITEMS: NavLinkItem[] = [
     label: 'Movimentações',
     description: 'Razão de estoque: entradas, saídas, transferências e estornos.',
     icon: ArrowLeftRightIcon,
+  },
+  {
+    path: '/inventario',
+    label: 'Inventário',
+    description: 'Contagem física por local; as diferenças viram ajustes no estoque.',
+    icon: ClipboardListIcon,
   },
   {
     path: '/rastreabilidade',

@@ -118,6 +118,14 @@ export const RecallDetailPage = lazyPage(
   () => import('@/features/recalls/RecallDetailPage'),
   (m) => m.RecallDetailPage,
 );
+export const InventoryCountsPage = lazyPage(
+  () => import('@/features/inventory-counts/InventoryCountsPage'),
+  (m) => m.InventoryCountsPage,
+);
+export const InventoryCountDetailPage = lazyPage(
+  () => import('@/features/inventory-counts/InventoryCountDetailPage'),
+  (m) => m.InventoryCountDetailPage,
+);
 export const NonConformitiesPage = lazyPage(
   () => import('@/features/quality/NonConformitiesPage'),
   (m) => m.NonConformitiesPage,
@@ -156,6 +164,7 @@ export const PRELOADERS: Record<string, LazyPage['preload']> = {
   '/recebimento': ReceiptPage.preload,
   '/estoque': StockPage.preload,
   '/movimentacoes': MovementsPage.preload,
+  '/inventario': InventoryCountsPage.preload,
   '/rastreabilidade': TraceSearchPage.preload,
   '/producao': ProductionOrdersPage.preload,
   '/expedicao': ShipmentsPage.preload,

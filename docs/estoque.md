@@ -31,6 +31,22 @@ flowchart LR
 | `GET /v1/movements`              | todos                                                 | Histórico. Filtros: `lotId`, `locationId`, `type`, `from`, `to`                                                |
 | `GET /v1/stock`                  | todos                                                 | Posição: saldo por lote e local. Filtros: `productId`, `locationId`, `lotStatus`, `q`                          |
 
+## Inventário (contagem física)
+
+Contagem por local; as diferenças viram ajustes ao aplicar ([ADR 0015](adr/0015-inventario-contagem-fisica.md)).
+
+| Método e rota                                | Perfis          | Descrição                                                                                                                             |
+| -------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /v1/inventory-counts`                  | admin, operador | `{ locationId, notes? }`: abre com os lotes que têm saldo no local. Uma aberta por local (409 `/problems/inventory-count-open`)       |
+| `GET /v1/inventory-counts`                   | todos           | Lista. Filtros: `status`, `locationId`                                                                                                |
+| `GET /v1/inventory-counts/:id`               | todos           | Detalhe com itens: saldo na abertura, saldo atual (ou na aplicação), contado e diferença                                              |
+| `PUT /v1/inventory-counts/:id/items/:itemId` | admin, operador | `{ countedQuantity }` (aceita `"0"`)                                                                                                  |
+| `POST /v1/inventory-counts/:id/items`        | admin, operador | `{ lotId, countedQuantity }`: lote achado no local que não estava na lista                                                            |
+| `POST /v1/inventory-counts/:id/apply`        | admin           | Lança um `ADJUSTMENT` por diferença (documento = número da contagem). Exige tudo contado (409 `/problems/inventory-count-incomplete`) |
+| `POST /v1/inventory-counts/:id/cancel`       | admin           | `{ reason }`; nada é lançado                                                                                                          |
+
+Contagem aplicada ou cancelada não muda (409 `/problems/inventory-count-closed`). A diferença usa o saldo do momento da aplicação, então movimentações feitas durante a contagem não viram diferença.
+
 ## Direção de cada tipo
 
 | Tipo          |         Origem         | Destino | Uso                                             |
