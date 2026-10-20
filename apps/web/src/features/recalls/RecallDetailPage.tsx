@@ -87,6 +87,7 @@ export function RecallDetailPage() {
   const { canManageRecall } = useQualityPermissions();
   const queryClient = useQueryClient();
   const [dialog, setDialog] = useState<'retry' | 'close' | null>(null);
+  const [releaseLots, setReleaseLots] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const query = useQuery({
@@ -133,9 +134,13 @@ export function RecallDetailPage() {
   });
 
   const close = useMutation({
-    mutationFn: (notes: string) => recallsApi.close(id, notes),
+    mutationFn: (notes: string) => recallsApi.close(id, notes, releaseLots),
     onSuccess: async (recall) => {
-      toast.success(`Recall ${recall.number} encerrado`);
+      toast.success(
+        releaseLots
+          ? `Recall ${recall.number} encerrado e lotes liberados`
+          : `Recall ${recall.number} encerrado`,
+      );
       await onSettled(recall);
     },
     onError: (error) =>
@@ -489,8 +494,9 @@ export function RecallDetailPage() {
         </div>
         <p className="flex items-start gap-1.5 text-xs text-muted-foreground">
           <InfoIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-          Encerrar o recall não libera os lotes: a volta a Disponível é feita lote a lote (Alterar
-          status), depois de encerrado.
+          Ao encerrar, escolha se os lotes voltam ao status anterior ao bloqueio (análise sem risco)
+          ou continuam bloqueados (estoque a destruir). Depois, a liberação também pode ser feita
+          lote a lote (Alterar status).
         </p>
       </section>
 
@@ -508,7 +514,7 @@ export function RecallDetailPage() {
           open
           onOpenChange={(open) => !open && setDialog(null)}
           title={`Encerrar o recall ${recall.number}?`}
-          description="Registre o que foi feito (clientes contatados, destino do estoque). Os lotes continuam bloqueados."
+          description="Registre o que foi feito (clientes contatados, destino do estoque)."
           confirmLabel="Encerrar recall"
           fieldLabel="Notas de encerramento"
           minLength={5}
@@ -517,7 +523,24 @@ export function RecallDetailPage() {
           error={close.error}
           onSubmit={(notes) => close.mutate(notes)}
           reasonPlaceholder="Clientes contatados; estoque recolhido e destinado à destruição"
-        />
+        >
+          <label className="flex items-start gap-2 rounded-md border p-3 text-sm">
+            <input
+              type="checkbox"
+              className="mt-0.5 size-4 accent-primary"
+              checked={releaseLots}
+              onChange={(event) => setReleaseLots(event.target.checked)}
+            />
+            <span>
+              <span className="font-medium">Liberar os lotes bloqueados</span>
+              <span className="block text-xs text-muted-foreground">
+                Cada lote volta ao status de antes do recall (sem saldo, fica consumido). Deixe
+                desmarcado se o estoque será destruído. Lotes em outro recall aberto continuam
+                bloqueados.
+              </span>
+            </span>
+          </label>
+        </ReasonDialog>
       )}
     </div>
   );

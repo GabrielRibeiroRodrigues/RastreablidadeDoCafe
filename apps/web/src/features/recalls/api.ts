@@ -35,11 +35,12 @@ export const recallsApi = {
   retry: (id: string) =>
     unwrap(getApiClient().POST('/v1/recalls/{id}/retry', { params: { path: { id } } })),
 
-  close: (id: string, notes: string) =>
+  /** `releaseLots`: devolve os lotes bloqueados ao status anterior ao bloqueio. */
+  close: (id: string, notes: string, releaseLots = false) =>
     unwrap(
       getApiClient().POST('/v1/recalls/{id}/close', {
         params: { path: { id } },
-        body: { notes },
+        body: { notes, releaseLots },
       }),
     ),
 

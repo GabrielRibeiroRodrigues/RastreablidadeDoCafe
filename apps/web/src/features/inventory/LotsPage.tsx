@@ -377,7 +377,7 @@ export function LotsPage() {
             <SearchInput
               value={params.q}
               onChange={list.setQuery}
-              placeholder="Buscar pelo código (CAF-2026-…)"
+              placeholder="Código, produto ou fornecedor"
             />
             <FilterSelect
               label="Produto"
