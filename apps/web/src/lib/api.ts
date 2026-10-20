@@ -157,6 +157,16 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
     'O relatório deste recall ainda não foi gerado (etapa pendente, com falha ou ignorada).',
   '/problems/non-conformity-not-open': () =>
     'Esta não conformidade já foi resolvida. Recarregue a página.',
+  '/problems/inventory-count-open': ({ extensions: ext }) =>
+    `Este local já tem uma contagem em aberto${text(ext.count) ? ` (${text(ext.count)})` : ''}: aplique ou cancele antes de abrir outra.`,
+  '/problems/inventory-count-closed': () =>
+    'Esta contagem já foi aplicada ou cancelada. Recarregue a página.',
+  '/problems/inventory-count-incomplete': ({ extensions: ext }) => {
+    const missing = Array.isArray(ext.missing) ? ext.missing.length : 0;
+    return missing === 1
+      ? 'Falta contar 1 lote antes de aplicar.'
+      : `Faltam contar ${missing || 'alguns'} lotes antes de aplicar.`;
+  },
   '/problems/invalid-import': ({ detail, extensions: ext }) =>
     /empty/i.test(detail ?? '')
       ? 'O arquivo está vazio: a primeira linha deve ser o cabeçalho.'

@@ -9,6 +9,7 @@ export const DOCUMENT_KINDS = {
   shipment: { kind: 'shipment', prefix: 'EXP' },
   nonConformity: { kind: 'non_conformity', prefix: 'NC' },
   recall: { kind: 'recall', prefix: 'RC' },
+  inventoryCount: { kind: 'inventory_count', prefix: 'INV' },
 } as const;
 
 export type DocumentKind = (typeof DOCUMENT_KINDS)[keyof typeof DOCUMENT_KINDS];

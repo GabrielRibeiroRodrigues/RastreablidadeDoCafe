@@ -27,7 +27,8 @@ export interface RecordMovementInput {
   idempotency?: { key: string; hash: string };
   /**
    * Permite baixar estoque de lote em quarentena/bloqueado. Uso exclusivo do descarte de não
-   * conformidade (perda do saldo retido); nenhuma rota pública repassa esta opção.
+   * conformidade e da aplicação de inventário (perda real do saldo retido); nenhuma rota pública
+   * repassa esta opção.
    */
   allowRestrictedLot?: boolean;
 }

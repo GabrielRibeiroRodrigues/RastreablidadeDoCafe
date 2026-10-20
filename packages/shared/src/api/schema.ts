@@ -535,6 +535,102 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/inventory-counts': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['InventoryCountsController_list'];
+    put?: never;
+    post: operations['InventoryCountsController_create'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/inventory-counts/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['InventoryCountsController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/inventory-counts/{id}/items/{itemId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations['InventoryCountsController_countItem'];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/inventory-counts/{id}/items': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['InventoryCountsController_addItem'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/inventory-counts/{id}/apply': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['InventoryCountsController_apply'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/inventory-counts/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['InventoryCountsController_cancel'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/shipments': {
     parameters: {
       query?: never;
@@ -1982,6 +2078,125 @@ export interface components {
       /** @example 42.500 */
       quantity: string;
     };
+    /** @enum {string} */
+    InventoryCountStatus: 'OPEN' | 'APPLIED' | 'CANCELLED';
+    InventoryCountResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example INV-2026-000001 */
+      number: string;
+      status: components['schemas']['InventoryCountStatus'];
+      location: components['schemas']['LocationSummary'];
+      notes: string | null;
+      /** @example 8 */
+      itemsCount: number;
+      /**
+       * @description Itens já contados
+       * @example 5
+       */
+      countedCount: number;
+      createdBy: components['schemas']['UserSummary'];
+      /** Format: date-time */
+      createdAt: string;
+      appliedBy: components['schemas']['UserSummary'] | null;
+      /** Format: date-time */
+      appliedAt: string | null;
+      cancelledBy: components['schemas']['UserSummary'] | null;
+      /** Format: date-time */
+      cancelledAt: string | null;
+      cancelReason: string | null;
+    };
+    CreateInventoryCountDto: {
+      /**
+       * Format: uuid
+       * @description Local a contar
+       */
+      locationId: string;
+      /** @example Contagem mensal do armazém */
+      notes?: string | null;
+    };
+    InventoryCountItemResponse: {
+      /** Format: uuid */
+      id: string;
+      lot: components['schemas']['LotSummary'];
+      product: components['schemas']['ProductSummary'];
+      unit: components['schemas']['Unit'];
+      /**
+       * @description Saldo no local quando a contagem foi aberta
+       * @example 12.000
+       */
+      systemQuantity: string;
+      /**
+       * @description Saldo atual no local (aberta) ou no momento da aplicação (aplicada)
+       * @example 11.500
+       */
+      currentQuantity: string;
+      /** @example 11.500 */
+      countedQuantity: string | null;
+      /**
+       * @description Contado − saldo atual (prévia enquanto aberta; lançado depois de aplicada)
+       * @example -0.500
+       */
+      difference: string | null;
+      countedBy: components['schemas']['UserSummary'] | null;
+      /** Format: date-time */
+      countedAt: string | null;
+      /**
+       * Format: uuid
+       * @description Ajuste no razão
+       */
+      adjustmentId: string | null;
+    };
+    InventoryCountDetailResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example INV-2026-000001 */
+      number: string;
+      status: components['schemas']['InventoryCountStatus'];
+      location: components['schemas']['LocationSummary'];
+      notes: string | null;
+      /** @example 8 */
+      itemsCount: number;
+      /**
+       * @description Itens já contados
+       * @example 5
+       */
+      countedCount: number;
+      createdBy: components['schemas']['UserSummary'];
+      /** Format: date-time */
+      createdAt: string;
+      appliedBy: components['schemas']['UserSummary'] | null;
+      /** Format: date-time */
+      appliedAt: string | null;
+      cancelledBy: components['schemas']['UserSummary'] | null;
+      /** Format: date-time */
+      cancelledAt: string | null;
+      cancelReason: string | null;
+      items: components['schemas']['InventoryCountItemResponse'][];
+    };
+    CountItemDto: {
+      /**
+       * @description Quantidade contada, na unidade do lote (0 = nada)
+       * @example 11.5
+       */
+      countedQuantity: string;
+    };
+    AddCountItemDto: {
+      /**
+       * @description Quantidade contada, na unidade do lote (0 = nada)
+       * @example 11.5
+       */
+      countedQuantity: string;
+      /**
+       * Format: uuid
+       * @description Lote encontrado no local que não estava na lista
+       */
+      lotId: string;
+    };
+    CancelOperationDto: {
+      /** @example Ordem lançada com o lote errado */
+      reason: string;
+    };
     CustomerSummary: {
       /** Format: uuid */
       id: string;
@@ -2091,10 +2306,6 @@ export interface components {
       notes?: string | null;
       /** @description Um item por par (lote, local); pares repetidos são rejeitados */
       items: components['schemas']['CreateShipmentItemDto'][];
-    };
-    CancelOperationDto: {
-      /** @example Ordem lançada com o lote errado */
-      reason: string;
     };
     CreateAttachmentDto: {
       /** @example laudo-classificacao.pdf */
@@ -4392,6 +4603,222 @@ export interface operations {
             meta: components['schemas']['PageMeta'];
           };
         };
+      };
+    };
+  };
+  InventoryCountsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: components['schemas']['InventoryCountStatus'];
+        locationId?: string;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['InventoryCountResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  InventoryCountsController_create: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CreateInventoryCountDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InventoryCountDetailResponse'];
+        };
+      };
+      /** @description Local não encontrado */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Já existe contagem aberta no local */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  InventoryCountsController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InventoryCountDetailResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  InventoryCountsController_countItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+        itemId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CountItemDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InventoryCountDetailResponse'];
+        };
+      };
+      /** @description Contagem já aplicada ou cancelada */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  InventoryCountsController_addItem: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddCountItemDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InventoryCountDetailResponse'];
+        };
+      };
+      /** @description Lote já está na contagem ou contagem fechada */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  InventoryCountsController_apply: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InventoryCountDetailResponse'];
+        };
+      };
+      /** @description Contagem incompleta, já aplicada ou cancelada */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  InventoryCountsController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelOperationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['InventoryCountDetailResponse'];
+        };
+      };
+      /** @description Contagem já aplicada ou cancelada */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
       };
     };
   };

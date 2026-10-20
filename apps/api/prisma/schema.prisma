@@ -83,27 +83,29 @@ model Company {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  users            User[]
-  products         Product[]
-  suppliers        Supplier[]
-  customers        Customer[]
-  locations        Location[]
-  lots             Lot[]
-  movements        StockMovement[]
-  lotSequences     LotSequence[]
-  productionOrders ProductionOrder[]
-  lotOrigins       LotOrigin[]
-  shipments        Shipment[]
-  shipmentItems    ShipmentItem[]
-  sequences        DocumentSequence[]
-  attachments      Attachment[]
-  auditLogs        AuditLog[]
-  notifications    Notification[]
-  nonConformities  NonConformity[]
-  recalls          Recall[]
-  recallSteps      RecallStep[]
-  recallLots       RecallLot[]
-  recallCustomers  RecallCustomer[]
+  users               User[]
+  products            Product[]
+  suppliers           Supplier[]
+  customers           Customer[]
+  locations           Location[]
+  lots                Lot[]
+  movements           StockMovement[]
+  lotSequences        LotSequence[]
+  productionOrders    ProductionOrder[]
+  lotOrigins          LotOrigin[]
+  shipments           Shipment[]
+  shipmentItems       ShipmentItem[]
+  sequences           DocumentSequence[]
+  attachments         Attachment[]
+  inventoryCounts     InventoryCount[]
+  inventoryCountItems InventoryCountItem[]
+  auditLogs           AuditLog[]
+  notifications       Notification[]
+  nonConformities     NonConformity[]
+  recalls             Recall[]
+  recallSteps         RecallStep[]
+  recallLots          RecallLot[]
+  recallCustomers     RecallCustomer[]
 
   @@map("companies")
 }
@@ -124,20 +126,24 @@ model User {
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company            Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company            Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
   notifications      Notification[]
   movements          StockMovement[]
-  attachments        Attachment[]      @relation("AttachmentUploadedBy")
-  removedAttachments Attachment[]      @relation("AttachmentRemovedBy")
-  productionOrders   ProductionOrder[] @relation("ProductionOrderUser")
-  cancelledOrders    ProductionOrder[] @relation("ProductionOrderCancelledBy")
-  shipments          Shipment[]        @relation("ShipmentUser")
-  cancelledShipments Shipment[]        @relation("ShipmentCancelledBy")
+  attachments        Attachment[]         @relation("AttachmentUploadedBy")
+  removedAttachments Attachment[]         @relation("AttachmentRemovedBy")
+  createdCounts      InventoryCount[]     @relation("InventoryCountCreatedBy")
+  appliedCounts      InventoryCount[]     @relation("InventoryCountAppliedBy")
+  cancelledCounts    InventoryCount[]     @relation("InventoryCountCancelledBy")
+  countedItems       InventoryCountItem[] @relation("InventoryCountItemCountedBy")
+  productionOrders   ProductionOrder[]    @relation("ProductionOrderUser")
+  cancelledOrders    ProductionOrder[]    @relation("ProductionOrderCancelledBy")
+  shipments          Shipment[]           @relation("ShipmentUser")
+  cancelledShipments Shipment[]           @relation("ShipmentCancelledBy")
   auditLogs          AuditLog[]
-  openedNcs          NonConformity[]   @relation("NcOpenedBy")
-  resolvedNcs        NonConformity[]   @relation("NcResolvedBy")
-  createdRecalls     Recall[]          @relation("RecallCreatedBy")
-  closedRecalls      Recall[]          @relation("RecallClosedBy")
+  openedNcs          NonConformity[]      @relation("NcOpenedBy")
+  resolvedNcs        NonConformity[]      @relation("NcResolvedBy")
+  createdRecalls     Recall[]             @relation("RecallCreatedBy")
+  closedRecalls      Recall[]             @relation("RecallClosedBy")
 
   /// Alvo de FKs compostas: garante no banco que referências são da mesma empresa.
   @@unique([companyId, id])
@@ -233,10 +239,11 @@ model Location {
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company       Company         @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  movementsFrom StockMovement[] @relation("MovementFrom")
-  movementsTo   StockMovement[] @relation("MovementTo")
-  shipmentItems ShipmentItem[]
+  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  movementsFrom   StockMovement[]  @relation("MovementFrom")
+  movementsTo     StockMovement[]  @relation("MovementTo")
+  shipmentItems   ShipmentItem[]
+  inventoryCounts InventoryCount[]
 
   @@unique([companyId, code])
   @@map("locations")
@@ -303,21 +310,22 @@ model Lot {
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company         Company          @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company             Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
   /// FK composta: o produto precisa ser da mesma empresa.
-  product         Product          @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
+  product             Product              @relation(fields: [companyId, productId], references: [companyId, id], onDelete: Restrict)
   /// FK simples (opcional): a mesma empresa é validada no serviço.
-  supplier        Supplier?        @relation(fields: [supplierId], references: [id], onDelete: Restrict)
-  movements       StockMovement[]
-  attachments     Attachment[]
+  supplier            Supplier?            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  movements           StockMovement[]
+  attachments         Attachment[]
   /// Genealogia: de quais lotes este veio, e quais lotes vieram dele.
-  origins         LotOrigin[]      @relation("ChildLot")
-  derived         LotOrigin[]      @relation("ParentLot")
-  producedBy      ProductionOrder?
-  shipmentItems   ShipmentItem[]
-  nonConformities NonConformity[]
-  recallsAsOrigin Recall[]
-  recallLots      RecallLot[]
+  origins             LotOrigin[]          @relation("ChildLot")
+  derived             LotOrigin[]          @relation("ParentLot")
+  producedBy          ProductionOrder?
+  shipmentItems       ShipmentItem[]
+  nonConformities     NonConformity[]
+  recallsAsOrigin     Recall[]
+  recallLots          RecallLot[]
+  inventoryCountItems InventoryCountItem[]
 
   @@unique([companyId, id])
   @@unique([companyId, code])
@@ -365,15 +373,16 @@ model StockMovement {
   requestHash    String?      @map("request_hash") @db.VarChar(64)
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  company      Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  company            Company             @relation(fields: [companyId], references: [id], onDelete: Restrict)
   /// FKs compostas: lote e usuário precisam ser da mesma empresa.
-  lot          Lot            @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
-  user         User           @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
-  fromLocation Location?      @relation("MovementFrom", fields: [fromLocationId], references: [id], onDelete: Restrict)
-  toLocation   Location?      @relation("MovementTo", fields: [toLocationId], references: [id], onDelete: Restrict)
-  reversalOf   StockMovement? @relation("Reversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
-  reversedBy   StockMovement? @relation("Reversal")
-  shipmentItem ShipmentItem?
+  lot                Lot                 @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
+  user               User                @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+  fromLocation       Location?           @relation("MovementFrom", fields: [fromLocationId], references: [id], onDelete: Restrict)
+  toLocation         Location?           @relation("MovementTo", fields: [toLocationId], references: [id], onDelete: Restrict)
+  reversalOf         StockMovement?      @relation("Reversal", fields: [reversalOfId], references: [id], onDelete: Restrict)
+  reversedBy         StockMovement?      @relation("Reversal")
+  shipmentItem       ShipmentItem?
+  inventoryCountItem InventoryCountItem? @relation("InventoryAdjustment")
 
   @@unique([companyId, idempotencyKey])
   @@index([companyId, lotId])
@@ -804,4 +813,70 @@ model Notification {
   @@index([companyId, userId, createdAt])
   @@index([companyId, userId, readAt])
   @@map("notifications")
+}
+
+enum InventoryCountStatus {
+  OPEN // contagem em andamento
+  APPLIED // diferenças lançadas no razão como ajustes
+  CANCELLED // descartada sem lançar nada
+
+  @@map("inventory_count_status")
+}
+
+/// Inventário (contagem física) de um local: a contagem vira ajustes no razão ao ser aplicada.
+model InventoryCount {
+  id            String               @id @default(uuid(7)) @db.Uuid
+  companyId     String               @map("company_id") @db.Uuid
+  /// Ex.: INV-2026-000001
+  number        String               @db.VarChar(30)
+  locationId    String               @map("location_id") @db.Uuid
+  status        InventoryCountStatus @default(OPEN)
+  notes         String?
+  createdById   String               @map("created_by_id") @db.Uuid
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(3)
+  appliedAt     DateTime?            @map("applied_at") @db.Timestamptz(3)
+  appliedById   String?              @map("applied_by_id") @db.Uuid
+  cancelledAt   DateTime?            @map("cancelled_at") @db.Timestamptz(3)
+  cancelledById String?              @map("cancelled_by_id") @db.Uuid
+  cancelReason  String?              @map("cancel_reason")
+
+  company     Company              @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  location    Location             @relation(fields: [locationId], references: [id], onDelete: Restrict)
+  createdBy   User                 @relation("InventoryCountCreatedBy", fields: [companyId, createdById], references: [companyId, id], onDelete: Restrict)
+  appliedBy   User?                @relation("InventoryCountAppliedBy", fields: [companyId, appliedById], references: [companyId, id], onDelete: Restrict)
+  cancelledBy User?                @relation("InventoryCountCancelledBy", fields: [companyId, cancelledById], references: [companyId, id], onDelete: Restrict)
+  items       InventoryCountItem[]
+
+  @@unique([companyId, id])
+  @@unique([companyId, number])
+  @@index([companyId, status, createdAt])
+  @@map("inventory_counts")
+}
+
+/// Um lote contado no inventário. A diferença é calculada contra o saldo do momento da aplicação.
+model InventoryCountItem {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  companyId       String    @map("company_id") @db.Uuid
+  countId         String    @map("count_id") @db.Uuid
+  lotId           String    @map("lot_id") @db.Uuid
+  /// Saldo do lote no local quando a contagem foi aberta (0 para lote encontrado a mais).
+  systemQuantity  Decimal   @map("system_quantity") @db.Decimal(14, 3)
+  countedQuantity Decimal?  @map("counted_quantity") @db.Decimal(14, 3)
+  countedAt       DateTime? @map("counted_at") @db.Timestamptz(3)
+  countedById     String?   @map("counted_by_id") @db.Uuid
+  /// Diferença lançada (contado − saldo na aplicação); null até aplicar.
+  difference      Decimal?  @db.Decimal(14, 3)
+  /// Ajuste gerado no razão (null se não houve diferença).
+  adjustmentId    String?   @unique @map("adjustment_id") @db.Uuid
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company    Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  count      InventoryCount @relation(fields: [companyId, countId], references: [companyId, id], onDelete: Restrict)
+  lot        Lot            @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
+  countedBy  User?          @relation("InventoryCountItemCountedBy", fields: [companyId, countedById], references: [companyId, id], onDelete: Restrict)
+  adjustment StockMovement? @relation("InventoryAdjustment", fields: [adjustmentId], references: [id], onDelete: Restrict)
+
+  @@unique([countId, lotId])
+  @@index([companyId, lotId])
+  @@map("inventory_count_items")
 }

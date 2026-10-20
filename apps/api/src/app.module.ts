@@ -10,6 +10,7 @@ import { CustomersModule } from './modules/customers/customers.module.js';
 import { DashboardModule } from './modules/dashboard/dashboard.module.js';
 import { ImportsModule } from './modules/imports/imports.module.js';
 import { InventoryModule } from './modules/inventory/inventory.module.js';
+import { InventoryCountsModule } from './modules/inventory-counts/inventory-counts.module.js';
 import { LabelsModule } from './modules/labels/labels.module.js';
 import { LocationsModule } from './modules/locations/locations.module.js';
 import { ProductionModule } from './modules/production/production.module.js';
@@ -46,6 +47,7 @@ import { TenancyModule } from './tenancy/tenancy.module.js';
     CustomersModule,
     LocationsModule,
     InventoryModule,
+    InventoryCountsModule,
     ShipmentsModule,
     AttachmentsModule,
     ProductionModule,
