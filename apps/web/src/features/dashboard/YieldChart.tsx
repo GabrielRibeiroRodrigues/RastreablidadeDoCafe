@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { cn } from 'cn';
 import { formatQuantity } from '@/lib/quantity';
 import { countOf } from '@/lib/plural';
-import { bucketLabel, type YieldBucket } from './performance';
+import { bucketLabel, bucketTick, xLabelIndexes, type YieldBucket } from './performance';
 
 const percent = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 1 });
 
@@ -10,7 +10,8 @@ const HEIGHT = 160;
 const TICKS = [0, 25, 50, 75, 100];
 /**
  * Rendimento da produção por semana ou mês: uma série, barras finas a partir do zero (escala
- * honesta de 0 a 100%), rótulo só na última barra e tooltip em cada barra (mouse e teclado).
+ * honesta de 0 a 100%), rótulo só na última barra, eixo X com a semana/mês e tooltip em cada barra
+ * (mouse e teclado).
  * A massa produzida fica no tooltip, nunca num segundo eixo. Tabela equivalente para leitores
  * de tela.
  */
@@ -25,15 +26,22 @@ export function YieldChart({
   const bars = series.filter((item) => item.yieldPercent !== null);
   const last = bars.length - 1;
   const current = active !== null ? bars[active] : undefined;
+  const xLabels = xLabelIndexes(bars.length);
 
   return (
     <figure className="space-y-2">
-      <div className="relative">
-        {/* Grade e eixo: recessivos. */}
-        <div className="absolute inset-0 flex flex-col justify-between" aria-hidden>
-          {[...TICKS].reverse().map((tick) => (
-            <div key={tick} className="flex items-center gap-2">
-              <span className="w-8 text-right text-[0.6875rem] text-muted-foreground tabular-nums">
+      {/* pt-2: espaço para o rótulo "100%", centralizado na linha do topo. */}
+      <div className="relative pt-2">
+        {/* Grade e eixo Y: recessivos, só na altura das barras (o eixo X fica abaixo). Cada linha
+            fica exatamente na sua porcentagem (mesma escala das barras); o texto centraliza nela. */}
+        <div className="absolute inset-x-0 top-2" style={{ height: HEIGHT }} aria-hidden>
+          {TICKS.map((tick) => (
+            <div
+              key={tick}
+              className="absolute inset-x-0 flex translate-y-1/2 items-center gap-2"
+              style={{ bottom: `${tick}%` }}
+            >
+              <span className="w-8 text-right text-[0.6875rem] leading-none text-muted-foreground tabular-nums">
                 {tick}%
               </span>
               <span className={cn('h-px flex-1', tick === 0 ? 'bg-border' : 'bg-border/50')} />
@@ -77,6 +85,17 @@ export function YieldChart({
               </button>
             );
           })}
+        </div>
+        {/* Eixo X: mesma grade de colunas das barras, texto recessivo. */}
+        <div className="ml-10 flex gap-0.5 pt-1.5" aria-hidden>
+          {bars.map((item, index) => (
+            <span
+              key={item.start}
+              className="max-w-12 min-w-2 flex-1 text-center text-[0.6875rem] whitespace-nowrap text-muted-foreground tabular-nums"
+            >
+              {xLabels.has(index) ? bucketTick(item.start, bucket) : ''}
+            </span>
+          ))}
         </div>
         {current && (
           <div
