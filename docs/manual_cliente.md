@@ -32,6 +32,7 @@ Este manual apresenta o TraceFlow e ensina, passo a passo, como usá-lo no dia a
    - 3.17 [Importação de cadastros por planilha](#317-importação-de-cadastros-por-planilha)
    - 3.18 [Perfis de acesso: o que cada um pode fazer](#318-perfis-de-acesso-o-que-cada-um-pode-fazer)
    - 3.19 [Uso no celular e tema escuro](#319-uso-no-celular-e-tema-escuro)
+   - 3.20 [Recursos adicionais desta versão](#320-recursos-adicionais-desta-versão)
 4. [Mensagens do sistema e como resolver erros comuns](#4-mensagens-do-sistema-e-como-resolver-erros-comuns)
 5. [Dúvidas frequentes](#5-dúvidas-frequentes)
 6. [Limitações conhecidas](#6-limitações-conhecidas)
@@ -82,29 +83,29 @@ Situações típicas: chegada de um caminhão com sacas de café verde; um dia d
 
 ### Situação de cada recurso
 
-| Recurso                                               | Situação          | Observação                                                                                                                        |
-| ----------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| Painel com indicadores                                | ✅ Disponível     |                                                                                                                                   |
-| Cadastros (produtos, fornecedores, clientes, locais)  | ✅ Disponível     | Sem exclusão: registros são desativados                                                                                           |
-| Recebimento de café e criação de lote                 | ✅ Disponível     |                                                                                                                                   |
-| Lotes, estoque por local e histórico de movimentações | ✅ Disponível     |                                                                                                                                   |
-| Saída, transferência, consumo, ajuste e estorno       | ✅ Disponível     | Ajuste e estorno só para administrador                                                                                            |
-| Anexos no lote (laudos, notas fiscais, fotos)         | ✅ Disponível     | PDF, JPEG, PNG ou WebP até 10 MB                                                                                                  |
-| Produção: beneficiamento, torra, blend e embalagem    | ✅ Disponível     |                                                                                                                                   |
-| Expedição para clientes                               | ✅ Disponível     |                                                                                                                                   |
-| Rastreabilidade visual (origem e destino)             | ✅ Disponível     |                                                                                                                                   |
-| Etiqueta em PDF com QR code e página pública          | ✅ Disponível     |                                                                                                                                   |
-| Não conformidades (quarentena, liberação, descarte)   | ✅ Disponível     |                                                                                                                                   |
-| Recall com simulação, bloqueio, relatório PDF e aviso | ✅ Disponível     | O aviso por e-mail vai para a equipe responsável pelo sistema, não para os clientes (veja [Limitações](#6-limitações-conhecidas)) |
-| Alerta de validade (sino no topo)                     | ✅ Disponível     |                                                                                                                                   |
-| Trilha de auditoria                                   | ✅ Disponível     |                                                                                                                                   |
-| Relatórios em planilha (CSV para Excel)               | ✅ Disponível     |                                                                                                                                   |
-| Importação de cadastros por planilha                  | ✅ Disponível     | Só cadastros; lotes e estoque inicial não são importados                                                                          |
-| Tema claro/escuro e uso no celular                    | ✅ Disponível     |                                                                                                                                   |
-| Cadastro de usuários pela tela                        | ❌ Não disponível | Feito pela equipe técnica (veja [Dúvidas frequentes](#5-dúvidas-frequentes))                                                      |
-| Cadastro de novas empresas pela tela                  | ❌ Não disponível | Feito pela equipe técnica                                                                                                         |
-| Envio automático de aviso aos clientes no recall      | ❌ Não disponível | O sistema gera a lista de contatos para a sua equipe enviar                                                                       |
-| Integração com emissão de nota fiscal ou ERP          | ❌ Não disponível | O número da NF é registrado como texto                                                                                            |
+| Recurso                                                | Situação          | Observação                                                                                                                        |
+| ------------------------------------------------------ | ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Painel com indicadores                                 | ✅ Disponível     |                                                                                                                                   |
+| Cadastros (produtos, fornecedores, clientes, locais)   | ✅ Disponível     | Sem exclusão: registros são desativados                                                                                           |
+| Recebimento de café e criação de lote                  | ✅ Disponível     |                                                                                                                                   |
+| Lotes, estoque por local e histórico de movimentações  | ✅ Disponível     |                                                                                                                                   |
+| Saída, transferência, consumo, ajuste e estorno        | ✅ Disponível     | Ajuste e estorno só para administrador; ordens e expedições podem ser **canceladas** inteiras                                     |
+| Anexos no lote (laudos, notas fiscais, fotos)          | ✅ Disponível     | PDF, JPEG, PNG ou WebP até 10 MB                                                                                                  |
+| Produção: beneficiamento, torra, blend e embalagem     | ✅ Disponível     |                                                                                                                                   |
+| Expedição para clientes                                | ✅ Disponível     |                                                                                                                                   |
+| Rastreabilidade visual (origem e destino)              | ✅ Disponível     |                                                                                                                                   |
+| Etiqueta em PDF com QR code e página pública           | ✅ Disponível     |                                                                                                                                   |
+| Não conformidades (quarentena, liberação, descarte)    | ✅ Disponível     |                                                                                                                                   |
+| Recall com simulação, bloqueio, relatório PDF e aviso  | ✅ Disponível     | O aviso por e-mail vai para a equipe responsável pelo sistema, não para os clientes (veja [Limitações](#6-limitações-conhecidas)) |
+| Central de avisos (validade, recall, não conformidade) | ✅ Disponível     | Sino no topo, com preferências por categoria                                                                                      |
+| Trilha de auditoria                                    | ✅ Disponível     |                                                                                                                                   |
+| Relatórios em planilha (CSV para Excel)                | ✅ Disponível     |                                                                                                                                   |
+| Importação de cadastros por planilha                   | ✅ Disponível     | Só cadastros; lotes e estoque inicial não são importados                                                                          |
+| Tema claro/escuro e uso no celular                     | ✅ Disponível     |                                                                                                                                   |
+| Gestão de usuários (convite, perfil, desativação)      | ✅ Disponível     | Só administrador: **Gestão › Usuários** (veja [3.20](#320-recursos-adicionais-desta-versão))                                      |
+| Cadastro de novas empresas pela tela                   | ❌ Não disponível | Feito pela equipe técnica; a identidade visual é editada em **Gestão › Empresa**                                                  |
+| Envio automático de aviso aos clientes no recall       | ❌ Não disponível | O sistema gera a lista de contatos para a sua equipe enviar                                                                       |
+| Integração com emissão de nota fiscal ou ERP           | ❌ Não disponível | O número da NF é registrado como texto                                                                                            |
 
 ### Resumo de cada módulo
 
@@ -165,12 +166,12 @@ _Menu do usuário: mostra quem está conectado, o perfil e a empresa. A opção 
 
 ### 3.2 Conhecendo a tela principal
 
-![Painel com cinco destaques numerados: menu lateral, sino de validade, menu do usuário, botão Novo recebimento e cartão de indicador](images/02-painel-anotado.png)
+![Painel com cinco destaques numerados: menu lateral, central de avisos, menu do usuário, botão Novo recebimento e cartão de indicador](images/02-painel-anotado.png)
 
 _Partes principais da tela. Os destaques em vermelho foram adicionados para este manual._
 
 1. **Menu lateral** — organizado em seções: Visão geral, Operação, Estoque, Qualidade, Cadastros e Gestão. Os itens mudam conforme o seu perfil (por exemplo, **Auditoria** só aparece para administradores e auditores). O botão **Recolher**, no rodapé do menu, deixa só os ícones.
-2. **Sino de validade** — mostra quantos lotes com saldo vencem nos próximos 30 dias. Fica vermelho se já houver lote vencido. Clicar leva à lista desses lotes.
+2. **Central de avisos (sino)** — mostra os avisos não lidos: lotes vencendo em 30 dias, recalls e não conformidades. Clique num aviso para abrir o registro; **Marcar todos como lidos** limpa a contagem e **Preferências de avisos** permite silenciar categorias.
 3. **Menu do usuário** — nome, perfil, empresa e a opção **Sair**. Ao lado fica o botão do **tema** (claro, escuro ou o do sistema).
 4. **Ações rápidas** — atalhos para **Novo recebimento**, **Nova ordem** e **Nova expedição** (aparecem só para quem pode operar o estoque).
 5. **Cartões de indicadores** — clicáveis; levam à lista correspondente já filtrada.
@@ -313,20 +314,21 @@ Na tabela, cada linha mostra: código (clique para abrir), produto, fornecedor/f
 
 **Como acessar:** clique no código de um lote em qualquer lista.
 
-![Detalhe de lote com oito destaques numerados nos botões de ação, em Anexar e em Estornar](images/22-lote-detalhe-anotado.png)
+![Detalhe de lote com nove destaques numerados nos botões de ação, em Anexar, Remover anexo e Estornar](images/22-lote-detalhe-anotado.png)
 
 _Detalhe de um lote bloqueado por recall. Repare no aviso vermelho explicando o bloqueio e no botão **Movimentar** desativado. Destaques adicionados para este manual._
 
-| #   | Ação                       | Quem pode                                                 | O que faz                                                                                                 |
-| --- | -------------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| 1   | **Rastreabilidade**        | Todos                                                     | Abre a árvore de origem e destino deste lote                                                              |
-| 2   | **Etiqueta**               | Todos                                                     | Gera o PDF da etiqueta com QR code (veja [3.12](#312-etiqueta-com-qr-code-e-página-pública))              |
-| 3   | **Abrir não conformidade** | Administrador e Operador                                  | Registra um problema de qualidade e coloca o lote em quarentena                                           |
-| 4   | **Editar dados**           | Administrador e Operador                                  | Corrige validade e dados de qualidade                                                                     |
-| 5   | **Alterar status**         | Administrador (todos os status); Operador (só quarentena) | Muda o status com motivo obrigatório                                                                      |
-| 6   | **Movimentar**             | Administrador e Operador                                  | Saída, transferência, consumo ou ajuste                                                                   |
-| 7   | **Anexar**                 | Administrador e Operador                                  | Envia laudos, notas e fotos (PDF, JPEG, PNG ou WebP, até 10 MB). Para abrir um anexo, clique no nome dele |
-| 8   | **Estornar**               | Administrador                                             | Desfaz uma movimentação criando uma movimentação inversa, com motivo                                      |
+| #   | Ação                        | Quem pode                                                 | O que faz                                                                                                                                 |
+| --- | --------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Rastreabilidade**         | Todos                                                     | Abre a árvore de origem e destino deste lote                                                                                              |
+| 2   | **Etiqueta**                | Todos                                                     | Gera o PDF da etiqueta com QR code (veja [3.12](#312-etiqueta-com-qr-code-e-página-pública))                                              |
+| 3   | **Abrir não conformidade**  | Administrador e Operador                                  | Registra um problema de qualidade e coloca o lote em quarentena                                                                           |
+| 4   | **Editar dados**            | Administrador e Operador                                  | Corrige validade e dados de qualidade                                                                                                     |
+| 5   | **Alterar status**          | Administrador (todos os status); Operador (só quarentena) | Muda o status com motivo obrigatório                                                                                                      |
+| 6   | **Movimentar**              | Administrador e Operador                                  | Saída, transferência, consumo ou ajuste                                                                                                   |
+| 7   | **Anexar**                  | Administrador e Operador                                  | Envia laudos, notas e fotos (PDF, JPEG, PNG ou WebP, até 10 MB). Para abrir um anexo, clique no nome dele                                 |
+| 8   | **Remover anexo** (lixeira) | Administrador                                             | Retira um arquivo enviado por engano, com motivo. O registro fica na auditoria                                                            |
+| 9   | **Estornar**                | Administrador                                             | Desfaz uma movimentação criando uma movimentação inversa, com motivo. Produção e consumo de uma ordem não têm este botão: cancele a ordem |
 
 Os cartões mostram **saldo atual** e quantidade inicial, **validade** (com dias restantes), **qualidade**, **saldo por local** e **anexos**. Abaixo, o **histórico de movimentações** do lote; o link **Ver em Movimentações** abre o razão já filtrado.
 
@@ -543,7 +545,7 @@ O recall é usado quando um lote apresenta problema grave (ex.: laudo reprovado)
 
 ![Simulação de recall com totais, lotes afetados, clientes a contatar, fazendas de origem e o formulário de execução](images/61-recall-simulacao.png)
 
-_Simulação do recall do lote verde `CAF-2026-000001`: 3 lotes afetados, 190 kg já expedidos para 3 clientes._
+_Simulação do recall do lote verde `CAF-2026-000001`: 4 lotes afetados (o verde, dois torrados e um blend), 170 kg já expedidos para 3 clientes. Expedições canceladas e itens estornados não entram na conta._
 
 **Passo 2 — Executar (administrador):**
 
@@ -565,11 +567,11 @@ _Detalhe do recall: as três etapas (bloquear lotes, gerar relatório, notificar
 - **Copiar lista** — copia os contatos dos clientes em texto pronto para colar num e-mail.
 - **Relatório PDF** — abre o relatório oficial do recall.
 - **Tentar de novo** — aparece se alguma etapa falhar.
-- **Encerrar** — finaliza o recall (notas obrigatórias). **Encerrar não libera os lotes:** cada lote volta a Disponível individualmente, por um administrador, em **Alterar status**.
+- **Encerrar** — finaliza o recall (notas obrigatórias). Marque **Liberar os lotes bloqueados** se a análise mostrou que não há risco: cada lote volta ao status de antes do recall. Deixe desmarcado se o estoque será destruído (os lotes continuam bloqueados e podem ser liberados um a um depois, em **Alterar status**).
 
 ![Relatório de recall em PDF com gravidade, motivo, lotes afetados e clientes a contatar](images/65-recall-relatorio-pdf.png)
 
-_Relatório do recall em PDF. **Atenção:** na versão atual, as quantidades do relatório aparecem com três casas decimais e a unidade em código (ex.: `15.000 BAG_60KG` significa 15 sacas; `70.000 KG` significa 70 kg). Use a tela do recall como referência dos números até essa correção (veja [Limitações](#6-limitações-conhecidas))._
+_Relatório do recall em PDF: gravidade, motivo, lotes bloqueados com o saldo (ex.: 12 sc, 102 kg) e clientes a contatar._
 
 ![Lista de recalls com número, lote de origem, severidade, status e progresso](images/64-recall-lista.png)
 
@@ -685,11 +687,96 @@ _Rastreabilidade no tema escuro._
 
 ---
 
+### 3.20 Recursos adicionais desta versão
+
+#### Central de avisos
+
+O sino no topo reúne os avisos de cada usuário: lotes vencendo, recalls executados e não conformidades abertas. Clique num aviso para ir ao registro. Em **Preferências de avisos**, cada pessoa escolhe as categorias que quer receber.
+
+![Central de avisos aberta com um aviso de validade e um de não conformidade](images/04-central-avisos.png)
+
+_Central de avisos com o resumo de validade e uma não conformidade não lida._
+
+#### Lotes: etiquetas em lote, exportação e filtros salvos
+
+- Marque as caixas à esquerda dos lotes e clique em **Imprimir etiquetas** para gerar um único PDF com uma etiqueta por lote (até 50).
+- **Exportar CSV** baixa a lista com os mesmos filtros da tela.
+- Com algum filtro aplicado, **Salvar filtros** guarda a combinação com um nome; ela aparece ao lado de "Vencendo" (fica salva neste navegador).
+
+![Lista de lotes com três lotes selecionados e o botão Imprimir etiquetas](images/21-lotes-selecao.png)
+
+_Seleção de lotes para imprimir as etiquetas de uma vez._
+
+![Diálogo Salvar filtros com o nome Disponíveis](images/21-lotes-salvar-filtros.png)
+
+_Salvando o filtro "Disponíveis" para usar depois com um clique._
+
+#### Escolha de lotes: o que vence primeiro aparece no topo
+
+Nos formulários de produção e expedição, a lista de lotes vem em ordem de validade (**o que vence primeiro sai primeiro**) e cada opção mostra a data de vencimento — em âmbar se faltarem 30 dias ou menos.
+
+![Lista de lotes do insumo aberta, com a validade em cada opção](images/34-seletor-fefo.png)
+
+_Seletor de lotes em ordem de validade._
+
+#### Cancelar uma ordem de produção ou uma expedição (administrador)
+
+Quando uma ordem ou uma expedição inteira foi lançada errada, abra-a, clique em **Cancelar ordem** ou **Cancelar expedição**, informe o motivo e clique em **Confirmar cancelamento**. O sistema estorna tudo de uma vez: na ordem, os insumos voltam ao estoque e o lote gerado fica sem saldo; na expedição, o café volta aos locais de onde saiu. A operação continua no histórico, marcada como **Cancelada**, e deixa de contar no painel, no rendimento e no recall.
+
+![Diálogo de cancelamento de uma ordem de produção com o motivo preenchido](images/33-producao-cancelar.png)
+
+_Cancelamento de uma ordem: o diálogo explica o que será estornado._
+
+![Ordem de produção cancelada com o aviso de quem cancelou, quando e por quê](images/33-producao-cancelada.png)
+
+_Ordem cancelada: o aviso mostra quem cancelou, quando e o motivo._
+
+![Expedição cancelada com o item marcado como Estornado](images/43-expedicao-cancelada.png)
+
+_Expedição cancelada: o item aparece como **Estornado** e não conta mais como entregue._
+
+> Uma ordem só pode ser cancelada se o lote gerado ainda tiver todo o saldo. Se ele já foi usado ou expedido, cancele antes o que o usou.
+
+#### Remover um anexo enviado por engano (administrador)
+
+No cartão **Anexos** do lote, a lixeira ao lado do arquivo abre a confirmação com motivo. O arquivo sai da lista, mas o registro (quem, quando e por quê) fica na auditoria.
+
+![Diálogo Remover anexo com o motivo preenchido](images/28-anexo-remover.png)
+
+_Remoção de um anexo enviado no lote errado._
+
+#### Aviso de recall para o consumidor
+
+Enquanto um lote estiver bloqueado por um recall, quem ler o QR code da embalagem vê o aviso **"Produto recolhido — não consuma"**, com a data e a orientação de procurar a empresa. O motivo do recall não é mostrado. Se o lote for liberado depois da análise, o aviso some.
+
+![Página pública com o aviso vermelho Produto recolhido — não consuma](images/66-pagina-publica-recall.png)
+
+_Página pública de um lote recolhido._
+
+No fim da página pública há o link **"Abrir este lote no sistema"**, para a equipe da empresa: ele pede o login e abre a rastreabilidade do lote.
+
+#### Usuários e empresa (administrador)
+
+- **Gestão › Usuários**: convidar pessoas (elas recebem a senha temporária por e-mail), mudar o perfil, desativar e reativar. A mudança vale na hora. Ninguém muda o próprio perfil e a empresa sempre mantém pelo menos um administrador ativo.
+- **Gestão › Empresa**: nome, cor da marca, frase curta e site. Aparecem na etiqueta e na página pública do QR code.
+
+![Tela de usuários da empresa com perfis e situação](images/86-usuarios.png)
+
+_Usuários da empresa._
+
+![Tela Empresa com cor da marca, frase e site, e a pré-visualização](images/87-empresa.png)
+
+_Identidade visual da empresa, com pré-visualização._
+
+#### Desempenho no painel
+
+A seção **Desempenho** do painel compara o período escolhido (30 dias a 12 meses) com o anterior: ordens, rendimento médio, perda e expedições, o gráfico de rendimento e o **giro de estoque** (por quantos dias o saldo de cada produto dura no ritmo atual).
+
 ## 4. Mensagens do sistema e como resolver erros comuns
 
 **Mensagens de sucesso** aparecem num quadro verde no canto superior direito (ex.: _"Lote CAF-2026-000007 recebido"_, _"NC-2026-000001 liberada"_). **Erros de preenchimento** aparecem em vermelho, logo abaixo do campo. **Erros gerais** aparecem num aviso no topo do formulário.
 
-![Diálogo de saída com a quantidade 20 em vermelho e a mensagem Saldo insuficiente em ARM-01: disponível 12,000](images/27-erro-saldo-insuficiente.png)
+![Diálogo de saída com a quantidade 20 em vermelho e a mensagem Saldo insuficiente em ARM-01: disponível 12](images/27-erro-saldo-insuficiente.png)
 
 _Exemplo de erro: tentar dar saída de 20 sacas de um lote que tem 12. O sistema avisa antes de enviar._
 
@@ -723,7 +810,7 @@ _Endereço inexistente: o menu continua disponível para seguir navegando._
 Pelo endereço informado pela equipe técnica, em qualquer navegador atualizado, no computador ou no celular. Não é preciso instalar nada. Veja [3.1](#31-como-entrar-no-sistema).
 
 **Como ganho acesso / como cadastro um novo colega?**
-Ainda não existe tela de cadastro de usuários. Solicite à equipe técnica, informando nome, e-mail e perfil (Administrador, Operador ou Auditor). A pessoa receberá uma senha temporária por e-mail.
+Um administrador da empresa convida a pessoa em **Gestão › Usuários** (e-mail, nome e perfil). Ela recebe uma senha temporária por e-mail. O primeiro administrador de cada empresa é criado pela equipe técnica.
 
 **Esqueci minha senha.**
 Use a opção de recuperação de senha da página de login, se estiver habilitada no seu ambiente; caso contrário, peça à equipe técnica para redefinir o acesso.
@@ -732,7 +819,7 @@ Use a opção de recuperação de senha da página de login, se estiver habilita
 Recebimento → (Produção) → Expedição. Veja [3.5](#35-recebimento-de-café), [3.9](#39-produção-beneficiamento-torra-blend-e-embalagem) e [3.10](#310-expedição-para-clientes).
 
 **Lancei uma quantidade errada. Como apago?**
-Não se apaga. Um administrador faz o **estorno** da movimentação (no histórico do lote) e você lança de novo, corretamente. Isso mantém o histórico confiável.
+Não se apaga. Um administrador faz o **estorno** da movimentação (no histórico do lote) e você lança de novo, corretamente. Uma **ordem de produção** ou uma **expedição** inteira lançada errada é desfeita pelo botão **Cancelar** na tela dela. O histórico continua confiável.
 
 **Por que não consigo movimentar um lote?**
 Verifique o status: em **quarentena**, ele só vai para um local de quarentena; **bloqueado** não sai. O aviso no topo do lote explica o motivo e como liberar.
@@ -762,18 +849,17 @@ Este projeto ainda não define um canal oficial de suporte (e-mail, telefone ou 
 
 ## 6. Limitações conhecidas
 
-| Limitação                                                                                                     | Impacto                                            | Alternativa atual                                 |
-| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ------------------------------------------------- |
-| Sem tela de gestão de usuários e empresas                                                                     | Novos acessos dependem da equipe técnica           | Solicitar à equipe técnica                        |
-| Recall não envia e-mail aos clientes                                                                          | Contato com clientes é manual                      | **Copiar lista** no detalhe do recall             |
-| O aviso automático (recall e validade) vai para uma lista única de e-mails da equipe responsável pelo sistema | Cada empresa não recebe avisos próprios por e-mail | Acompanhar o sino de validade e a tela de Recall  |
-| Quantidades no **PDF do recall** saem com 3 casas e unidade em código (ex.: `15.000 BAG_60KG` = 15 sacas)     | Leitura pode confundir                             | Usar a tela do recall como referência dos números |
-| Importação só de cadastros                                                                                    | Estoque inicial precisa ser lançado                | Lançar por Recebimento                            |
-| Sem integração com nota fiscal/ERP                                                                            | NF é registrada como texto                         | Exportar relatórios CSV                           |
-| Sem exclusão de cadastros ou movimentações                                                                    | Proposital (rastreabilidade)                       | Desativar cadastros; estornar movimentações       |
-| Anexos: só PDF, JPEG, PNG e WebP até 10 MB                                                                    | Outros formatos não são aceitos                    | Converter para PDF                                |
-| Relatórios: até 20.000 linhas por arquivo                                                                     | Períodos muito longos são cortados                 | Baixar por períodos menores                       |
-| Algumas mensagens técnicas podem aparecer em inglês em casos raros                                            | —                                                  | Informar o ID da requisição ao suporte            |
+| Limitação                                                                                                     | Impacto                                                     | Alternativa atual                                               |
+| ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | --------------------------------------------------------------- |
+| Empresas novas só pela equipe técnica                                                                         | Abrir uma nova empresa no sistema depende da equipe técnica | Usuários são convidados pelo administrador em Gestão › Usuários |
+| Recall não envia e-mail aos clientes                                                                          | Contato com clientes é manual                               | **Copiar lista** no detalhe do recall                           |
+| O aviso automático (recall e validade) vai para uma lista única de e-mails da equipe responsável pelo sistema | Cada empresa não recebe avisos próprios por e-mail          | Acompanhar o sino de validade e a tela de Recall                |
+| Importação só de cadastros                                                                                    | Estoque inicial precisa ser lançado                         | Lançar por Recebimento                                          |
+| Sem integração com nota fiscal/ERP                                                                            | NF é registrada como texto                                  | Exportar relatórios CSV                                         |
+| Sem exclusão de cadastros ou movimentações                                                                    | Proposital (rastreabilidade)                                | Desativar cadastros; estornar movimentações                     |
+| Anexos: só PDF, JPEG, PNG e WebP até 10 MB                                                                    | Outros formatos não são aceitos                             | Converter para PDF                                              |
+| Relatórios: até 20.000 linhas por arquivo                                                                     | Períodos muito longos são cortados                          | Baixar por períodos menores                                     |
+| Algumas mensagens técnicas podem aparecer em inglês em casos raros                                            | —                                                           | Informar o ID da requisição ao suporte                          |
 
 ---
 

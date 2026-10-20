@@ -234,9 +234,43 @@ API: de 175 para **264 testes** (Postgres real via Testcontainers), em `apps/api
 - Verificado nesta rodada: lint, typecheck, build, 264 + 41 testes, `pnpm audit --prod` (7 achados em ferramentas transitivas), backup/restauração lógica local.
 - Achados novos: quantidades do PDF do recall sem formatação pt-BR (`15.000 BAG_60KG`), "disponível 12,000" no diálogo de movimentação, "expedição(ões)" no recall, `NOTIFICATIONS_TOPIC_ARN` desatualizado no deploy.md, sem alarme de espaço livre do RDS.
 
+### Melhorias (branch `feat/improvements`, 2026-10-18)
+
+Registro retroativo (a branch não atualizou este arquivo):
+
+- **Gestão de usuários** pela tela (Gestão → Usuários, só admin): convite pelo Cognito, perfil e ativação; o perfil do banco passa a ser a fonte da autorização ([ADR 0012](adr/0012-perfil-do-banco-e-gestao-de-usuarios.md)).
+- **Rate limit compartilhado** entre as instâncias da Lambda (tabela `rate_limits`, `RATE_LIMIT_STORE=postgres`).
+- **CSP do front ligada por padrão** (script de tema movido para `/theme-init.js`).
+- **Retenção da auditoria**: job mensal arquiva em JSON Lines no bucket e apaga registros com mais de `AUDIT_RETENTION_DAYS` (padrão 5 anos).
+- **Central de avisos** por usuário (recall, validade, não conformidade) com preferências por categoria.
+- **Erros do navegador** enviados para os logs (`POST /v1/client-errors`) e métrica no dashboard.
+- **Desempenho no painel** (período × anterior, série de rendimento, giro de estoque), **etiquetas em lote**, **marca da empresa** na etiqueta e na página pública, **visões salvas e CSV** na lista de lotes.
+- **Testes de navegador na CI** (Playwright: telas em desktop e celular + fluxos principais) e roteiro de restauração ([restauracao.md](restauracao.md)).
+
+### Revisão e correções (branch `fix/review-findings`, 2026-10-19)
+
+Revisão completa da aplicação ([guia de produção](guia_producao.md) atualizado). Corrigido e implementado:
+
+| Tema                             | O que mudou                                                                                                                                                                                                              |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Estornos no rastreio e no recall | Item de expedição estornado aparece como "estornado", não torna o cliente afetado e não conta no recall nem no "já expedido"                                                                                             |
+| Cancelamento de operações        | `POST /production-orders/:id/cancel` e `/shipments/:id/cancel` (admin, motivo): estornam tudo numa transação; estorno avulso de produção/consumo de ordem é recusado ([ADR 0013](adr/0013-cancelamento-de-operacoes.md)) |
+| Painel e relatórios              | Operações canceladas fora do painel e do desempenho; CSV com "Cancelada em"/"Estornado em"                                                                                                                               |
+| Recall                           | PDF e e-mail com quantidades em pt-BR ("15 sc"); encerrar pode **liberar os lotes** (voltam ao status anterior)                                                                                                          |
+| Página pública                   | Aviso **"Produto recolhido — não consuma"** enquanto o lote está bloqueado por recall ([ADR 0014](adr/0014-aviso-de-recall-na-pagina-publica.md)); funcionário logado vê **"Abrir no sistema"**                          |
+| Datas                            | Nada com data no futuro (5 min de folga) nem movimentação anterior à existência do lote                                                                                                                                  |
+| Códigos                          | Ano de lotes e documentos pelo calendário de São Paulo (antes UTC)                                                                                                                                                       |
+| Usuários                         | Convite que falha no banco apaga a conta criada no Cognito (`AdminDeleteUser`)                                                                                                                                           |
+| Anexos                           | Remoção de anexo enviado por engano (admin, motivo, auditoria; registro e arquivo ficam)                                                                                                                                 |
+| UX                               | FEFO nos seletores de lote, textos e plurais corrigidos, avisos de quarentena só quando cabem, sem requisição 403 na Auditoria                                                                                           |
+| Dependências                     | Prisma 7.10.1 e overrides: `pnpm audit --prod` sem achados; CLI do shadcn em devDependencies                                                                                                                             |
+| Infra/CI                         | Teste de saúde ao fim de cada deploy, assets antigos do front preservados, alarme de disco do RDS                                                                                                                        |
+| Testes                           | API 264 → **341** (bucket real com MinIO, handler da Lambda, segredos do SSM, cancelamentos, datas, recall); web 41 → **59**; navegador **51** fluxos/telas; checagem de divergência schema × migrations no setup        |
+
 ## Próximos passos
 
 - Seguir o [guia de produção](guia_producao.md) (passos na conta AWS são humanos).
-- Testes que faltam: anexos/etiqueta com MinIO no Testcontainers, Lambda handler, Playwright na CI.
+- Testes que faltam: job de migrations contra o RDS real e o fluxo de login do Cognito (só no ambiente publicado).
+- Evoluções sugeridas: aviso automático aos clientes no recall, inventário (contagem física), RLS no Postgres como segunda camada de isolamento, chaves de API para integrações.
 - Gravar o vídeo do MVP.
 - Pendências conhecidas: mensagens de erro da API em inglês (o front traduz pelos códigos); RDS público por custo (ADR 0010).

@@ -36,20 +36,20 @@ As Lambdas rodam **fora da VPC** e o RDS tem endpoint público com TLS obrigató
 
 ### Módulos Terraform
 
-| Módulo            | O que cria                                                                                                                                                                         |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `network`         | VPC, subnets, IGW, gateway endpoint S3, SGs (Lambda → RDS 5432), endpoints de interface opcionais                                                                                  |
-| `database`        | RDS PG 17 `db.t4g.micro`, gp3 20 GB, criptografado, backup 7 dias, `rds.force_ssl`, senha e `DATABASE_URL` no SSM                                                                  |
-| `auth`            | User Pool (login por e-mail, MFA TOTP opcional, só convite), grupos `admin`/`operator`/`auditor`, app client PKCE, Hosted UI                                                       |
-| `storage`         | Bucket privado de arquivos: CORS do front, SSE-S3, versionamento, ciclo de vida, TLS obrigatório                                                                                   |
-| `lambda-function` | Base de toda Lambda: role própria, log group (14 dias), X-Ray, DLQ opcional                                                                                                        |
-| `api`             | Lambda da API (Node 24, arm64, 1024 MB, 29 s, concorrência reservada 5) + HTTP API com CORS e throttling                                                                           |
-| `jobs`            | Lambdas `migrate`, `expiry-alert` (Scheduler diário 07:00 America/Sao_Paulo), `recall-step` e `audit-retention` (mensal: arquiva a auditoria antiga no bucket); DLQ SQS            |
-| `workflow`        | Tópico SNS (e-mails) e state machine do recall (BLOCK_LOTS → REPORT → NOTIFY, retry + catch)                                                                                       |
-| `web`             | Bucket privado + CloudFront com OAC, fallback SPA, cache por tipo de arquivo, headers de segurança                                                                                 |
-| `observability`   | Dashboard (API, Lambdas, RDS, DLQ, erros do navegador) e ~10 alarmes → SNS. Erros do front: `POST /v1/client-errors` → log `event=client_error` → métrica `TraceFlow/ClientErrors` |
-| `github-oidc`     | Provider OIDC do GitHub e role de deploy restrita ao repositório (main, tags `v*`, environment `production`)                                                                       |
-| `ecs-alternative` | **Não usado.** API em ECS Fargate + ALB + WAF, só validado (`terraform validate`)                                                                                                  |
+| Módulo            | O que cria                                                                                                                                                                                                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `network`         | VPC, subnets, IGW, gateway endpoint S3, SGs (Lambda → RDS 5432), endpoints de interface opcionais                                                                                                                                                  |
+| `database`        | RDS PG 17 `db.t4g.micro`, gp3 20 GB, criptografado, backup 7 dias, `rds.force_ssl`, senha e `DATABASE_URL` no SSM                                                                                                                                  |
+| `auth`            | User Pool (login por e-mail, MFA TOTP opcional, só convite), grupos `admin`/`operator`/`auditor`, app client PKCE, Hosted UI                                                                                                                       |
+| `storage`         | Bucket privado de arquivos: CORS do front, SSE-S3, versionamento, ciclo de vida, TLS obrigatório                                                                                                                                                   |
+| `lambda-function` | Base de toda Lambda: role própria, log group (14 dias), X-Ray, DLQ opcional                                                                                                                                                                        |
+| `api`             | Lambda da API (Node 24, arm64, 1024 MB, 29 s, concorrência reservada 5) + HTTP API com CORS e throttling                                                                                                                                           |
+| `jobs`            | Lambdas `migrate`, `expiry-alert` (Scheduler diário 07:00 America/Sao_Paulo), `recall-step` e `audit-retention` (mensal: arquiva a auditoria antiga no bucket); DLQ SQS                                                                            |
+| `workflow`        | Tópico SNS (e-mails) e state machine do recall (BLOCK_LOTS → REPORT → NOTIFY, retry + catch)                                                                                                                                                       |
+| `web`             | Bucket privado + CloudFront com OAC, fallback SPA, cache por tipo de arquivo, headers de segurança                                                                                                                                                 |
+| `observability`   | Dashboard (API, Lambdas, RDS, DLQ, erros do navegador) e 11 alarmes → SNS (o 11º, espaço livre do RDS abaixo de 2 GB, custa ~US$ 0,10/mês). Erros do front: `POST /v1/client-errors` → log `event=client_error` → métrica `TraceFlow/ClientErrors` |
+| `github-oidc`     | Provider OIDC do GitHub e role de deploy restrita ao repositório (main, tags `v*`, environment `production`)                                                                                                                                       |
+| `ecs-alternative` | **Não usado.** API em ECS Fargate + ALB + WAF, só validado (`terraform validate`)                                                                                                                                                                  |
 
 ### Configuração da aplicação na AWS
 
@@ -97,7 +97,7 @@ Região `us-east-1`, preços de referência de out/2026. "Free tier" = conta no 
 | S3 (front + arquivos, poucos GB)                                   | 5 GB grátis        | centavos                  |
 | Cognito Essentials (até 10 mil MAU)                                | grátis             | grátis                    |
 | Step Functions (4 mil transições), SNS, SQS, Scheduler, SSM padrão | grátis             | ~US$ 0                    |
-| CloudWatch (10 alarmes, 3 dashboards, 5 GB de logs)                | grátis             | ~US$ 0                    |
+| CloudWatch (10 alarmes, 3 dashboards, 5 GB de logs) + 1 alarme     | ~US$ 0,10          | ~US$ 0,10                 |
 | **Total (modo padrão)**                                            | **~US$ 0–1/mês**   | **~US$ 18–20/mês**        |
 | `private_networking = true` (3 interface endpoints, 1 AZ)          | —                  | **+ ~US$ 22/mês**         |
 | Evitado: NAT Gateway                                               | —                  | (+ ~US$ 33/mês)           |
@@ -192,7 +192,7 @@ Para ver o que seria aplicado sem aplicar: `--payload '{"dryRun":true}'`.
    - variable `AWS_REGION` (opcional, padrão `us-east-1`).
 3. **Actions → Deploy → Run workflow** (ou `git tag v0.2.0 && git push --tags`).
 
-O workflow: `build` (bundle das Lambdas) → `plan` (mostra o plano no log) → **aprovação manual** → `deploy`: `terraform apply`, invoca a Lambda `migrate`, compila o front com `VITE_AUTH_MODE=cognito` e as variáveis dos outputs, envia ao S3 (`assets/` com cache de 1 ano, `index.html` com `no-cache`) e invalida o CloudFront.
+O workflow: `build` (bundle das Lambdas) → `plan` (mostra o plano no log) → **aprovação manual** → `deploy`: `terraform apply`, invoca a Lambda `migrate`, compila o front com `VITE_AUTH_MODE=cognito` e as variáveis dos outputs, envia ao S3 (`assets/` com cache de 1 ano e **sem apagar os assets antigos**, para abas abertas antes do deploy continuarem carregando páginas; `index.html` com `no-cache`), invalida o CloudFront e termina com um **teste de saúde**: `/v1/health/ready` precisa responder 200 (até 60 s) e a URL do front precisa servir o app — senão o deploy fica vermelho.
 
 > O plano **não** é salvo como artefato (ele conteria a senha do RDS e artefatos são legíveis por quem lê o repo); o job `deploy` gera um plano novo e aplica. O `concurrency` do workflow impede dois deploys simultâneos.
 

@@ -59,9 +59,12 @@ flowchart LR
 
 Antes de lançar as saídas, os itens são **ordenados por `lotId` e depois por `locationId`**. Como cada saída trava a linha do lote (`FOR UPDATE`) até o fim da transação, duas expedições concorrentes que tocam os mesmos lotes sempre pedem os travamentos na mesma ordem: uma espera a outra terminar em vez de cada uma segurar um lote que a outra precisa (deadlock). A ordem dos itens no corpo da requisição não importa.
 
-## Correção: estorno do item
+## Correção: cancelamento ou estorno do item
 
-Não há edição nem cancelamento de expedição. Para corrigir um item (quantidade errada, lote errado, devolução), estorne a saída dele:
+Expedições não são editadas. Há duas formas de corrigir ([ADR 0013](adr/0013-cancelamento-de-operacoes.md)):
+
+- **Cancelar a expedição inteira** (devolução total, cliente errado, lançada em dobro): `POST /v1/shipments/:id/cancel` `{ "reason": "…" }` (só admin, motivo de 5 a 500 caracteres). Numa transação, estorna a saída de cada item ainda não estornado e grava `cancelledAt`, `cancelReason` e quem cancelou. Um segundo cancelamento (inclusive simultâneo) responde 409 `/problems/already-cancelled`.
+- **Estornar um item** (devolução parcial, quantidade errada) — a saída dele no razão:
 
 ```bash
 curl -X POST localhost:3000/v1/movements/<movementId>/reverse \
@@ -70,6 +73,8 @@ curl -X POST localhost:3000/v1/movements/<movementId>/reverse \
 ```
 
 O estorno (`REVERSAL`, só admin) devolve a quantidade ao local de origem e mantém a mesma `documentRef` (`EXP-…`). A expedição continua no histórico; se for preciso enviar outra quantidade, crie uma nova expedição.
+
+**Efeitos de itens estornados e expedições canceladas**: o detalhe traz `reversal` por item e `cancellation` na expedição (a lista traz `reversedItemsCount`); o rastreio para frente marca o item como `reversed` e **não** conta o cliente como afetado; o recall não manda contatá-lo nem soma a quantidade em "já expedido"; o painel ignora expedições canceladas; o CSV de expedições ganha a coluna "Estornado em".
 
 ## Exemplo
 

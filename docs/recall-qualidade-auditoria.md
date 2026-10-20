@@ -6,15 +6,15 @@ Decisão: [ADR 0009](adr/0009-recall-orquestrado.md). Código: `apps/api/src/mod
 
 ### Rotas
 
-| Rota                         | Perfis                   | O que faz                                                        |
-| ---------------------------- | ------------------------ | ---------------------------------------------------------------- |
-| `POST /v1/recalls/simulate`  | admin, operador, auditor | Impacto sem gravar nada: lotes (com saldo), expedições, clientes |
-| `POST /v1/recalls`           | admin                    | Cria (`RC-AAAA-NNNNNN`) e executa o workflow                     |
-| `POST /v1/recalls/:id/retry` | admin                    | Retoma um recall `FAILED` a partir da etapa que falhou           |
-| `POST /v1/recalls/:id/close` | admin                    | Encerra com notas (`COMPLETED`/`FAILED` → `CLOSED`)              |
-| `GET /v1/recalls`            | todos                    | Lista paginada (filtros `status`, `lotId`)                       |
-| `GET /v1/recalls/:id`        | todos                    | Detalhe: etapas, lotes (status anterior), clientes com contato   |
-| `GET /v1/recalls/:id/report` | todos                    | URL pré-assinada do PDF (404 se o relatório ainda não existe)    |
+| Rota                         | Perfis                   | O que faz                                                                                |
+| ---------------------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
+| `POST /v1/recalls/simulate`  | admin, operador, auditor | Impacto sem gravar nada: lotes (com saldo), expedições, clientes                         |
+| `POST /v1/recalls`           | admin                    | Cria (`RC-AAAA-NNNNNN`) e executa o workflow                                             |
+| `POST /v1/recalls/:id/retry` | admin                    | Retoma um recall `FAILED` a partir da etapa que falhou                                   |
+| `POST /v1/recalls/:id/close` | admin                    | Encerra com notas (`COMPLETED`/`FAILED` → `CLOSED`); `releaseLots: true` libera os lotes |
+| `GET /v1/recalls`            | todos                    | Lista paginada (filtros `status`, `lotId`)                                               |
+| `GET /v1/recalls/:id`        | todos                    | Detalhe: etapas, lotes (status anterior), clientes com contato                           |
+| `GET /v1/recalls/:id/report` | todos                    | URL pré-assinada do PDF (404 se o relatório ainda não existe)                            |
 
 ### Impacto
 
@@ -68,7 +68,11 @@ Contrato com a infraestrutura:
 
 - No máximo **um recall não encerrado por lote de origem** (409 `/problems/recall-already-open`; índice único parcial no banco).
 - Enquanto o lote estiver num recall não encerrado, voltar a `AVAILABLE` é recusado (409 `/problems/lot-under-recall`) — pela troca de status e pela liberação de NC.
-- Encerrar o recall **não libera** os lotes: continuam `BLOCKED`; a liberação é explícita, lote a lote (`PATCH /lots/:id/status`).
+- Encerrar o recall **sem** `releaseLots` mantém os lotes `BLOCKED` (estoque a destruir); a liberação continua possível lote a lote (`PATCH /lots/:id/status`).
+- Encerrar **com** `releaseLots: true` devolve cada lote bloqueado pelo recall ao status anterior ao bloqueio (`QUARANTINE` volta a quarentena, demais a `AVAILABLE`; sem saldo, `CONSUMED`), com uma entrada `lot.status_changed` por lote. Lote que também está em outro recall aberto continua bloqueado.
+- **Itens estornados** (devolução, cliente errado) não entram nos clientes a contatar nem em "já expedido" ([ADR 0013](adr/0013-cancelamento-de-operacoes.md)).
+- **Página pública**: enquanto o lote estiver bloqueado por um recall executado, o QR code mostra "Produto recolhido — não consuma" ([ADR 0014](adr/0014-aviso-de-recall-na-pagina-publica.md)).
+- Relatório PDF e e-mail: quantidades em pt-BR com unidade curta ("15 sc", "1.250,5 kg").
 
 ## Não conformidade e quarentena
 

@@ -6,12 +6,13 @@ Laudos de classificação, notas fiscais e fotos ficam num **bucket S3 privado**
 
 Todas sob `/v1/lots/:lotId/attachments`. Lote ou anexo de outra empresa responde **404**.
 
-| Método | Rota            | Perfis          | O que faz                                                          |
-| ------ | --------------- | --------------- | ------------------------------------------------------------------ |
-| POST   | `/`             | admin, operator | Registra o anexo (`PENDING`) e devolve o formulário de upload      |
-| POST   | `/:id/confirm`  | admin, operator | Confere o objeto no bucket (HEAD) e marca `UPLOADED` (idempotente) |
-| GET    | `/`             | todos           | Lista os anexos `UPLOADED` do lote (mais recentes primeiro)        |
-| GET    | `/:id/download` | todos           | Devolve `{ url, expiresAt }`: URL GET pré-assinada                 |
+| Método | Rota            | Perfis          | O que faz                                                                                                                                            |
+| ------ | --------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | `/`             | admin, operator | Registra o anexo (`PENDING`) e devolve o formulário de upload                                                                                        |
+| POST   | `/:id/confirm`  | admin, operator | Confere o objeto no bucket (HEAD) e marca `UPLOADED` (idempotente)                                                                                   |
+| GET    | `/`             | todos           | Lista os anexos `UPLOADED` do lote (mais recentes primeiro)                                                                                          |
+| GET    | `/:id/download` | todos           | Devolve `{ url, expiresAt }`: URL GET pré-assinada                                                                                                   |
+| POST   | `/:id/remove`   | admin           | Retira o anexo da lista `{ reason }` (status `REMOVED`, quem/quando/por quê; auditoria `attachment.removed`). O registro e o objeto versionado ficam |
 
 Corpo do `POST /`: `{ fileName, contentType, sizeBytes }`.
 

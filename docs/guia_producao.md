@@ -10,6 +10,8 @@ Ele foi escrito a partir da análise do repositório no commit `de13181` (branch
 
 > **Convenções.** Comandos são para **bash** (Linux, macOS ou Git Bash no Windows). No Git Bash, prefixe comandos `docker` que montam pastas com `MSYS_NO_PATHCONV=1`. Valores entre `<...>` devem ser trocados pelos do seu ambiente. Salvo indicação, rode os comandos **na raiz do repositório**.
 
+> **Atualização de 19/10/2026.** Depois desta análise, vários itens do [checklist](#2-checklist-do-que-falta-para-produção) foram resolvidos no código (ver [progresso](progresso.md#revisão-e-correções-branch-fixreview-findings-2026-10-19)): **PDF do recall** com quantidades em pt-BR; **pequenos defeitos de texto**; **CSP do front** ligada por padrão; **rate limit** compartilhado entre instâncias; **gestão de usuários** pela tela (convite pelo Cognito, com `cognito-idp:AdminDeleteUser` para desfazer convites com falha); **dependências** (`pnpm audit --prod` sem achados); **alarme de disco do RDS**; **teste de saúde ao fim do deploy**; `deploy.md` com `SNS_TOPIC_ARN`; roteiro de restauração em [restauracao.md](restauracao.md); testes com bucket real, handler da Lambda e navegador na CI. Continuam pendentes tudo o que depende da conta AWS (etapas 3 a 17), o aviso de privacidade/LGPD e o canal de suporte.
+
 ---
 
 ## Índice
