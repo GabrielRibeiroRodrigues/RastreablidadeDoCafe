@@ -186,15 +186,16 @@ No topo de cada página há uma **trilha** (ex.: _Estoque › Lotes › CAF-2026
 
 _O Painel reúne o resumo da operação._
 
-| Bloco                      | O que mostra                                                                                 |
-| -------------------------- | -------------------------------------------------------------------------------------------- |
-| **Lotes disponíveis**      | Quantos lotes podem ser movimentados, quantos estão em quarentena e quantos estão bloqueados |
-| **Movimentações hoje**     | Entradas, saídas, transferências e ajustes do dia                                            |
-| **Produção · 30 dias**     | Número de ordens, rendimento médio e perda total em kg                                       |
-| **Expedições · 30 dias**   | Número de expedições e de clientes atendidos                                                 |
-| **Estoque por produto**    | Barras proporcionais ao peso em kg (sacas convertidas: 1 saca = 60 kg)                       |
-| **Vencendo em 30 dias**    | Lotes com saldo perto da validade (data em vermelho/âmbar)                                   |
-| **Movimentações recentes** | As últimas operações; **Ver razão** abre a lista completa                                    |
+| Bloco                      | O que mostra                                                                                                                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Lotes disponíveis**      | Quantos lotes podem ser movimentados, quantos estão em quarentena e quantos estão bloqueados                                                                                          |
+| **Movimentações hoje**     | Entradas, saídas, transferências e ajustes do dia                                                                                                                                     |
+| **Produção · 30 dias**     | Número de ordens, rendimento médio e perda total em kg                                                                                                                                |
+| **Expedições · 30 dias**   | Número de expedições e de clientes atendidos                                                                                                                                          |
+| **Estoque por produto**    | Barras proporcionais ao peso em kg (sacas convertidas: 1 saca = 60 kg)                                                                                                                |
+| **Vencendo em 30 dias**    | Lotes com saldo perto da validade (data em vermelho/âmbar)                                                                                                                            |
+| **Movimentações recentes** | As últimas operações; **Ver razão** abre a lista completa                                                                                                                             |
+| **Desempenho**             | O período escolhido (30 dias a 12 meses) comparado com o anterior: ordens, rendimento médio, perda, expedições, gráfico de rendimento por semana ou mês e giro de estoque por produto |
 
 **Dica:** para o perfil Auditor, as ações rápidas mudam para **Ver estoque** e **Rastrear lote**.
 
