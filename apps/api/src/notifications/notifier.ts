@@ -67,3 +67,25 @@ export function snsSubject(subject: string): string {
     .trim();
   return (ascii || 'TraceFlow').slice(0, 99);
 }
+
+/**
+ * Grava o aviso na central do app (por usuário) e repassa ao canal externo (SNS ou log).
+ * Falha na central não impede o aviso externo, e vice-versa: os dois são independentes.
+ */
+export class InboxNotifier implements Notifier {
+  private readonly logger = new Logger('InboxNotifier');
+
+  constructor(
+    private readonly inbox: { deliver(notification: Notification): Promise<number> },
+    private readonly external: Notifier,
+  ) {}
+
+  async notify(notification: Notification): Promise<void> {
+    try {
+      await this.inbox.deliver(notification);
+    } catch (error) {
+      this.logger.error({ err: error, event: notification.event }, 'In-app notification failed');
+    }
+    await this.external.notify(notification);
+  }
+}

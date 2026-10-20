@@ -59,6 +59,7 @@ function LinkLabel({ drawn }: { drawn: DrawnLink }) {
       className={cn(
         'pointer-events-none absolute z-10 max-w-[6rem] -translate-x-1/2 -translate-y-1/2 rounded-md border bg-background/95 px-1.5 py-0.5 text-center leading-tight shadow-xs',
         link.touchesRoot && 'border-primary/40',
+        link.undone && 'opacity-60',
       )}
       style={{ left: drawn.labelX, top: drawn.labelY }}
     >
@@ -171,10 +172,29 @@ function ShipmentCard({ shipment }: { shipment: TraceShipment }) {
   return (
     <Link
       to={`/expedicao/${shipment.shipmentId}`}
-      title={`Ver a expedição ${shipment.number}`}
-      className="block rounded-lg border border-sky-600/30 bg-sky-600/[0.04] p-3 shadow-xs transition-colors hover:border-sky-600/60 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      title={
+        shipment.reversed
+          ? `Saída estornada: o café não chegou ao cliente (${shipment.number})`
+          : `Ver a expedição ${shipment.number}`
+      }
+      className={cn(
+        'block rounded-lg border p-3 shadow-xs transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none',
+        shipment.reversed
+          ? 'border-dashed border-muted-foreground/40 bg-muted/30 opacity-70 hover:opacity-100'
+          : 'border-sky-600/30 bg-sky-600/[0.04] hover:border-sky-600/60',
+      )}
     >
-      <div className="flex items-center gap-1.5 text-sky-700 dark:text-sky-400">
+      {shipment.reversed && (
+        <p className="mb-1 text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">
+          Estornado · não entregue
+        </p>
+      )}
+      <div
+        className={cn(
+          'flex items-center gap-1.5',
+          shipment.reversed ? 'text-muted-foreground' : 'text-sky-700 dark:text-sky-400',
+        )}
+      >
         <TruckIcon className="size-4 shrink-0" aria-hidden />
         <span className="truncate text-sm font-semibold">{shipment.customer.name}</span>
       </div>
@@ -294,7 +314,10 @@ export function TraceTree({ model, direction }: { model: TreeModel; direction: T
                 d={path}
                 fill="none"
                 strokeWidth={link.touchesRoot ? 2 : 1.5}
-                strokeDasharray={link.kind === 'production' ? undefined : '5 4'}
+                strokeDasharray={
+                  link.undone ? '2 4' : link.kind === 'production' ? undefined : '5 4'
+                }
+                opacity={link.undone ? 0.5 : undefined}
                 markerEnd={link.touchesRoot ? 'url(#trace-arrow-root)' : 'url(#trace-arrow)'}
                 className={link.touchesRoot ? 'stroke-primary/70' : 'stroke-muted-foreground/45'}
               />

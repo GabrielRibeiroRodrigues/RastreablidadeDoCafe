@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { formatQuantityRaw } from './quantity';
+import { formatQuantity } from './quantity';
 
 /**
  * Modelo de erro da API: RFC 9457 (`application/problem+json`). As chamadas em si
@@ -104,7 +104,7 @@ const text = (value: unknown): string => (typeof value === 'string' ? value : ''
 /** Problemas de domínio (campo `type` do RFC 9457) com mensagem própria em pt-BR. */
 const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
   '/problems/insufficient-stock': ({ extensions: ext }) =>
-    `Saldo insuficiente em ${text(ext.location) || 'origem'}: disponível ${formatQuantityRaw(
+    `Saldo insuficiente em ${text(ext.location) || 'origem'}: disponível ${formatQuantity(
       text(ext.available) || '0',
     )}`,
   '/problems/lot-not-movable': ({ extensions: ext, detail }) => {
@@ -118,18 +118,24 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
     return 'Lote em quarentena/bloqueado não pode ser movimentado.';
   },
   '/problems/already-reversed': () => 'Esta movimentação já foi estornada.',
+  '/problems/already-cancelled': ({ extensions: ext }) =>
+    `${text(ext.document) || 'Esta operação'} já foi cancelada. Recarregue a página.`,
+  '/problems/use-cancellation': ({ extensions: ext }) =>
+    `Esta movimentação faz parte da ${text(ext.document) || 'ordem de produção'}: para desfazê-la, cancele a ordem inteira (na tela da ordem).`,
   '/problems/invalid-reversal': () =>
     'Um estorno não pode ser estornado; lance uma nova movimentação.',
   '/problems/idempotency-key-reused': () =>
     'Esta operação já foi enviada com outros dados. Recarregue a página e tente de novo.',
-  '/problems/invalid-movement': ({ detail }) =>
-    /adjustment requires a reason/i.test(detail ?? '')
-      ? 'Informe o motivo do ajuste.'
-      : /different locations/i.test(detail ?? '')
-        ? 'Origem e destino devem ser locais diferentes.'
-        : /exactly one/i.test(detail ?? '')
-          ? 'O ajuste deve ter só origem (perda) ou só destino (sobra).'
-          : 'Movimentação inválida: confira origem, destino e quantidade.',
+  '/problems/invalid-movement': ({ detail, extensions: ext }) =>
+    /before lot .* was received/i.test(detail ?? '')
+      ? `A data não pode ser anterior ao recebimento (ou à produção) do lote ${text(ext.lot)}.`
+      : /adjustment requires a reason/i.test(detail ?? '')
+        ? 'Informe o motivo do ajuste.'
+        : /different locations/i.test(detail ?? '')
+          ? 'Origem e destino devem ser locais diferentes.'
+          : /exactly one/i.test(detail ?? '')
+            ? 'O ajuste deve ter só origem (perda) ou só destino (sobra).'
+            : 'Movimentação inválida: confira origem, destino e quantidade.',
   '/problems/lot-consumed': () => 'Lote consumido (sem saldo): o status não pode ser alterado.',
   '/problems/inactive-product': () => 'O produto está inativo.',
   '/problems/inactive-location': () => 'O local de destino está inativo.',
@@ -156,7 +162,22 @@ const PROBLEM_MESSAGES: Record<string, (error: ApiError) => string> = {
       ? 'O arquivo está vazio: a primeira linha deve ser o cabeçalho.'
       : `CSV malformado${typeof ext.line === 'number' ? ` na linha ${ext.line}` : ''}: confira aspas e separadores.`,
   '/problems/import-too-large': () => 'O arquivo tem mais de 5.000 linhas: divida-o em partes.',
+  '/problems/last-admin': () =>
+    'A empresa precisa de pelo menos um administrador ativo. Promova outra pessoa antes.',
+  '/problems/own-role': () => 'Você não pode mudar o seu próprio perfil.',
+  '/problems/own-account': () => 'Você não pode desativar a sua própria conta.',
+  '/problems/request-timeout': () =>
+    'A operação demorou demais e foi interrompida. Tente de novo; se continuar, filtre um período menor.',
 };
+
+/**
+ * Tipos de problema tratados pelo status HTTP (mensagem genérica + erros por campo), sem texto
+ * próprio. Qualquer outro tipo que a API emitir precisa estar em `PROBLEM_MESSAGES` (há um teste).
+ */
+export const GENERIC_PROBLEMS = ['/problems/validation-error', '/problems/conflict'] as const;
+
+/** Tipos com mensagem própria em pt-BR (usado pelo teste de cobertura das traduções). */
+export const TRANSLATED_PROBLEMS: readonly string[] = Object.keys(PROBLEM_MESSAGES);
 
 const STAGE_TEXT: Record<string, string> = {
   PROCESSING: 'Beneficiamento',
@@ -180,7 +201,7 @@ const typeList = (text: string): string =>
 function translateProductionDetail(detail: string): string {
   let m = /Output \(([\d.,]+) kg\) cannot exceed the input mass \(([\d.,]+) kg\)/i.exec(detail);
   if (m) {
-    return `A massa de saída (${formatQuantityRaw(m[1] ?? '')} kg) não pode exceder a de entrada (${formatQuantityRaw(m[2] ?? '')} kg).`;
+    return `A massa de saída (${formatQuantity(m[1] ?? '')} kg) não pode exceder a de entrada (${formatQuantity(m[2] ?? '')} kg).`;
   }
   m = /^(\w+) must produce (.+), not (\w+)\.?$/.exec(detail);
   if (m) {
@@ -222,6 +243,10 @@ export function getErrorMessage(error: unknown): string {
         return 'Formato de arquivo não aceito.';
       case 429:
         return 'Muitas requisições em pouco tempo. Aguarde um instante e tente de novo.';
+      case 503:
+        return /storage not configured/i.test(error.detail ?? '')
+          ? 'O armazenamento de arquivos não está configurado neste ambiente: anexos e etiquetas ficam indisponíveis.'
+          : `Serviço temporariamente indisponível. Tente novamente em instantes (ID: ${error.requestId}).`;
       default:
         return error.status >= 500
           ? `Erro inesperado na API. Tente novamente em instantes (ID: ${error.requestId}).`
@@ -234,6 +259,7 @@ export function getErrorMessage(error: unknown): string {
 
 const FIELD_MESSAGES: Array<[RegExp, (match: RegExpMatchArray) => string]> = [
   [/must be unique/i, () => 'Já existe um cadastro com este valor.'],
+  [/cannot be in the future/i, () => 'A data não pode estar no futuro.'],
   [/should not be empty|must not be empty/i, () => 'Campo obrigatório.'],
   [/longer than or equal to (\d+)/i, (m) => `Informe pelo menos ${m[1]} caracteres.`],
   [/shorter than or equal to (\d+)/i, (m) => `Informe no máximo ${m[1]} caracteres.`],

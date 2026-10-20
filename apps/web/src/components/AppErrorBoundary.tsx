@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { reportClientError } from '@/lib/error-reporting';
 
 interface State {
   error: Error | null;
@@ -17,6 +18,7 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, State> 
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error('Erro não tratado no app', error, info.componentStack);
+    reportClientError('render', error);
   }
 
   override render() {

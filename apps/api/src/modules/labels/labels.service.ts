@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { BUSINESS_TIME_ZONE } from '../../common/time/business-time.js';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../../config/env.js';
 import type { ProductType, RoastLevel } from '../../generated/prisma/client.js';
@@ -8,8 +9,9 @@ import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { toPublicOrigin, uniqueOrigins } from '../trace/public-origin.js';
 import { TraceService } from '../trace/trace.service.js';
-import { buildLabelPdf } from './label-pdf.js';
-import type { LabelResponse } from './labels.dto.js';
+import { randomUUID } from 'node:crypto';
+import { buildLabelPdf, buildLabelsPdf, type LabelData } from './label-pdf.js';
+import type { LabelBatchResponse, LabelResponse } from './labels.dto.js';
 import { generatePublicToken } from './public-token.js';
 
 const PDF = 'application/pdf';
@@ -30,7 +32,7 @@ const DATE_LABEL: Record<ProductType, string> = {
 };
 
 /** Datas exibidas no fuso da operação (Brasil). */
-const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: 'America/Sao_Paulo' });
+const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: BUSINESS_TIME_ZONE });
 /** Colunas `date` chegam como meia-noite UTC: formatar em UTC para não voltar um dia. */
 const dateOnlyFormat = new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' });
 
@@ -56,24 +58,75 @@ export class LabelsService {
   async generate(lotId: string): Promise<LabelResponse> {
     this.storage.assertConfigured();
     const companyId = this.tenant.requireCompanyId();
+    const company = await this.company(companyId);
+    const { data, lot } = await this.labelFor(lotId, company);
 
+    const pdf = await buildLabelPdf(data);
+    const key = `${companyId}/labels/${lot.id}.pdf`;
+    await this.storage.putObject(key, pdf, PDF);
+    await this.audit.record({
+      action: 'label.generated',
+      entityType: 'lot',
+      entityId: lot.id,
+      after: { code: lot.code, storageKey: key, publicUrl: data.publicUrl },
+    });
+    const download = await this.storage.createDownloadUrl(key, `etiqueta-${lot.code}.pdf`, {
+      inline: true,
+    });
+    return { ...download, publicUrl: data.publicUrl };
+  }
+
+  /**
+   * Várias etiquetas num só PDF (uma por página, na ordem pedida) para imprimir de uma vez.
+   * Lote inexistente ou de outra empresa: 404 para o pedido inteiro.
+   */
+  async generateBatch(lotIds: string[]): Promise<LabelBatchResponse> {
+    this.storage.assertConfigured();
+    const companyId = this.tenant.requireCompanyId();
+    const company = await this.company(companyId);
+    const ids = [...new Set(lotIds)];
+    const labels = [];
+    // Em sequência: o rastreio de cada lote é uma consulta recursiva; não vale saturar o pool.
+    for (const id of ids) labels.push(await this.labelFor(id, company));
+
+    const pdf = await buildLabelsPdf(labels.map((label) => label.data));
+    const key = `${companyId}/labels/batch-${randomUUID()}.pdf`;
+    await this.storage.putObject(key, pdf, PDF);
+    await this.audit.record({
+      action: 'label.batch_generated',
+      entityType: 'lot',
+      after: { lots: labels.map((label) => label.lot.code), storageKey: key },
+    });
+    const download = await this.storage.createDownloadUrl(
+      key,
+      `etiquetas-${labels.length}-lotes.pdf`,
+      { inline: true },
+    );
+    return { ...download, count: labels.length };
+  }
+
+  private company(companyId: string) {
+    return this.db.client.company.findUniqueOrThrow({
+      where: { id: companyId },
+      select: { name: true, brandColor: true },
+    });
+  }
+
+  /** Dados publicáveis de um lote para a etiqueta (cria o token público se ainda não houver). */
+  private async labelFor(lotId: string, company: { name: string; brandColor: string | null }) {
     // 404 se o lote não existir ou for de outra empresa.
     const lot = await this.db.client.lot.findUniqueOrThrow({
       where: { id: lotId },
       include: { product: { select: { name: true, type: true } } },
     });
-    const [company, backward, token] = await Promise.all([
-      this.db.client.company.findUniqueOrThrow({
-        where: { id: companyId },
-        select: { name: true },
-      }),
+    const [backward, token] = await Promise.all([
       this.trace.backward(lotId),
       this.ensurePublicToken(lotId, lot.publicToken),
     ]);
 
-    const publicUrl = `${this.publicWebUrl}/rastreio/${token}`;
-    const pdf = await buildLabelPdf({
+    const data: LabelData = {
       companyName: company.name,
+      brandColor: company.brandColor,
       productName: lot.product.name,
       lotCode: lot.code,
       harvest: lot.harvest,
@@ -86,21 +139,9 @@ export class LabelsService {
         ? lot.cuppingScore.toNumber().toLocaleString('pt-BR', { maximumFractionDigits: 2 })
         : null,
       origins: uniqueOrigins(backward.origins.map(toPublicOrigin)),
-      publicUrl,
-    });
-
-    const key = `${companyId}/labels/${lot.id}.pdf`;
-    await this.storage.putObject(key, pdf, PDF);
-    await this.audit.record({
-      action: 'label.generated',
-      entityType: 'lot',
-      entityId: lot.id,
-      after: { code: lot.code, storageKey: key, publicUrl },
-    });
-    const download = await this.storage.createDownloadUrl(key, `etiqueta-${lot.code}.pdf`, {
-      inline: true,
-    });
-    return { ...download, publicUrl };
+      publicUrl: `${this.publicWebUrl}/rastreio/${token}`,
+    };
+    return { data, lot };
   }
 
   /**

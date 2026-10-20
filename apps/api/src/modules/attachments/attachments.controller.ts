@@ -3,6 +3,7 @@ import {
   ApiBearerAuth,
   ApiConflictResponse,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiServiceUnavailableResponse,
@@ -12,6 +13,7 @@ import { Roles } from '../../auth/decorators.js';
 import {
   AttachmentResponse,
   CreateAttachmentDto,
+  RemoveAttachmentDto,
   CreateAttachmentResponse,
   DownloadUrlResponse,
 } from './attachments.dto.js';
@@ -53,6 +55,19 @@ export class AttachmentsController {
   @ApiOkResponse({ type: AttachmentResponse, isArray: true })
   list(@Param('lotId', ParseUUIDPipe) lotId: string): Promise<AttachmentResponse[]> {
     return this.attachments.list(lotId);
+  }
+
+  /** Retira um anexo enviado por engano (o registro e o arquivo versionado ficam). */
+  @Post(':id/remove')
+  @HttpCode(204)
+  @Roles('admin')
+  @ApiNoContentResponse()
+  remove(
+    @Param('lotId', ParseUUIDPipe) lotId: string,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RemoveAttachmentDto,
+  ): Promise<void> {
+    return this.attachments.remove(lotId, id, dto.reason);
   }
 
   @Get(':id/download')

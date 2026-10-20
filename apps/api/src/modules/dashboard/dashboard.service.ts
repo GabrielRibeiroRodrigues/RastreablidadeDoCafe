@@ -10,7 +10,7 @@ import { formatQuantity } from '../inventory/quantity.js';
 import type { DashboardResponse } from './dashboard.dto.js';
 
 /** Fuso usado para "hoje" e para a janela de vencimento (a empresa não tem fuso próprio ainda). */
-export const BUSINESS_TIME_ZONE = 'America/Sao_Paulo';
+import { BUSINESS_TIME_ZONE } from '../../common/time/business-time.js';
 export const EXPIRING_DAYS = 30;
 const EXPIRING_LIMIT = 5;
 const TOP_PRODUCTS = 8;
@@ -151,12 +151,14 @@ export class DashboardService {
                  SUM(output_mass_kg) AS output_kg,
                  COALESCE(SUM(loss_kg), 0) AS loss_kg
           FROM production_orders
-          WHERE company_id = ${companyId}::uuid AND performed_at >= now() - interval '30 days'
+          WHERE company_id = ${companyId}::uuid
+            AND cancelled_at IS NULL AND performed_at >= now() - interval '30 days'
         ) po,
         (
           SELECT COUNT(*)::int AS shipments, COUNT(DISTINCT customer_id)::int AS customers
           FROM shipments
-          WHERE company_id = ${companyId}::uuid AND shipped_at >= now() - interval '30 days'
+          WHERE company_id = ${companyId}::uuid
+            AND cancelled_at IS NULL AND shipped_at >= now() - interval '30 days'
         ) s`,
     );
   }

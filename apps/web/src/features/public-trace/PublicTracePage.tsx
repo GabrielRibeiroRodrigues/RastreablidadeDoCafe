@@ -3,21 +3,26 @@ import type { ApiSchema } from '@traceflow/shared';
 import { cn } from 'cn';
 import {
   CoffeeIcon,
+  ExternalLinkIcon,
   FactoryIcon,
   LeafIcon,
   MapPinIcon,
   MountainIcon,
   PackageIcon,
   RefreshCwIcon,
+  GitForkIcon,
   SearchXIcon,
+  SirenIcon,
   SproutIcon,
   type LucideIcon,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useParams } from 'react-router';
+import { Link, useParams } from 'react-router';
+import { useAuth } from '@/auth/auth-context';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PRODUCT_TYPE_LABELS, ROAST_LEVEL_LABELS } from '@/features/products/labels';
+import { isDarkColor } from '@/lib/color';
 import { ApiError, getErrorMessage } from '@/lib/api';
 import { formatDate } from '@/lib/quantity';
 import { publicTraceApi, type PublicOrigin, type PublicTrace, type PublicTraceStep } from './api';
@@ -71,7 +76,12 @@ export function PublicTracePage() {
 }
 
 function TraceView({ trace }: { trace: PublicTrace }) {
-  const { lot } = trace;
+  const { lot, brand } = trace;
+  // Funcionário logado lendo o QR da etiqueta: atalho para o lote dentro do sistema.
+  const { isAuthenticated } = useAuth();
+  // Cor da marca no fundo só quando o texto claro continua legível; senão, vira uma faixa no topo.
+  const brandBackground = isDarkColor(brand.color) ? brand.color : null;
+  const brandStripe = brand.color && !brandBackground ? brand.color : null;
   const dateLabel =
     lot.productType === 'GREEN'
       ? 'Recebido em'
@@ -82,15 +92,35 @@ function TraceView({ trace }: { trace: PublicTrace }) {
   return (
     <>
       <title>{`${lot.productName} · ${lot.code} — TraceFlow`}</title>
-      <header className="relative overflow-hidden bg-sidebar text-sidebar-foreground">
+      <header
+        className="relative overflow-hidden bg-sidebar text-sidebar-foreground"
+        style={brandBackground ? { backgroundColor: brandBackground } : undefined}
+      >
+        {brandStripe && (
+          <div aria-hidden className="h-1.5 w-full" style={{ backgroundColor: brandStripe }} />
+        )}
         <div
           aria-hidden
           className="pointer-events-none absolute -top-24 -right-24 size-72 rounded-full bg-sidebar-primary/20 blur-3xl"
         />
         <div className="relative mx-auto max-w-2xl space-y-5 px-4 pt-8 pb-10 sm:px-6">
-          <p className="text-xs font-semibold tracking-[0.18em] text-sidebar-primary uppercase">
-            {trace.companyName}
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs font-semibold tracking-[0.18em] text-sidebar-primary uppercase">
+              {trace.companyName}
+            </p>
+            {brand.tagline && <p className="text-sm text-sidebar-foreground/80">{brand.tagline}</p>}
+            {brand.website && (
+              <a
+                href={brand.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs text-sidebar-foreground/80 underline-offset-4 hover:text-sidebar-accent-foreground hover:underline"
+              >
+                {brand.website.replace(/^https:\/\//, '').replace(/\/$/, '')}
+                <ExternalLinkIcon className="size-3" aria-hidden />
+              </a>
+            )}
+          </div>
           <div className="space-y-3">
             <h1 className="text-3xl leading-tight font-semibold tracking-tight text-sidebar-accent-foreground sm:text-4xl">
               {lot.productName}
@@ -116,7 +146,7 @@ function TraceView({ trace }: { trace: PublicTrace }) {
                     lot.available ? 'bg-emerald-300' : 'bg-sidebar-muted',
                   )}
                 />
-                {lot.available ? 'Disponível' : 'Indisponível'}
+                {trace.recall ? 'Recolhido' : lot.available ? 'Disponível' : 'Indisponível'}
               </span>
             </div>
           </div>
@@ -133,6 +163,46 @@ function TraceView({ trace }: { trace: PublicTrace }) {
           </dl>
         </div>
       </header>
+
+      {trace.recall && (
+        <section
+          role="alert"
+          aria-labelledby="recall-aviso"
+          className="border-b-4 border-red-700 bg-red-50 text-red-950 dark:bg-red-950 dark:text-red-50"
+        >
+          <div className="mx-auto flex max-w-2xl gap-3 px-4 py-5 sm:px-6">
+            <SirenIcon
+              className="mt-0.5 size-6 shrink-0 text-red-700 dark:text-red-300"
+              aria-hidden
+            />
+            <div className="space-y-1.5">
+              <h2 id="recall-aviso" className="text-lg font-semibold">
+                Produto recolhido — não consuma
+              </h2>
+              <p className="text-sm">
+                {trace.companyName} recolheu este lote em {formatDay(trace.recall.since)}. Se você
+                tem este produto, não o consuma e entre em contato com a empresa
+                {brand.website ? ' pelo site indicado acima' : ''} para orientações sobre troca ou
+                devolução.
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {isAuthenticated && (
+        <div className="border-b bg-muted/40">
+          <div className="mx-auto flex max-w-2xl flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm sm:px-6">
+            <span className="text-muted-foreground">Você está conectado ao TraceFlow.</span>
+            <Button size="sm" variant="outline" asChild>
+              <Link to={`/rastreabilidade?codigo=${encodeURIComponent(lot.code)}`}>
+                <GitForkIcon aria-hidden />
+                Abrir no sistema
+              </Link>
+            </Button>
+          </div>
+        </div>
+      )}
 
       <main className="mx-auto w-full max-w-2xl flex-1 space-y-10 px-4 py-8 sm:px-6">
         <section aria-labelledby="origem" className="space-y-4">
@@ -178,6 +248,20 @@ function TraceView({ trace }: { trace: PublicTrace }) {
             </p>
           )}
         </section>
+
+        {/* A sessão vive na aba (sessionStorage): quem lê o QR numa aba nova chega deslogado.
+            O link passa pelo login e volta direto para o lote. */}
+        {!isAuthenticated && (
+          <p className="text-center text-xs text-muted-foreground">
+            É da equipe da {trace.companyName}?{' '}
+            <Link
+              to={`/rastreabilidade?codigo=${encodeURIComponent(lot.code)}`}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              Abrir este lote no sistema
+            </Link>
+          </p>
+        )}
       </main>
     </>
   );

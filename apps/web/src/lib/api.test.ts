@@ -58,6 +58,30 @@ describe('getErrorMessage', () => {
   it('includes the request id on server errors', () => {
     expect(getErrorMessage(error(500))).toContain('req-9');
   });
+
+  const problem = (body: Record<string, unknown>) =>
+    new ApiError({ title: 'Conflict', status: 409, ...body } as never, 'req-1');
+
+  it('shows stock quantities the Portuguese way, without trailing zeros', () => {
+    expect(
+      getErrorMessage(
+        problem({ type: '/problems/insufficient-stock', available: '12.000', location: 'ARM-01' }),
+      ),
+    ).toBe('Saldo insuficiente em ARM-01: disponível 12');
+  });
+
+  it('explains a movement dated before its lot existed', () => {
+    expect(
+      getErrorMessage(
+        problem({
+          type: '/problems/invalid-movement',
+          status: 400,
+          detail: 'Movement date is before lot CAF-2026-000001 was received or produced.',
+          lot: 'CAF-2026-000001',
+        }),
+      ),
+    ).toBe('A data não pode ser anterior ao recebimento (ou à produção) do lote CAF-2026-000001.');
+  });
 });
 
 describe('translateFieldMessage', () => {
@@ -65,6 +89,7 @@ describe('translateFieldMessage', () => {
     ['must be unique', 'Já existe um cadastro com este valor.'],
     ['name must be longer than or equal to 2 characters', 'Informe pelo menos 2 caracteres.'],
     ['document must be a valid CPF or CNPJ', 'CPF ou CNPJ inválido.'],
+    ['occurredAt cannot be in the future', 'A data não pode estar no futuro.'],
     ['something new', 'something new'],
   ])('%s', (input, expected) => {
     expect(translateFieldMessage(input)).toBe(expected);

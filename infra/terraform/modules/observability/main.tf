@@ -1,4 +1,4 @@
-# Dashboard e alarmes (-> SNS). Mantido em ~10 alarmes, o limite do free tier do CloudWatch.
+# Dashboard e alarmes (-> SNS). ~10 alarmes (limite do free tier do CloudWatch) + o de disco do RDS.
 
 data "aws_region" "current" {}
 
@@ -54,6 +54,17 @@ locals {
         threshold   = var.db_connections_threshold
         period      = 300
       }
+      # Disco cheio para o banco (gp3 sem autoscaling, ADR 0010): o 11º alarme, ~US$ 0,10/mês.
+      rds-free-storage = {
+        description = "RDS free storage below ${var.db_free_storage_threshold_gb} GB"
+        namespace   = "AWS/RDS"
+        metric      = "FreeStorageSpace"
+        dimensions  = { DBInstanceIdentifier = var.db_instance_id }
+        statistic   = "Minimum"
+        threshold   = var.db_free_storage_threshold_gb * 1024 * 1024 * 1024
+        period      = 300
+        comparison  = "LessThanThreshold"
+      }
       dlq-messages = {
         description = "Failed asynchronous job invocations in the DLQ"
         namespace   = "AWS/SQS"
@@ -72,7 +83,9 @@ locals {
       statistic   = "Sum"
       threshold   = key == "api" ? 5 : 1
       period      = 300
-    } if key != "migrate" },
+    } if !contains(["migrate", "audit-retention"], key) },
+    # migrate é invocada pelo deploy (falha aparece no workflow); audit-retention é assíncrona e
+    # mensal (falha cai na DLQ, que já tem alarme) — assim os alarmes ficam no limite do free tier.
     !var.enable_recall_alarm ? {} : {
       recall-failed = {
         description = "Recall executions failed"
@@ -100,11 +113,26 @@ resource "aws_cloudwatch_metric_alarm" "this" {
   period              = each.value.period
   evaluation_periods  = 1
   threshold           = each.value.threshold
-  comparison_operator = "GreaterThanOrEqualToThreshold"
+  comparison_operator = try(each.value.comparison, "GreaterThanOrEqualToThreshold")
   treat_missing_data  = "notBreaching"
   alarm_actions       = [var.alarm_topic_arn]
   ok_actions          = [var.alarm_topic_arn]
   tags                = var.tags
+}
+
+# Erros do navegador (POST /v1/client-errors → log `event=client_error`) viram métrica: filtro de
+# log não conta no limite de alarmes do free tier e aparece no dashboard.
+resource "aws_cloudwatch_log_metric_filter" "client_errors" {
+  name           = "${var.name_prefix}-client-errors"
+  log_group_name = "/aws/lambda/${var.api_function_name}"
+  pattern        = "{ $.event = \"client_error\" }"
+
+  metric_transformation {
+    name          = "ClientErrors"
+    namespace     = "TraceFlow"
+    value         = "1"
+    default_value = "0"
+  }
 }
 
 resource "aws_cloudwatch_dashboard" "this" {
@@ -181,6 +209,18 @@ resource "aws_cloudwatch_dashboard" "this" {
           stat   = "Maximum"
           metrics = [
             ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", var.dlq_name],
+          ]
+        }
+      },
+      {
+        type = "metric", x = 0, y = 18, width = 12, height = 6
+        properties = {
+          title  = "Web: browser errors (ClientErrors)"
+          region = local.region
+          period = 300
+          stat   = "Sum"
+          metrics = [
+            ["TraceFlow", "ClientErrors"],
           ]
         }
       },

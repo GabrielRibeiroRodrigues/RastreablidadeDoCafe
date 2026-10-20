@@ -89,7 +89,7 @@ function ExecuteDialog({
           <li>
             <strong className="font-medium">{impact.totals.customers}</strong>{' '}
             {plural(impact.totals.customers, 'cliente', 'clientes')} a contatar (
-            {impact.totals.shipments} expedição(ões))
+            {countOf(impact.totals.shipments, 'expedição', 'expedições')})
           </li>
           <li>Relatório PDF e aviso à equipe serão gerados.</li>
         </ul>
@@ -224,7 +224,7 @@ export function NewRecallPage() {
         </Alert>
       )}
 
-      <Card>
+      <Card className="overflow-visible">
         <CardHeader>
           <CardTitle>1. Lote de origem</CardTitle>
           <CardDescription>

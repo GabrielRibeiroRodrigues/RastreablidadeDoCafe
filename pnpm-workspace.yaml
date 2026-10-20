@@ -1,9 +1,17 @@
 packages:
   - apps/*
   - packages/*
+  - e2e
 
 # pnpm 10 bloqueia scripts de instalação por padrão; libere só o necessário.
 onlyBuiltDependencies:
   - esbuild
   - prisma
   - '@prisma/engines'
+
+# Versões corrigidas de dependências transitivas de ferramentas (CLI/Studio do Prisma) apontadas
+# pelo `pnpm audit`. Revise ao atualizar o Prisma: remova a entrada quando ele já trouxer a versão.
+overrides:
+  lodash: ^4.18.1
+  mysql2: ^3.24.6
+  deepmerge-ts: ^8.0.0

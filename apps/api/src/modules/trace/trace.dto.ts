@@ -36,6 +36,10 @@ export class TraceProductionOrder {
   @ApiProperty({ example: 'OP-2026-000001' }) number!: string;
   @ApiProperty({ enum: ProductionStage, enumName: 'ProductionStage' }) stage!: ProductionStage;
   @ApiProperty() performedAt!: Date;
+  @ApiProperty({
+    description: 'Ordem cancelada: os consumos e a produção foram estornados (ligação histórica)',
+  })
+  cancelled!: boolean;
 }
 
 /** Aresta pai → filho: o filho consumiu `quantity` (unidade do pai) do pai na ordem indicada. */
@@ -63,6 +67,11 @@ export class TraceShipment {
   @ApiProperty({ example: 'CAF-2026-000130' }) lotCode!: string;
   @ApiProperty({ example: '12.000' }) quantity!: string;
   @ApiProperty({ enum: Unit, enumName: 'Unit' }) unit!: Unit;
+  @ApiProperty({
+    description:
+      'A saída do item foi estornada (devolução, cliente errado): o café não chegou ao cliente',
+  })
+  reversed!: boolean;
 }
 
 class TraceGraph {
@@ -85,8 +94,14 @@ export class BackwardTraceResponse extends TraceGraph {
 
 /** Para frente: onde foi usado e para quem foi expedido — base do recall. */
 export class ForwardTraceResponse extends TraceGraph {
-  @ApiProperty({ type: [TraceShipment], description: 'Expedições do lote e de todos os derivados' })
+  @ApiProperty({
+    type: [TraceShipment],
+    description: 'Expedições do lote e de todos os derivados, inclusive itens estornados',
+  })
   shipments!: TraceShipment[];
-  @ApiProperty({ type: [TraceCustomer], description: 'Clientes afetados (distintos)' })
+  @ApiProperty({
+    type: [TraceCustomer],
+    description: 'Clientes afetados (distintos), só por itens não estornados',
+  })
   customers!: TraceCustomer[];
 }

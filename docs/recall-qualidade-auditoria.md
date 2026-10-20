@@ -6,15 +6,15 @@ Decisão: [ADR 0009](adr/0009-recall-orquestrado.md). Código: `apps/api/src/mod
 
 ### Rotas
 
-| Rota                         | Perfis                   | O que faz                                                        |
-| ---------------------------- | ------------------------ | ---------------------------------------------------------------- |
-| `POST /v1/recalls/simulate`  | admin, operador, auditor | Impacto sem gravar nada: lotes (com saldo), expedições, clientes |
-| `POST /v1/recalls`           | admin                    | Cria (`RC-AAAA-NNNNNN`) e executa o workflow                     |
-| `POST /v1/recalls/:id/retry` | admin                    | Retoma um recall `FAILED` a partir da etapa que falhou           |
-| `POST /v1/recalls/:id/close` | admin                    | Encerra com notas (`COMPLETED`/`FAILED` → `CLOSED`)              |
-| `GET /v1/recalls`            | todos                    | Lista paginada (filtros `status`, `lotId`)                       |
-| `GET /v1/recalls/:id`        | todos                    | Detalhe: etapas, lotes (status anterior), clientes com contato   |
-| `GET /v1/recalls/:id/report` | todos                    | URL pré-assinada do PDF (404 se o relatório ainda não existe)    |
+| Rota                         | Perfis                   | O que faz                                                                                |
+| ---------------------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
+| `POST /v1/recalls/simulate`  | admin, operador, auditor | Impacto sem gravar nada: lotes (com saldo), expedições, clientes                         |
+| `POST /v1/recalls`           | admin                    | Cria (`RC-AAAA-NNNNNN`) e executa o workflow                                             |
+| `POST /v1/recalls/:id/retry` | admin                    | Retoma um recall `FAILED` a partir da etapa que falhou                                   |
+| `POST /v1/recalls/:id/close` | admin                    | Encerra com notas (`COMPLETED`/`FAILED` → `CLOSED`); `releaseLots: true` libera os lotes |
+| `GET /v1/recalls`            | todos                    | Lista paginada (filtros `status`, `lotId`)                                               |
+| `GET /v1/recalls/:id`        | todos                    | Detalhe: etapas, lotes (status anterior), clientes com contato                           |
+| `GET /v1/recalls/:id/report` | todos                    | URL pré-assinada do PDF (404 se o relatório ainda não existe)                            |
 
 ### Impacto
 
@@ -68,7 +68,11 @@ Contrato com a infraestrutura:
 
 - No máximo **um recall não encerrado por lote de origem** (409 `/problems/recall-already-open`; índice único parcial no banco).
 - Enquanto o lote estiver num recall não encerrado, voltar a `AVAILABLE` é recusado (409 `/problems/lot-under-recall`) — pela troca de status e pela liberação de NC.
-- Encerrar o recall **não libera** os lotes: continuam `BLOCKED`; a liberação é explícita, lote a lote (`PATCH /lots/:id/status`).
+- Encerrar o recall **sem** `releaseLots` mantém os lotes `BLOCKED` (estoque a destruir); a liberação continua possível lote a lote (`PATCH /lots/:id/status`).
+- Encerrar **com** `releaseLots: true` devolve cada lote bloqueado pelo recall ao status anterior ao bloqueio (`QUARANTINE` volta a quarentena, demais a `AVAILABLE`; sem saldo, `CONSUMED`), com uma entrada `lot.status_changed` por lote. Lote que também está em outro recall aberto continua bloqueado.
+- **Itens estornados** (devolução, cliente errado) não entram nos clientes a contatar nem em "já expedido" ([ADR 0013](adr/0013-cancelamento-de-operacoes.md)).
+- **Página pública**: enquanto o lote estiver bloqueado por um recall executado, o QR code mostra "Produto recolhido — não consuma" ([ADR 0014](adr/0014-aviso-de-recall-na-pagina-publica.md)).
+- Relatório PDF e e-mail: quantidades em pt-BR com unidade curta ("15 sc", "1.250,5 kg").
 
 ## Não conformidade e quarentena
 
@@ -100,7 +104,23 @@ Tabela `audit_logs` (só inclusão: trigger no banco + extensão de tenant): emp
 - **Explícita**, na mesma transação da operação: `lot.received`, `lot.updated` (antes/depois dos campos enviados), `lot.status_changed`, `movement.created`, `movement.reversed`, `production_order.created`, `shipment.created`, `company.updated`, `label.generated`, `non_conformity.opened|released|discarded`, `recall.created|started|retried|executed|failed|closed`.
 - **Rede de segurança**: um interceptor global grava `http.post|put|patch|delete` (rota + id do resultado) para toda escrita autenticada e bem-sucedida que o serviço não auditou; repetições idempotentes são ignoradas. Não guarda corpo de requisição nem resposta.
 - `request_id` e IP entram no contexto (CLS) na abertura da requisição (`x-request-id`; IP do primeiro `x-forwarded-for` ou do socket — informativo). Jobs usam `job:expiry-alert:…` e `sfn:{recallId}:{step}`.
+- **Retenção** (`AUDIT_RETENTION_DAYS`, padrão 1825 dias = 5 anos, mínimo 366): o job mensal `audit-retention` (Scheduler, dia 1 às 03:00) arquiva os registros mais antigos no bucket, em `<empresa>/audit-archive/<data>_<último id>.jsonl.gz` (JSON Lines + gzip, lotes de 5.000), e só depois os remove, na mesma transação. O trigger continua proibindo `UPDATE` sempre e só aceita `DELETE` com a flag `traceflow.audit_retention` ligada na transação **e** para registros com mais de 1 ano. Sem bucket configurado, nada é apagado; se o upload falhar, nada é apagado.
 - `GET /v1/audit-logs` (admin, auditor): paginado, filtros `entityType`, `entityId`, `userId`, `action` (exata, ou prefixo terminado em ponto, ex.: `recall.`), `from`/`to`; inclui o nome do usuário.
+
+## Central de avisos (no app)
+
+Os avisos de `recall.executed`, `recall.failed` e `lots.expiring` (que também saem pelo SNS) e o de `non_conformity.opened` (só no app) ficam na **central de avisos** do cabeçalho: um registro por destinatário na tabela `notifications`.
+
+| Categoria | Eventos                            | Quem recebe               |
+| --------- | ---------------------------------- | ------------------------- |
+| `recall`  | `recall.executed`, `recall.failed` | admin, operador e auditor |
+| `expiry`  | `lots.expiring` (job diário)       | admin e operador          |
+| `quality` | `non_conformity.opened`            | admin e operador          |
+
+- Cada usuário vê só os próprios avisos (`GET /v1/notifications`, `unread-count`, `POST /{id}/read`, `read-all`); aviso de outro usuário ou empresa responde 404.
+- Cada usuário pode silenciar categorias (`GET/PUT /v1/notifications/preferences`, coluna `users.muted_notifications`).
+- O sino mostra os não lidos e atualiza a cada minuto; no topo da lista fica o resumo **ao vivo** dos lotes vencendo em 30 dias.
+- E-mail continua pelo tópico SNS da operação (`notification_emails` no Terraform). E-mail individual por usuário exigiria o SES com domínio verificado, que fica fora do free tier deste projeto.
 
 ## Variáveis de ambiente
 
@@ -109,7 +129,8 @@ Tabela `audit_logs` (só inclusão: trigger no banco + extensão de tenant): emp
 | `SNS_TOPIC_ARN`            | —      | Avisos via SNS; vazio → log                           |
 | `RECALL_STATE_MACHINE_ARN` | —      | Recall orquestrado pelo Step Functions; vazio → local |
 | `ALERT_EXPIRY_DAYS`        | `30`   | Janela padrão do alerta de validade                   |
+| `AUDIT_RETENTION_DAYS`     | `1825` | Retenção da auditoria antes de arquivar no bucket     |
 
-## Testes pendentes (adiados a pedido)
+## Testes
 
-Falha e retomada de etapa do recall, dois retries simultâneos, bloqueio concorrente com movimentação, descarte com saldo em vários locais, NC simultâneas no mesmo lote, isolamento por empresa nas novas rotas e na auditoria, trigger de imutabilidade de `audit_logs`, jobs.
+Cobertos em `apps/api/test/recall-quality.e2e-spec.ts`, `tenancy-resources.e2e-spec.ts` e `audit-retention.e2e-spec.ts`: retomada de etapa, retries simultâneos, descarte com saldo em vários locais, resolução concorrente de NC, isolamento por empresa, trigger de `audit_logs` e retenção. Os handlers dos jobs na Lambda ainda não têm teste automatizado.

@@ -67,6 +67,8 @@ export async function createScenario(testApp: TestApp, name = 'Torrefação Test
     },
     patch: (path: string, body: object, as: As = 'admin') =>
       testApp.http().patch(path).auth(tokens[as], bearer).send(body),
+    put: (path: string, body: object, as: As = 'admin') =>
+      testApp.http().put(path).auth(tokens[as], bearer).send(body),
   };
 
   /** Recebe um lote de café verde e devolve o id. */

@@ -71,7 +71,7 @@ const ACTION_OPTIONS = [
 ];
 
 /** Usuários vistos nas entradas mais recentes (a API não tem listagem de usuários). */
-function useAuditUsers() {
+function useAuditUsers(enabled: boolean) {
   return useQuery({
     queryKey: ['audit-logs', 'users'],
     queryFn: async ({ signal }) => {
@@ -81,6 +81,8 @@ function useAuditUsers() {
       return [...users].map(([value, label]) => ({ value, label }));
     },
     staleTime: 5 * 60_000,
+    // Sem o perfil, a API responde 403: nem pergunta.
+    enabled,
   });
 }
 
@@ -158,7 +160,7 @@ export function AuditPage() {
   const { params } = list;
   const { entityType, action, userId, entityId, from, to } = params.filters;
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
-  const users = useAuditUsers();
+  const users = useAuditUsers(canViewAudit);
 
   const query = useQuery({
     queryKey: ['audit-logs', 'list', params],

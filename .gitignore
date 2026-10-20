@@ -49,3 +49,7 @@ Thumbs.db
 
 # Prisma Client gerado (prisma generate)
 apps/api/src/generated/
+
+# Playwright (e2e)
+e2e/test-results/
+e2e/playwright-report/

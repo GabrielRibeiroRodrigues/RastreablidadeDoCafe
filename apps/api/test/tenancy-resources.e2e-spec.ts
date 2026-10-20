@@ -76,6 +76,7 @@ describe('Tenant isolation across business resources (e2e)', () => {
     ['non-conformity', () => `/v1/non-conformities/${ids['nc']}`],
     ['recall', () => `/v1/recalls/${ids['recall']}`],
     ['recall report', () => `/v1/recalls/${ids['recall']}/report`],
+    ['lot attachments', () => `/v1/lots/${ids['green']}/attachments`],
   ])('GET another company %s → 404', async (_name, path) => {
     const res = await a.http.get(path());
     expect(res.status).toBe(404);
@@ -152,11 +153,8 @@ describe('Tenant isolation across business resources (e2e)', () => {
   });
 
   it('storage-backed routes never expose the other company', async () => {
-    // Sem bucket nos testes, anexos e etiqueta respondem 503 antes de ler qualquer dado.
-    for (const res of await Promise.all([
-      a.http.get(`/v1/lots/${ids['green']}/attachments`),
-      a.http.post(`/v1/lots/${ids['roasted']}/label`),
-    ])) {
+    // Sem bucket nos testes, a etiqueta responde 503 antes de ler qualquer dado.
+    for (const res of await Promise.all([a.http.post(`/v1/lots/${ids['roasted']}/label`)])) {
       expect([404, 503], res.text).toContain(res.status);
     }
   });

@@ -188,7 +188,7 @@ function Step({
   children: ReactNode;
 }) {
   return (
-    <Card>
+    <Card className="overflow-visible">
       <CardHeader>
         <div className="flex items-start gap-3">
           <span
@@ -325,10 +325,13 @@ export function NewProductionOrderPage() {
     },
   });
   const inputsArray = useFieldArray({ control: form.control, name: 'inputs' });
-  const [stage, inputs, outputProduct, outputQuantity] = useWatch({
+  const [stage, inputs, outputProduct, outputQuantity, outputLocationId] = useWatch({
     control: form.control,
-    name: ['stage', 'inputs', 'outputProduct', 'outputQuantity'],
+    name: ['stage', 'inputs', 'outputProduct', 'outputQuantity', 'outputLocationId'],
   });
+  const outputInQuarantine =
+    locations.data?.data.find((location) => location.id === outputLocationId)?.type ===
+    'QUARANTINE';
   const rules = STAGE_RULES[stage];
   const mass = previewOf({ inputs, outputProduct, outputQuantity });
   const chosen = useMemo(
@@ -610,7 +613,11 @@ export function NewProductionOrderPage() {
                     value: l.id,
                     label: `${l.code} · ${l.name} (${LOCATION_TYPE_LABELS[l.type]})`,
                   }))}
-                  description="Local de quarentena: o lote nasce em quarentena."
+                  description={
+                    outputInQuarantine
+                      ? 'Local de quarentena: o lote será criado em quarentena.'
+                      : 'Escolher um local de quarentena cria o lote já em quarentena.'
+                  }
                 />
                 <TextField
                   control={form.control}

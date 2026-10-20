@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { businessYear } from '../../common/time/business-time.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import type { TenantTransaction } from '../../tenancy/tenant-prisma.service.js';
 
@@ -20,7 +21,7 @@ export type DocumentKind = (typeof DOCUMENT_KINDS)[keyof typeof DOCUMENT_KINDS];
 @Injectable()
 export class DocumentNumberService {
   async next(tx: TenantTransaction, doc: DocumentKind, at: Date = new Date()): Promise<string> {
-    const year = at.getUTCFullYear();
+    const year = businessYear(at);
     const [row] = await tx.sql<Array<{ last_value: number }>>(
       (companyId) => Prisma.sql`
         INSERT INTO document_sequences (company_id, kind, year, last_value)

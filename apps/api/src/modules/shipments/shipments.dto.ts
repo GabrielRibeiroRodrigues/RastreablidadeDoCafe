@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotFuture } from '../../common/validation/not-future.js';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -21,6 +22,7 @@ import {
   ProductSummary,
   UserSummary,
 } from '../inventory/inventory.dto.js';
+import { CancellationResponse } from '../inventory/cancellation.js';
 import { IsQuantity } from '../inventory/quantity.js';
 
 export const MAX_SHIPMENT_ITEMS = 50;
@@ -55,6 +57,7 @@ export class CreateShipmentDto {
   @ApiPropertyOptional({ description: 'Data/hora da expedição (padrão: agora)' })
   @IsOptional()
   @IsDateString()
+  @IsNotFuture()
   shippedAt?: string;
 
   @ApiPropertyOptional({ type: String, nullable: true })
@@ -140,7 +143,19 @@ export class ShipmentResponse {
     string | null;
   @ApiProperty() shippedAt!: Date;
   @ApiProperty({ example: 2 }) itemsCount!: number;
+  @ApiProperty({
+    example: 0,
+    description: 'Itens cuja saída foi estornada; igual a itemsCount = expedição toda estornada',
+  })
+  reversedItemsCount!: number;
   @ApiProperty({ type: UserSummary }) user!: UserSummary;
+  @ApiProperty({ type: CancellationResponse, nullable: true })
+  cancellation!: CancellationResponse | null;
+}
+
+export class ShipmentItemReversal {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() occurredAt!: Date;
 }
 
 export class ShipmentItemResponse {
@@ -151,6 +166,12 @@ export class ShipmentItemResponse {
   @ApiProperty({ enum: Unit, enumName: 'Unit', description: 'Unidade do lote' }) unit!: Unit;
   @ApiProperty({ format: 'uuid', description: 'Saída (ISSUE) no razão; estorne-a para corrigir' })
   movementId!: string;
+  @ApiProperty({
+    type: ShipmentItemReversal,
+    nullable: true,
+    description: 'Estorno da saída (o café não chegou ao cliente); null se vale',
+  })
+  reversal!: ShipmentItemReversal | null;
 }
 
 export class ShipmentDetailResponse {
@@ -163,5 +184,11 @@ export class ShipmentDetailResponse {
   @ApiProperty({ type: String, nullable: true }) notes!: string | null;
   @ApiProperty({ type: [ShipmentItemResponse] }) items!: ShipmentItemResponse[];
   @ApiProperty({ type: UserSummary }) user!: UserSummary;
+  @ApiProperty({
+    type: CancellationResponse,
+    nullable: true,
+    description: 'Cancelamento (todas as saídas estornadas); null se a expedição vale',
+  })
+  cancellation!: CancellationResponse | null;
   @ApiProperty() createdAt!: Date;
 }

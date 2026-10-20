@@ -19,6 +19,8 @@ export interface LabelData {
   origins: PublicOrigin[];
   /** Conteúdo do QR code: a página pública de rastreio. */
   publicUrl: string;
+  /** Cor da marca (#RRGGBB) na faixa superior; sem ela, o café escuro padrão. */
+  brandColor?: string | null;
 }
 
 /** 100 × 150 mm (etiqueta térmica comum), em pontos (1 mm = 72 / 25,4 pt). */
@@ -36,22 +38,50 @@ const CREAM = rgb(0.98, 0.96, 0.93);
 const QR_SIZE = 36 * MM;
 const MAX_ORIGINS = 4;
 
+/** Etiqueta de um lote (uma página). */
+export function buildLabelPdf(data: LabelData): Promise<Uint8Array> {
+  return buildLabelsPdf([data]);
+}
+
 /**
- * Monta o PDF da etiqueta do lote (uma página 100 × 150 mm) com QR code vetorial — nítido em
+ * Monta o PDF de etiquetas (uma página 100 × 150 mm por lote) com QR code vetorial — nítido em
  * impressora térmica. Usa Helvetica (fonte padrão do PDF, codificação WinAnsi): cobre os acentos
  * do português (ã, é, ç…); caracteres fora dela são trocados por equivalentes sem acento.
  */
-export async function buildLabelPdf(data: LabelData): Promise<Uint8Array> {
+export async function buildLabelsPdf(items: LabelData[]): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
-  pdf.setTitle(`Etiqueta ${data.lotCode}`);
-  pdf.setSubject(data.productName);
+  const first = items[0];
+  pdf.setTitle(
+    items.length === 1 && first ? `Etiqueta ${first.lotCode}` : `Etiquetas (${items.length} lotes)`,
+  );
+  if (items.length === 1 && first) pdf.setSubject(first.productName);
   pdf.setCreator('TraceFlow');
   pdf.setProducer('TraceFlow');
 
-  const page = pdf.addPage([WIDTH, HEIGHT]);
   const regular = await pdf.embedFont(StandardFonts.Helvetica);
   const bold = await pdf.embedFont(StandardFonts.HelveticaBold);
+  for (const data of items) drawLabel(pdf.addPage([WIDTH, HEIGHT]), regular, bold, data);
+  return pdf.save();
+}
+
+/** #RRGGBB → cor do pdf-lib e a tinta legível sobre ela (contraste pela luminância). */
+export function bandColors(hex: string | null | undefined) {
+  const match = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex ?? '');
+  if (!match) return { band: ESPRESSO, ink: CREAM };
+  const [r, g, b] = match.slice(1).map((part) => parseInt(part, 16) / 255) as [
+    number,
+    number,
+    number,
+  ];
+  const linear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  const luminance = 0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
+  // Mesmo critério do WCAG: texto escuro se ele contrastar mais que o claro.
+  return { band: rgb(r, g, b), ink: luminance > 0.179 ? INK : CREAM };
+}
+
+function drawLabel(page: PDFPage, regular: PDFFont, bold: PDFFont, data: LabelData): void {
   const text = new TextWriter(page, regular, bold);
+  const colors = bandColors(data.brandColor);
   const contentWidth = WIDTH - 2 * MARGIN;
 
   // Faixa superior: empresa.
@@ -61,14 +91,14 @@ export async function buildLabelPdf(data: LabelData): Promise<Uint8Array> {
     y: HEIGHT - bandHeight,
     width: WIDTH,
     height: bandHeight,
-    color: ESPRESSO,
+    color: colors.band,
   });
   text.fitLine(data.companyName.toUpperCase(), {
     x: MARGIN,
     y: HEIGHT - bandHeight / 2 - 3.5,
     size: 10,
     font: bold,
-    color: CREAM,
+    color: colors.ink,
     maxWidth: contentWidth,
   });
 
@@ -167,7 +197,7 @@ export async function buildLabelPdf(data: LabelData): Promise<Uint8Array> {
   }
   const hidden = data.origins.length - origins.length;
   if (hidden > 0 && y - 6 > qrTop) {
-    text.draw(`+ ${hidden} outra(s) origem(ns)`, {
+    text.draw(`+ ${hidden === 1 ? 'outra origem' : `${hidden} outras origens`}`, {
       x: MARGIN,
       y,
       size: 8,
@@ -200,8 +230,6 @@ export async function buildLabelPdf(data: LabelData): Promise<Uint8Array> {
     sideY -= 8;
   }
   text.draw('Rastreado com TraceFlow', { x: sideX, y: qrY, size: 6.5, font: bold, color: MUTED });
-
-  return pdf.save();
 }
 
 function rule(page: PDFPage, y: number): void {

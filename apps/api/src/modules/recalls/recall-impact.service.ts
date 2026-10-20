@@ -48,7 +48,10 @@ export class RecallImpactService {
     const originLot = lots.find((lot) => lot.id === lotId) ?? lots[0];
     if (!originLot) throw new Error(`Forward trace did not include the origin lot ${lotId}`);
 
-    const customers = aggregateCustomers(forward.shipments);
+    // Itens estornados (devolução, cliente errado) não chegaram ao cliente: ficam na lista de
+    // expedições para conferência, mas fora dos clientes a contatar e do total expedido.
+    const delivered = forward.shipments.filter((shipment) => !shipment.reversed);
+    const customers = aggregateCustomers(delivered);
     const withStock = lots.filter((lot) => !new Prisma.Decimal(lot.balance).isZero());
 
     return {
@@ -60,10 +63,10 @@ export class RecallImpactService {
       totals: {
         lots: lots.length,
         lotsWithStock: withStock.length,
-        shipments: new Set(forward.shipments.map((s) => s.shipmentId)).size,
+        shipments: new Set(delivered.map((s) => s.shipmentId)).size,
         customers: customers.length,
         stock: sumByUnit(withStock.map((lot) => ({ unit: lot.unit, quantity: lot.balance }))),
-        shipped: sumByUnit(forward.shipments),
+        shipped: sumByUnit(delivered),
       },
       truncated: forward.truncated,
     };

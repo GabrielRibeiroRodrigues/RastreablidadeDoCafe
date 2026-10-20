@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsNotFuture } from '../../common/validation/not-future.js';
 import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -17,6 +18,7 @@ import { PagingDto } from '../../common/http/pagination.js';
 import { trimToNull, upperTrim } from '../../common/http/transforms.js';
 import { ProductionStage, ProductType, Unit } from '../../generated/prisma/client.js';
 import { LotSummary, ProductSummary, UserSummary } from '../inventory/inventory.dto.js';
+import { CancellationResponse } from '../inventory/cancellation.js';
 import { LotQualityDto } from '../inventory/lots.dto.js';
 import { IsQuantity } from '../inventory/quantity.js';
 
@@ -62,6 +64,7 @@ export class CreateProductionOrderDto {
   @ApiPropertyOptional({ description: 'Quando foi produzido (padrão: agora)' })
   @IsOptional()
   @IsDateString()
+  @IsNotFuture()
   performedAt?: string;
 
   @ApiPropertyOptional({
@@ -144,6 +147,12 @@ export class ProductionOrderResponse {
   @ApiProperty({ type: String, nullable: true, example: '108.000' }) lossKg!: string | null;
   @ApiProperty({ type: String, nullable: true }) notes!: string | null;
   @ApiProperty({ type: UserSummary }) user!: UserSummary;
+  @ApiProperty({
+    type: CancellationResponse,
+    nullable: true,
+    description: 'Cancelamento (produção e consumos estornados); null se a ordem vale',
+  })
+  cancellation!: CancellationResponse | null;
   @ApiProperty() createdAt!: Date;
 }
 

@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRightIcon, GitForkIcon } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { ArrowRightIcon, BanIcon, GitForkIcon } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router';
+import { useInventoryPermissions } from '@/auth/permissions';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -12,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { CancellationAlert, CancelOperationDialog } from '@/features/inventory/CancelOperation';
 import { LotStatusBadge, Quantity } from '@/features/inventory/components';
 import { formatDateTime } from '@/lib/quantity';
 import { productionApi } from './api';
@@ -30,6 +33,8 @@ function Metric({ label, children }: { label: string; children: ReactNode }) {
 
 export function ProductionOrderDetailPage() {
   const { id = '' } = useParams();
+  const { canReverse } = useInventoryPermissions();
+  const [cancelling, setCancelling] = useState(false);
   const query = useQuery({
     queryKey: ['production-orders', 'detail', id],
     queryFn: ({ signal }) => productionApi.get(id, signal),
@@ -62,7 +67,12 @@ export function ProductionOrderDetailPage() {
         title={order.number}
         documentTitle={`Ordem ${order.number}`}
         breadcrumbs={crumbs}
-        badges={<StageBadge stage={order.stage} className="h-6 px-2.5 text-sm" />}
+        badges={
+          <>
+            <StageBadge stage={order.stage} className="h-6 px-2.5 text-sm" />
+            {order.cancellation && <Badge variant="destructive">Cancelada</Badge>}
+          </>
+        }
         description={
           <>
             {formatDateTime(order.performedAt)} · por{' '}
@@ -70,14 +80,32 @@ export function ProductionOrderDetailPage() {
           </>
         }
         actions={
-          <Button variant="outline" asChild>
-            <Link to={`/lotes/${output.id}/rastreabilidade`}>
-              <GitForkIcon />
-              Rastreabilidade do lote gerado
-            </Link>
-          </Button>
+          <>
+            <Button variant="outline" asChild>
+              <Link to={`/lotes/${output.id}/rastreabilidade`}>
+                <GitForkIcon />
+                Rastreabilidade do lote gerado
+              </Link>
+            </Button>
+            {canReverse && !order.cancellation && (
+              <Button variant="outline" onClick={() => setCancelling(true)}>
+                <BanIcon aria-hidden />
+                Cancelar ordem
+              </Button>
+            )}
+          </>
         }
       />
+
+      {order.cancellation && (
+        <CancellationAlert cancellation={order.cancellation}>
+          <p>
+            A produção e os consumos foram estornados: os insumos voltaram ao estoque e o lote
+            gerado ficou sem saldo. A ordem continua no histórico e no rastreio, sem contar no
+            rendimento.
+          </p>
+        </CancellationAlert>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
@@ -193,10 +221,29 @@ export function ProductionOrderDetailPage() {
           </Table>
         </div>
         <p className="text-xs text-muted-foreground">
-          Ordens não são editadas: para corrigir, estorne as movimentações de consumo e de produção
-          nos lotes.
+          Ordens não são editadas. Para desfazer uma ordem lançada errada, um administrador usa
+          “Cancelar ordem”: a produção e os consumos são estornados juntos (o lote gerado precisa
+          ter todo o saldo).
         </p>
       </section>
+
+      {cancelling && (
+        <CancelOperationDialog
+          title={`Cancelar a ordem ${order.number}?`}
+          description={
+            <>
+              A produção de <strong className="font-medium text-foreground">{output.code}</strong> e
+              o consumo de{' '}
+              {order.inputs.length === 1 ? '1 insumo' : `${order.inputs.length} insumos`} serão
+              estornados. Só é possível se o lote gerado ainda tiver todo o saldo.
+            </>
+          }
+          successMessage={`Ordem ${order.number} cancelada`}
+          reasonPlaceholder="Torra lançada com o lote errado"
+          cancel={(reason) => productionApi.cancel(order.id, reason)}
+          onClose={() => setCancelling(false)}
+        />
+      )}
     </div>
   );
 }

@@ -33,4 +33,13 @@ export const productionApi = {
         body,
       }),
     ),
+
+  /** Cancela a ordem (admin): estorna a produção e os consumos. */
+  cancel: (id: string, reason: string) =>
+    unwrap(
+      getApiClient().POST('/v1/production-orders/{id}/cancel', {
+        params: { path: { id } },
+        body: { reason },
+      }),
+    ),
 };

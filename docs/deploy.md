@@ -36,20 +36,20 @@ As Lambdas rodam **fora da VPC** e o RDS tem endpoint público com TLS obrigató
 
 ### Módulos Terraform
 
-| Módulo            | O que cria                                                                                                                   |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `network`         | VPC, subnets, IGW, gateway endpoint S3, SGs (Lambda → RDS 5432), endpoints de interface opcionais                            |
-| `database`        | RDS PG 17 `db.t4g.micro`, gp3 20 GB, criptografado, backup 7 dias, `rds.force_ssl`, senha e `DATABASE_URL` no SSM            |
-| `auth`            | User Pool (login por e-mail, MFA TOTP opcional, só convite), grupos `admin`/`operator`/`auditor`, app client PKCE, Hosted UI |
-| `storage`         | Bucket privado de arquivos: CORS do front, SSE-S3, versionamento, ciclo de vida, TLS obrigatório                             |
-| `lambda-function` | Base de toda Lambda: role própria, log group (14 dias), X-Ray, DLQ opcional                                                  |
-| `api`             | Lambda da API (Node 24, arm64, 1024 MB, 29 s, concorrência reservada 5) + HTTP API com CORS e throttling                     |
-| `jobs`            | Lambdas `migrate`, `expiry-alert` (Scheduler diário 07:00 America/Sao_Paulo) e `recall-step`; DLQ SQS                        |
-| `workflow`        | Tópico SNS (e-mails) e state machine do recall (BLOCK_LOTS → REPORT → NOTIFY, retry + catch)                                 |
-| `web`             | Bucket privado + CloudFront com OAC, fallback SPA, cache por tipo de arquivo, headers de segurança                           |
-| `observability`   | Dashboard (API, Lambdas, RDS, DLQ) e ~10 alarmes → SNS                                                                       |
-| `github-oidc`     | Provider OIDC do GitHub e role de deploy restrita ao repositório (main, tags `v*`, environment `production`)                 |
-| `ecs-alternative` | **Não usado.** API em ECS Fargate + ALB + WAF, só validado (`terraform validate`)                                            |
+| Módulo            | O que cria                                                                                                                                                                                                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `network`         | VPC, subnets, IGW, gateway endpoint S3, SGs (Lambda → RDS 5432), endpoints de interface opcionais                                                                                                                                                  |
+| `database`        | RDS PG 17 `db.t4g.micro`, gp3 20 GB, criptografado, backup 7 dias, `rds.force_ssl`, senha e `DATABASE_URL` no SSM                                                                                                                                  |
+| `auth`            | User Pool (login por e-mail, MFA TOTP opcional, só convite), grupos `admin`/`operator`/`auditor`, app client PKCE, Hosted UI                                                                                                                       |
+| `storage`         | Bucket privado de arquivos: CORS do front, SSE-S3, versionamento, ciclo de vida, TLS obrigatório                                                                                                                                                   |
+| `lambda-function` | Base de toda Lambda: role própria, log group (14 dias), X-Ray, DLQ opcional                                                                                                                                                                        |
+| `api`             | Lambda da API (Node 24, arm64, 1024 MB, 29 s, concorrência reservada 5) + HTTP API com CORS e throttling                                                                                                                                           |
+| `jobs`            | Lambdas `migrate`, `expiry-alert` (Scheduler diário 07:00 America/Sao_Paulo), `recall-step` e `audit-retention` (mensal: arquiva a auditoria antiga no bucket); DLQ SQS                                                                            |
+| `workflow`        | Tópico SNS (e-mails) e state machine do recall (BLOCK_LOTS → REPORT → NOTIFY, retry + catch)                                                                                                                                                       |
+| `web`             | Bucket privado + CloudFront com OAC, fallback SPA, cache por tipo de arquivo, headers de segurança                                                                                                                                                 |
+| `observability`   | Dashboard (API, Lambdas, RDS, DLQ, erros do navegador) e 11 alarmes → SNS (o 11º, espaço livre do RDS abaixo de 2 GB, custa ~US$ 0,10/mês). Erros do front: `POST /v1/client-errors` → log `event=client_error` → métrica `TraceFlow/ClientErrors` |
+| `github-oidc`     | Provider OIDC do GitHub e role de deploy restrita ao repositório (main, tags `v*`, environment `production`)                                                                                                                                       |
+| `ecs-alternative` | **Não usado.** API em ECS Fargate + ALB + WAF, só validado (`terraform validate`)                                                                                                                                                                  |
 
 ### Configuração da aplicação na AWS
 
@@ -64,9 +64,21 @@ O Terraform monta as variáveis de `apps/api/src/config/env.ts`. Segredos **não
 | `DATABASE_URL_SSM_PARAMETER`                                  | `/traceflow/prod/db/url` (SecureString, `sslmode=verify-full`) |
 | `DATABASE_POOL_MAX`                                           | `2` (5 instâncias × 2 = 10 conexões no máximo)                 |
 | `S3_BUCKET`, `S3_REGION`                                      | bucket de arquivos                                             |
-| `NOTIFICATIONS_TOPIC_ARN`                                     | tópico SNS (API e jobs)                                        |
+| `SNS_TOPIC_ARN`                                               | tópico SNS (API e jobs)                                        |
+| `TRUST_PROXY` / `RATE_LIMIT_STORE`                            | `1` / `postgres` (rate limit compartilhado entre instâncias)   |
 | `RECALL_STATE_MACHINE_ARN`                                    | state machine do recall (só API)                               |
 | `NODE_EXTRA_CA_CERTS`                                         | `/var/runtime/ca-cert.pem` (CA do RDS no runtime da Lambda)    |
+
+**Orçamento de conexões no RDS** (`db.t4g.micro`, `max_connections` ≈ 80, sem RDS Proxy por custo):
+
+| Quem                               | Limite                            | Conexões |
+| ---------------------------------- | --------------------------------- | -------: |
+| API                                | concorrência reservada 5 × pool 2 |       10 |
+| Etapas do recall (`recall-step`)   | 1 por recall em execução × pool 2 |      2–6 |
+| Alerta de validade, migrations     | 1 execução por vez × pool 2       |    2 + 2 |
+| Folga (console, `psql`, monitoria) |                                   |      ~10 |
+
+O alarme `rds-connections` dispara em 60. Os jobs não têm concorrência reservada de propósito: contas novas têm limite total de 10 execuções simultâneas e a AWS exige 10 sem reserva. Se a conta tiver limite maior e o volume de recalls crescer, reserve 2 para `recall-step`.
 
 > Os jobs da Semana 4 devem ler exatamente `NOTIFICATIONS_TOPIC_ARN`, `RECALL_STATE_MACHINE_ARN` e `S3_BUCKET`. Se usarem outros nomes, ajuste `app_environment` em `infra/terraform/envs/prod/main.tf`.
 
@@ -85,7 +97,7 @@ Região `us-east-1`, preços de referência de out/2026. "Free tier" = conta no 
 | S3 (front + arquivos, poucos GB)                                   | 5 GB grátis        | centavos                  |
 | Cognito Essentials (até 10 mil MAU)                                | grátis             | grátis                    |
 | Step Functions (4 mil transições), SNS, SQS, Scheduler, SSM padrão | grátis             | ~US$ 0                    |
-| CloudWatch (10 alarmes, 3 dashboards, 5 GB de logs)                | grátis             | ~US$ 0                    |
+| CloudWatch (10 alarmes, 3 dashboards, 5 GB de logs) + 1 alarme     | ~US$ 0,10          | ~US$ 0,10                 |
 | **Total (modo padrão)**                                            | **~US$ 0–1/mês**   | **~US$ 18–20/mês**        |
 | `private_networking = true` (3 interface endpoints, 1 AZ)          | —                  | **+ ~US$ 22/mês**         |
 | Evitado: NAT Gateway                                               | —                  | (+ ~US$ 33/mês)           |
@@ -180,7 +192,7 @@ Para ver o que seria aplicado sem aplicar: `--payload '{"dryRun":true}'`.
    - variable `AWS_REGION` (opcional, padrão `us-east-1`).
 3. **Actions → Deploy → Run workflow** (ou `git tag v0.2.0 && git push --tags`).
 
-O workflow: `build` (bundle das Lambdas) → `plan` (mostra o plano no log) → **aprovação manual** → `deploy`: `terraform apply`, invoca a Lambda `migrate`, compila o front com `VITE_AUTH_MODE=cognito` e as variáveis dos outputs, envia ao S3 (`assets/` com cache de 1 ano, `index.html` com `no-cache`) e invalida o CloudFront.
+O workflow: `build` (bundle das Lambdas) → `plan` (mostra o plano no log) → **aprovação manual** → `deploy`: `terraform apply`, invoca a Lambda `migrate`, compila o front com `VITE_AUTH_MODE=cognito` e as variáveis dos outputs, envia ao S3 (`assets/` com cache de 1 ano e **sem apagar os assets antigos**, para abas abertas antes do deploy continuarem carregando páginas; `index.html` com `no-cache`), invalida o CloudFront e termina com um **teste de saúde**: `/v1/health/ready` precisa responder 200 (até 60 s) e a URL do front precisa servir o app — senão o deploy fica vermelho.
 
 > O plano **não** é salvo como artefato (ele conteria a senha do RDS e artefatos são legíveis por quem lê o repo); o job `deploy` gera um plano novo e aplica. O `concurrency` do workflow impede dois deploys simultâneos.
 
@@ -229,7 +241,8 @@ pnpm --filter @traceflow/api tenant:bootstrap --tax-id 12345678000195 \
   --email "$EMAIL" --name "Ana Ribeiro" --sub "$SUB" --role ADMIN
 ```
 
-- Grupos (`admin`, `operator`, `auditor`) definem os **perfis** que a API aceita (vêm no token); `--role` grava o perfil "de cadastro" na tabela `users`. Mantenha os dois iguais.
+- O perfil gravado por `--role` na tabela `users` é o que vale para a API ([ADR 0012](adr/0012-perfil-do-banco-e-gestao-de-usuarios.md)); coloque o usuário no grupo de mesmo nome para o console ficar coerente.
+- **Só o primeiro admin** passa por este roteiro. Os demais usuários são convidados por ele na tela **Gestão → Usuários**: a API cria a conta no Cognito, envia o convite e mantém os grupos.
 - Outros usuários da mesma empresa: repita com o mesmo `--tax-id` (a empresa é reaproveitada).
 - O script recusa mover um `sub` que já pertence a outra empresa.
 - Todas as opções também podem vir de variáveis (`TENANT_TAX_ID`, `TENANT_COMPANY`, `TENANT_LOT_PREFIX`, `TENANT_ADMIN_EMAIL`, `TENANT_ADMIN_NAME`, `TENANT_ADMIN_SUB`, `TENANT_ADMIN_ROLE`).
@@ -243,7 +256,7 @@ O seed de desenvolvimento (`db:seed`) **não** deve rodar em produção: os usu�
 curl -s "$(terraform output -raw api_url)/v1/health/ready"   # {"status":"ok","database":"up"}
 ```
 
-Abra `terraform output -raw web_url`, faça login (o Cognito pede para trocar a senha temporária) e confira o dashboard: `terraform output -raw dashboard_url`.
+Abra `terraform output -raw web_url`, faça login (o Cognito pede para trocar a senha temporária) e confira o dashboard: `terraform output -raw dashboard_url`. Para ver os erros do navegador: CloudWatch Logs Insights no log group da API com `filter event = "client_error" | fields @timestamp, kind, message, url, release`.
 
 ### Domínio próprio (opcional)
 
@@ -259,7 +272,7 @@ Abra `terraform output -raw web_url`, faça login (o Cognito pede para trocar a 
   aws rds restore-db-instance-to-point-in-time --source-db-instance-identifier traceflow-prod \
     --target-db-instance-identifier traceflow-prod-restore --restore-time 2026-10-16T12:00:00Z
   ```
-  Depois, atualize o parâmetro `/traceflow/prod/db/url` com o novo endpoint (ou importe a instância no Terraform) e reinicie as Lambdas (qualquer novo deploy ou mudança de configuração força um novo init).
+  Passo a passo completo (conferir, recuperar só o que se perdeu ou voltar o banco inteiro sem trocar a instância do Terraform) e o ensaio: [restauracao.md](restauracao.md).
 - **Infraestrutura**: `git revert` do commit Terraform + novo deploy. O state é versionado no S3 (dá para recuperar uma versão anterior em último caso).
 
 ## Segredos
@@ -313,4 +326,4 @@ No Git Bash do Windows, prefixe os comandos `docker` com `MSYS_NO_PATHCONV=1`. A
 - O primeiro `apply` real ainda não aconteceu; espere ajustes finos (nomes globais de bucket/domínio do Cognito já incluem o ID da conta para evitar colisão).
 - `private_networking = true` não foi testado de ponta a ponta (a API precisa alcançar o JWKS do Cognito; veja o ADR 0010).
 - Jobs `expiry-alert` e `recall-step` dependem do código da Semana 4; sem os zips, o workflow desliga os recursos correspondentes (e a variável `RECALL_STATE_MACHINE_ARN` fica vazia).
-- Content-Security-Policy do front está desligada por padrão (`web_content_security_policy`): uma CSP errada quebra o login; configure depois de testar (precisa permitir a API, o domínio do Cognito e o bucket de arquivos em `connect-src`).
+- **Content-Security-Policy do front ligada por padrão**, montada no Terraform (`local.web_csp_default`): `script-src 'self'` (o script de tema saiu do HTML para `/theme-init.js`), `connect-src` com o API Gateway da região, o Cognito (`cognito-idp` e o domínio do Hosted UI) e o bucket de arquivos, `frame-ancestors 'none'`. Validada localmente com o build servido sob a mesma política (44 telas, PDFs, upload direto ao bucket, tema e logout, sem violações). A API vai por wildcard (`*.execute-api.<região>`) porque o CORS da API depende da URL do front — usar o ID da API criaria um ciclo. Com domínio próprio na API, acrescente-o em `web_csp_extra_connect`. Para desligar em emergência: `web_content_security_policy = "off"`.

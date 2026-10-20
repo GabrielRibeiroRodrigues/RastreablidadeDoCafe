@@ -34,6 +34,7 @@ const ENTRIES = [
   { name: 'migrate', source: 'jobs/migrate.job.js', copy: { 'prisma/migrations': 'migrations' } },
   { name: 'expiry-alert', source: 'jobs/expiry-alert.job.js' },
   { name: 'recall-step', source: 'jobs/recall-step.job.js' },
+  { name: 'audit-retention', source: 'jobs/audit-retention.job.js' },
 ];
 
 /**

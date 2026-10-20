@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { BUSINESS_TIME_ZONE } from '../../common/time/business-time.js';
 import { dateCell, dateTimeCell, decimalCell, toCsv, type CsvValue } from '../../common/csv/csv.js';
 import type {
   LocationType,
@@ -12,8 +13,10 @@ import type {
 import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
 import { fromDateOnly } from '../inventory/inventory.mappers.js';
 import { Quantity } from '../inventory/quantity.js';
+import { LotsService } from '../inventory/lots.service.js';
 import { StockService } from '../inventory/stock.controller.js';
 import type {
+  LotsReportQueryDto,
   MovementsReportQueryDto,
   ProductionReportQueryDto,
   ShipmentsReportQueryDto,
@@ -80,7 +83,7 @@ function period(from?: string, to?: string) {
 }
 
 /** Sufixo do nome do arquivo: data de hoje em São Paulo ("2026-10-15"). */
-const today = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+const today = () => new Date().toLocaleDateString('en-CA', { timeZone: BUSINESS_TIME_ZONE });
 
 /** CPF/CNPJ com pontuação: além de legível, impede o Excel de tratá-lo como número. */
 function formatDocument(document: string | null): string | null {
@@ -98,7 +101,47 @@ export class ReportsService {
   constructor(
     private readonly db: TenantPrismaService,
     private readonly stock: StockService,
+    private readonly lots: LotsService,
   ) {}
+
+  async lotsReport(query: LotsReportQueryDto): Promise<CsvReport> {
+    const { data, total } = await this.lots.listForExport(query, REPORT_MAX_ROWS);
+    const header = [
+      'Lote',
+      'Produto (SKU)',
+      'Produto',
+      'Tipo',
+      'Situação',
+      'Fornecedor',
+      'Fazenda',
+      'Saldo',
+      'Quantidade inicial',
+      'Unidade',
+      'Recebido em',
+      'Validade',
+      'Safra',
+      'Variedade',
+      'Pontuação SCA',
+    ];
+    const rows = data.map((lot): CsvValue[] => [
+      lot.code,
+      lot.product.sku,
+      lot.product.name,
+      PRODUCT_TYPE[lot.product.type],
+      LOT_STATUS[lot.status],
+      lot.supplier?.name ?? null,
+      lot.supplier?.farmName ?? null,
+      qty(lot.balance),
+      qty(lot.initialQuantity),
+      UNIT[lot.unit],
+      dateTimeCell(lot.receivedAt),
+      lot.expiresAt ? dateCell(fromDateOnly(lot.expiresAt)) : null,
+      lot.harvest,
+      lot.variety,
+      lot.cuppingScore,
+    ]);
+    return report('lotes', header, rows, total > REPORT_MAX_ROWS);
+  }
 
   async stockReport(query: StockReportQueryDto): Promise<CsvReport> {
     const page = await this.stock.position({ ...query, page: 1, pageSize: REPORT_MAX_ROWS });
@@ -207,6 +250,7 @@ export class ReportsService {
         outputMassKg: true,
         yieldPercent: true,
         lossKg: true,
+        cancelledAt: true,
         outputLot: {
           select: {
             code: true,
@@ -240,6 +284,7 @@ export class ReportsService {
       'Rendimento (%)',
       'Perda (kg)',
       'Usuário',
+      'Cancelada em',
     ];
     const rows = orders
       .slice(0, REPORT_MAX_ROWS)
@@ -263,6 +308,7 @@ export class ReportsService {
         o.yieldPercent === null ? null : decimalCell(o.yieldPercent, 2),
         qty(o.lossKg),
         o.user.name,
+        o.cancelledAt ? dateTimeCell(o.cancelledAt) : null,
       ]);
     return report('producao', header, rows, orders.length > REPORT_MAX_ROWS);
   }
@@ -292,6 +338,7 @@ export class ReportsService {
           select: { code: true, unit: true, product: { select: { sku: true, name: true } } },
         },
         location: { select: { code: true } },
+        movement: { select: { reversedBy: { select: { occurredAt: true } } } },
       },
       orderBy: [{ shipment: { shippedAt: 'asc' } }, { shipmentId: 'asc' }, { createdAt: 'asc' }],
       take: REPORT_MAX_ROWS + 1,
@@ -312,6 +359,7 @@ export class ReportsService {
       'Quantidade',
       'Unidade',
       'Usuário',
+      'Estornado em',
     ];
     const rows = items
       .slice(0, REPORT_MAX_ROWS)
@@ -330,6 +378,7 @@ export class ReportsService {
         qty(item.quantity),
         UNIT[item.lot.unit],
         item.shipment.user.name,
+        item.movement.reversedBy ? dateTimeCell(item.movement.reversedBy.occurredAt) : null,
       ]);
     return report('expedicoes', header, rows, items.length > REPORT_MAX_ROWS);
   }

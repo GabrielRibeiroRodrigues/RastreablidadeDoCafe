@@ -87,6 +87,70 @@ export interface paths {
     patch: operations['CompaniesController_update'];
     trace?: never;
   };
+  '/v1/users': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['UsersController_list'];
+    put?: never;
+    post: operations['UsersController_invite'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/users/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['UsersController_get'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch: operations['UsersController_update'];
+    trace?: never;
+  };
+  '/v1/users/{id}/deactivate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['UsersController_deactivate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/users/{id}/activate': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['UsersController_activate'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/products': {
     parameters: {
       query?: never;
@@ -503,6 +567,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/shipments/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ShipmentsController_cancel'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/lots/{lotId}/attachments': {
     parameters: {
       query?: never;
@@ -529,6 +609,22 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['AttachmentsController_confirm'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/lots/{lotId}/attachments/{id}/remove': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['AttachmentsController_remove'];
     delete?: never;
     options?: never;
     head?: never;
@@ -583,6 +679,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/production-orders/{id}/cancel': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ProductionController_cancel'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/lots/{id}/trace/backward': {
     parameters: {
       query?: never;
@@ -631,6 +743,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/labels/batch': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['LabelBatchController_generateBatch'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/dashboard': {
     parameters: {
       query?: never;
@@ -639,6 +767,38 @@ export interface paths {
       cookie?: never;
     };
     get: operations['DashboardController_summary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/dashboard/performance': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['DashboardController_performanceSummary'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/reports/lots.csv': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['ReportsController_lots'];
     put?: never;
     post?: never;
     delete?: never;
@@ -721,6 +881,86 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['ImportsController_import'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/notifications': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['NotificationsController_list'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/notifications/unread-count': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['NotificationsController_unreadCount'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/notifications/read-all': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['NotificationsController_markAllRead'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/notifications/{id}/read': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['NotificationsController_markRead'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/v1/notifications/preferences': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['NotificationsController_preferences'];
+    put: operations['NotificationsController_setPreferences'];
+    post?: never;
     delete?: never;
     options?: never;
     head?: never;
@@ -935,6 +1175,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/v1/client-errors': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['ClientErrorsController_report'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/v1/health': {
     parameters: {
       query?: never;
@@ -1025,12 +1281,27 @@ export interface components {
        * @example CAF
        */
       lotPrefix: string;
+      /**
+       * @description Cor da marca
+       * @example #5b3a29
+       */
+      brandColor: string | null;
+      /** @example Cafés especiais da Mantiqueira */
+      tagline: string | null;
+      /** @example https://serraazul.com.br */
+      website: string | null;
       /** Format: date-time */
       createdAt: string;
     };
     UpdateCompanyDto: {
       /** @example Torrefação Serra Azul */
-      name: string;
+      name?: string;
+      /** @example #5b3a29 */
+      brandColor?: string | null;
+      /** @example Cafés especiais da Mantiqueira */
+      tagline?: string | null;
+      /** @example https://serraazul.com.br */
+      website?: string | null;
     };
     PageMeta: {
       /** @example 1 */
@@ -1041,6 +1312,37 @@ export interface components {
       total: number;
       /** @example 3 */
       totalPages: number;
+    };
+    /** @enum {string} */
+    AppRole: 'admin' | 'operator' | 'auditor';
+    UserResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example bruno@serraazul.com.br */
+      email: string;
+      /** @example Bruno Costa */
+      name: string;
+      role: components['schemas']['AppRole'];
+      isActive: boolean;
+      /** @description É o próprio usuário logado */
+      isCurrentUser: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    InviteUserDto: {
+      /** @example bruno@serraazul.com.br */
+      email: string;
+      /** @example Bruno Costa */
+      name: string;
+      /** @example operator */
+      role: components['schemas']['AppRole'];
+    };
+    UpdateUserDto: {
+      /** @example Bruno Costa */
+      name?: string;
+      role?: components['schemas']['AppRole'];
     };
     /** @enum {string} */
     ProductType: 'GREEN' | 'ROASTED' | 'BLEND' | 'PACKAGING';
@@ -1686,6 +1988,13 @@ export interface components {
       /** @example Cafeteria Grão Fino */
       name: string;
     };
+    CancellationResponse: {
+      /** Format: date-time */
+      cancelledAt: string;
+      /** @example Ordem lançada com o lote errado */
+      reason: string;
+      user: components['schemas']['UserSummary'];
+    };
     ShipmentResponse: {
       /** Format: uuid */
       id: string;
@@ -1698,7 +2007,13 @@ export interface components {
       shippedAt: string;
       /** @example 2 */
       itemsCount: number;
+      /**
+       * @description Itens cuja saída foi estornada; igual a itemsCount = expedição toda estornada
+       * @example 0
+       */
+      reversedItemsCount: number;
       user: components['schemas']['UserSummary'];
+      cancellation: components['schemas']['CancellationResponse'] | null;
     };
     CustomerDetailSummary: {
       /** Format: uuid */
@@ -1711,6 +2026,12 @@ export interface components {
       city: string | null;
       /** @example MG */
       state: string | null;
+    };
+    ShipmentItemReversal: {
+      /** Format: uuid */
+      id: string;
+      /** Format: date-time */
+      occurredAt: string;
     };
     ShipmentItemResponse: {
       lot: components['schemas']['LotSummary'];
@@ -1725,6 +2046,8 @@ export interface components {
        * @description Saída (ISSUE) no razão; estorne-a para corrigir
        */
       movementId: string;
+      /** @description Estorno da saída (o café não chegou ao cliente); null se vale */
+      reversal: components['schemas']['ShipmentItemReversal'] | null;
     };
     ShipmentDetailResponse: {
       /** Format: uuid */
@@ -1739,6 +2062,8 @@ export interface components {
       notes: string | null;
       items: components['schemas']['ShipmentItemResponse'][];
       user: components['schemas']['UserSummary'];
+      /** @description Cancelamento (todas as saídas estornadas); null se a expedição vale */
+      cancellation: components['schemas']['CancellationResponse'] | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -1767,6 +2092,10 @@ export interface components {
       /** @description Um item por par (lote, local); pares repetidos são rejeitados */
       items: components['schemas']['CreateShipmentItemDto'][];
     };
+    CancelOperationDto: {
+      /** @example Ordem lançada com o lote errado */
+      reason: string;
+    };
     CreateAttachmentDto: {
       /** @example laudo-classificacao.pdf */
       fileName: string;
@@ -1782,7 +2111,7 @@ export interface components {
       sizeBytes: number;
     };
     /** @enum {string} */
-    AttachmentStatus: 'PENDING' | 'UPLOADED';
+    AttachmentStatus: 'PENDING' | 'UPLOADED' | 'REMOVED';
     AttachmentResponse: {
       /** Format: uuid */
       id: string;
@@ -1815,6 +2144,10 @@ export interface components {
     CreateAttachmentResponse: {
       attachment: components['schemas']['AttachmentResponse'];
       upload: components['schemas']['UploadInstructions'];
+    };
+    RemoveAttachmentDto: {
+      /** @example Laudo enviado no lote errado */
+      reason: string;
     };
     DownloadUrlResponse: {
       /** @description URL pré-assinada (GET), de curta duração */
@@ -1860,6 +2193,8 @@ export interface components {
       lossKg: string | null;
       notes: string | null;
       user: components['schemas']['UserSummary'];
+      /** @description Cancelamento (produção e consumos estornados); null se a ordem vale */
+      cancellation: components['schemas']['CancellationResponse'] | null;
       /** Format: date-time */
       createdAt: string;
     };
@@ -1973,6 +2308,8 @@ export interface components {
       stage: components['schemas']['ProductionStage'];
       /** Format: date-time */
       performedAt: string;
+      /** @description Ordem cancelada: os consumos e a produção foram estornados (ligação histórica) */
+      cancelled: boolean;
     };
     TraceEdge: {
       /** Format: uuid */
@@ -2018,6 +2355,8 @@ export interface components {
       /** @example 12.000 */
       quantity: string;
       unit: components['schemas']['Unit'];
+      /** @description A saída do item foi estornada (devolução, cliente errado): o café não chegou ao cliente */
+      reversed: boolean;
     };
     ForwardTraceResponse: {
       /** Format: uuid */
@@ -2027,9 +2366,9 @@ export interface components {
       edges: components['schemas']['TraceEdge'][];
       /** @description true se o limite de profundidade cortou o grafo */
       truncated: boolean;
-      /** @description Expedições do lote e de todos os derivados */
+      /** @description Expedições do lote e de todos os derivados, inclusive itens estornados */
       shipments: components['schemas']['TraceShipment'][];
-      /** @description Clientes afetados (distintos) */
+      /** @description Clientes afetados (distintos), só por itens não estornados */
       customers: components['schemas']['TraceCustomer'][];
     };
     LabelResponse: {
@@ -2042,6 +2381,21 @@ export interface components {
        * @example https://traceflow.example.com/rastreio/3q2-7wH1y0mXl4bJp9cS8g
        */
       publicUrl: string;
+    };
+    LabelBatchDto: {
+      /** @description Lotes a imprimir, na ordem das páginas (até 50) */
+      lotIds: string[];
+    };
+    LabelBatchResponse: {
+      /** @description URL pré-assinada (GET) do PDF com todas as etiquetas */
+      url: string;
+      /** Format: date-time */
+      expiresAt: string;
+      /**
+       * @description Etiquetas no PDF (lotes repetidos contam uma vez)
+       * @example 12
+       */
+      count: number;
     };
     LotStatusCounts: {
       /** @example 12 */
@@ -2146,6 +2500,88 @@ export interface components {
       /** @description Até 8 movimentações mais recentes */
       recentMovements: components['schemas']['MovementResponse'][];
     };
+    ProductionTotals: {
+      /** @example 12 */
+      orders: number;
+      /**
+       * @description Massa de entrada (kg)
+       * @example 1800.000
+       */
+      inputKg: string;
+      /**
+       * @description Massa de saída (kg)
+       * @example 1496.000
+       */
+      outputKg: string;
+      /** @example 83.11 */
+      yieldPercent: number | null;
+      /** @example 304.000 */
+      lossKg: string;
+    };
+    ShipmentTotals: {
+      /** @example 9 */
+      count: number;
+      /** @example 4 */
+      customers: number;
+    };
+    PeriodTotals: {
+      production: components['schemas']['ProductionTotals'];
+      shipments: components['schemas']['ShipmentTotals'];
+    };
+    YieldBucket: {
+      /**
+       * @description Início da semana ou do mês
+       * @example 2026-10-05
+       */
+      start: string;
+      /** @example 3 */
+      orders: number;
+      /** @example 420.000 */
+      outputKg: string;
+      /** @example 82.5 */
+      yieldPercent: number | null;
+    };
+    ProductTurnover: {
+      /** Format: uuid */
+      productId: string;
+      /** @example VRD-BOURBON-AM */
+      sku: string;
+      /** @example Café verde Bourbon Amarelo */
+      name: string;
+      type: components['schemas']['ProductType'];
+      unit: components['schemas']['Unit'];
+      /**
+       * @description Saídas no período (expedição + consumo), líquidas de estornos
+       * @example 120.000
+       */
+      outflow: string;
+      /**
+       * @description Saldo atual
+       * @example 40.000
+       */
+      balance: string;
+      /**
+       * @description Dias de cobertura no ritmo do período (saldo ÷ saída diária média)
+       * @example 10
+       */
+      coverageDays: number | null;
+    };
+    PerformanceResponse: {
+      /** @enum {number} */
+      days: 30 | 90 | 180 | 365;
+      /**
+       * @description Agrupamento da série de rendimento
+       * @enum {string}
+       */
+      bucket: 'week' | 'month';
+      /** @description Últimos `days` dias */
+      current: components['schemas']['PeriodTotals'];
+      /** @description Os `days` dias anteriores, para comparação */
+      previous: components['schemas']['PeriodTotals'];
+      yieldSeries: components['schemas']['YieldBucket'][];
+      /** @description Até 8 produtos com maior saída */
+      turnover: components['schemas']['ProductTurnover'][];
+    };
     ImportRowError: {
       /**
        * @description Linha do arquivo (1 = cabeçalho)
@@ -2187,6 +2623,33 @@ export interface components {
        */
       created: number;
       errors: components['schemas']['ImportRowError'][];
+    };
+    /** @enum {string} */
+    NotificationCategory: 'recall' | 'expiry' | 'quality';
+    NotificationResponse: {
+      /** Format: uuid */
+      id: string;
+      /** @example recall.executed */
+      event: string;
+      category: components['schemas']['NotificationCategory'];
+      /** @example Recall RC-2026-000001 (Alta) - 3 lotes bloqueados */
+      title: string;
+      body: string;
+      /** @example /recall/0190… */
+      link: string | null;
+      /** Format: date-time */
+      readAt: string | null;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    Object: Record<string, never>;
+    UnreadCountResponse: {
+      /** @example 3 */
+      unread: number;
+    };
+    NotificationPreferencesDto: {
+      /** @description Categorias silenciadas na central de avisos */
+      muted: components['schemas']['NotificationCategory'][];
     };
     AuditUser: {
       /** Format: uuid */
@@ -2476,6 +2939,11 @@ export interface components {
     CloseRecallDto: {
       /** @example Clientes contatados; estoque recolhido e destinado à destruição */
       notes: string;
+      /**
+       * @description Libera os lotes ainda bloqueados por este recall (voltam ao status anterior ao bloqueio; sem saldo, ficam consumidos). Lotes em outro recall aberto continuam bloqueados.
+       * @default false
+       */
+      releaseLots: boolean;
     };
     RecallReportResponse: {
       /** @description URL pré-assinada do PDF (curta duração) */
@@ -2495,6 +2963,14 @@ export interface components {
       expiredCount: number;
       /** @description Lotes com saldo que vencem na janela (inclui vencidos), por data */
       data: components['schemas']['ExpiringLot'][];
+    };
+    PublicBrandResponse: {
+      /** @example #5b3a29 */
+      color: string | null;
+      /** @example Cafés especiais da Mantiqueira */
+      tagline: string | null;
+      /** @example https://serraazul.com.br */
+      website: string | null;
     };
     PublicLotResponse: {
       /** @example CAF-2026-000013 */
@@ -2561,9 +3037,22 @@ export interface components {
       inputs: string[];
       origin: components['schemas']['PublicOriginResponse'] | null;
     };
+    PublicRecallNotice: {
+      /**
+       * Format: date-time
+       * @description Quando o lote foi bloqueado pelo recall
+       */
+      since: string;
+      /**
+       * @example HIGH
+       * @enum {string}
+       */
+      severity: 'LOW' | 'MEDIUM' | 'HIGH';
+    };
     PublicTraceResponse: {
       /** @example Torrefação Serra Azul */
       companyName: string;
+      brand: components['schemas']['PublicBrandResponse'];
       lot: components['schemas']['PublicLotResponse'];
       /** @description Fazendas/regiões de origem */
       origins: components['schemas']['PublicOriginResponse'][];
@@ -2571,6 +3060,23 @@ export interface components {
       chain: components['schemas']['PublicTraceStep'][];
       /** @description true se a cadeia foi cortada pelo limite de profundidade */
       truncated: boolean;
+      /** @description Aviso ao consumidor: lote recolhido (recall executado e lote ainda bloqueado). O motivo interno não é exposto. */
+      recall: components['schemas']['PublicRecallNotice'] | null;
+    };
+    ClientErrorDto: {
+      /**
+       * @description Onde o erro foi capturado
+       * @enum {string}
+       */
+      kind: 'render' | 'route' | 'unhandled' | 'rejection';
+      /** @example Cannot read properties of undefined (reading 'code') */
+      message: string;
+      stack?: string;
+      /** @example https://app.traceflow.dev/lotes/0190… */
+      url?: string;
+      /** @description Versão do front (hash do build) */
+      release?: string;
+      userAgent?: string;
     };
     HealthResponse: {
       /** @example ok */
@@ -2712,6 +3218,174 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['CompanyResponse'];
+        };
+      };
+    };
+  };
+  UsersController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        status?: 'active' | 'inactive' | 'all';
+        sort?: 'name' | '-name' | 'createdAt' | '-createdAt';
+        /** @description Busca por nome ou e-mail */
+        q?: string;
+        role?: components['schemas']['AppRole'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['UserResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  UsersController_invite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['InviteUserDto'];
+      };
+    };
+    responses: {
+      201: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description E-mail já cadastrado */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UsersController_get: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UsersController_update: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['UpdateUserDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description Mudaria o próprio perfil ou deixaria a empresa sem admin */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UsersController_deactivate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
+        };
+      };
+      /** @description Própria conta ou último admin */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  UsersController_activate: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UserResponse'];
         };
       };
     };
@@ -3839,6 +4513,44 @@ export interface operations {
       };
     };
   };
+  ShipmentsController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelOperationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ShipmentDetailResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Expedição já cancelada */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   AttachmentsController_list: {
     parameters: {
       query?: never;
@@ -3942,6 +4654,44 @@ export interface operations {
       };
       /** @description Arquivo ausente no bucket ou diferente do declarado */
       409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  AttachmentsController_remove: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        lotId: string;
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RemoveAttachmentDto'];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Lote ou anexo não encontrado na empresa */
+      404: {
         headers: {
           [name: string]: unknown;
         };
@@ -4096,6 +4846,44 @@ export interface operations {
       };
     };
   };
+  ProductionController_cancel: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['CancelOperationDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['ProductionOrderResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Ordem já cancelada ou lote gerado já usado/expedido (saldo insuficiente) */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   TraceController_backward: {
     parameters: {
       query?: never;
@@ -4185,6 +4973,43 @@ export interface operations {
       };
     };
   };
+  LabelBatchController_generateBatch: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['LabelBatchDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['LabelBatchResponse'];
+        };
+      };
+      /** @description Algum lote não foi encontrado na empresa */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+      /** @description Armazenamento não configurado (S3_BUCKET) */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
   DashboardController_summary: {
     parameters: {
       query?: never;
@@ -4200,6 +5025,57 @@ export interface operations {
         };
         content: {
           'application/json': components['schemas']['DashboardResponse'];
+        };
+      };
+    };
+  };
+  DashboardController_performanceSummary: {
+    parameters: {
+      query?: {
+        /** @description Janela em dias */
+        days?: 30 | 90 | 180 | 365;
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['PerformanceResponse'];
+        };
+      };
+    };
+  };
+  ReportsController_lots: {
+    parameters: {
+      query?: {
+        /** @description Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda) */
+        q?: string;
+        productId?: string;
+        supplierId?: string;
+        status?: components['schemas']['LotStatus'];
+        /** @description Só lotes que vencem nos próximos N dias (inclui vencidos) */
+        expiresWithinDays?: number;
+        sort?: '-receivedAt' | 'receivedAt' | 'code' | '-code' | 'expiresAt' | '-expiresAt';
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description CSV para Excel pt-BR (UTF-8 com BOM, separador ";", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'text/csv': string;
         };
       };
     };
@@ -4345,6 +5221,142 @@ export interface operations {
           [name: string]: unknown;
         };
         content?: never;
+      };
+    };
+  };
+  NotificationsController_list: {
+    parameters: {
+      query?: {
+        page?: number;
+        pageSize?: number;
+        /** @description Só os não lidos */
+        unread?: components['schemas']['Object'];
+      };
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['NotificationResponse'][];
+            meta: components['schemas']['PageMeta'];
+          };
+        };
+      };
+    };
+  };
+  NotificationsController_unreadCount: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['UnreadCountResponse'];
+        };
+      };
+    };
+  };
+  NotificationsController_markAllRead: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            updated?: number;
+          };
+        };
+      };
+    };
+  };
+  NotificationsController_markRead: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationResponse'];
+        };
+      };
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  NotificationsController_preferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationPreferencesDto'];
+        };
+      };
+    };
+  };
+  NotificationsController_setPreferences: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['NotificationPreferencesDto'];
+      };
+    };
+    responses: {
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': components['schemas']['NotificationPreferencesDto'];
+        };
       };
     };
   };
@@ -4785,6 +5797,33 @@ export interface operations {
         content?: never;
       };
       /** @description Limite de requisições por IP excedido */
+      429: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
+    };
+  };
+  ClientErrorsController_report: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['ClientErrorDto'];
+      };
+    };
+    responses: {
+      204: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content?: never;
+      };
       429: {
         headers: {
           [name: string]: unknown;

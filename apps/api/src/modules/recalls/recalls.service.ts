@@ -2,6 +2,7 @@ import { HttpStatus, Injectable } from '@nestjs/common';
 import { DomainProblemException } from '../../common/http/domain-problem.exception.js';
 import { pageArgs, toPage, type Page } from '../../common/http/pagination.js';
 import {
+  LotStatus,
   RecallStatus,
   RecallStepStatus,
   type Prisma,
@@ -9,7 +10,10 @@ import {
 } from '../../generated/prisma/client.js';
 import { StorageService } from '../../storage/storage.service.js';
 import { TenantContext } from '../../tenancy/tenant-context.js';
-import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
+import {
+  TenantPrismaService,
+  type TenantTransaction,
+} from '../../tenancy/tenant-prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
 import { DOCUMENT_KINDS, DocumentNumberService } from '../inventory/document-number.service.js';
 import { formatQuantity } from '../inventory/quantity.js';
@@ -194,18 +198,70 @@ export class RecallsService {
           { recallStatus: recall.status },
         );
       }
+      const released = dto.releaseLots ? await this.releaseLots(tx, id, recall.number) : [];
       await this.audit.record(
         {
           action: 'recall.closed',
           entityType: 'recall',
           entityId: id,
           before: { status: recall.status },
-          after: { status: RecallStatus.CLOSED, notes: dto.notes },
+          after: { status: RecallStatus.CLOSED, notes: dto.notes, releasedLots: released },
         },
         tx,
       );
     });
     return this.get(id);
+  }
+
+  /**
+   * Devolve cada lote bloqueado por este recall ao status anterior ao bloqueio (sem saldo:
+   * consumido). Lote que também está em outro recall aberto continua bloqueado. Travas em ordem
+   * fixa de lote, como no razão.
+   */
+  private async releaseLots(
+    tx: TenantTransaction,
+    recallId: string,
+    recallNumber: string,
+  ): Promise<string[]> {
+    const items = await tx.recallLot.findMany({
+      where: { recallId, blockedAt: { not: null } },
+      select: { lotId: true, previousStatus: true },
+      orderBy: { lotId: 'asc' },
+    });
+    const released: string[] = [];
+    for (const item of items) {
+      const lot = await this.ledger.lockLot(tx, item.lotId);
+      if (lot.status !== LotStatus.BLOCKED) continue;
+      const otherOpen = await tx.recallLot.count({
+        where: {
+          lotId: lot.id,
+          recallId: { not: recallId },
+          recall: { status: { not: RecallStatus.CLOSED } },
+        },
+      });
+      if (otherOpen > 0) continue;
+
+      const balances = await this.ledger.balances(tx, lot.id);
+      const status =
+        balances.size === 0
+          ? LotStatus.CONSUMED
+          : item.previousStatus === LotStatus.QUARANTINE
+            ? LotStatus.QUARANTINE
+            : LotStatus.AVAILABLE;
+      await tx.lot.update({ where: { id: lot.id }, data: { status } });
+      await this.audit.record(
+        {
+          action: 'lot.status_changed',
+          entityType: 'lot',
+          entityId: lot.id,
+          before: { code: lot.code, status: lot.status },
+          after: { code: lot.code, status, reason: `Encerramento do ${recallNumber}` },
+        },
+        tx,
+      );
+      released.push(lot.code);
+    }
+    return released;
   }
 
   async list(query: ListRecallsQueryDto): Promise<Page<RecallResponse>> {

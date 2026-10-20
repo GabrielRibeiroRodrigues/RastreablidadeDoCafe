@@ -41,6 +41,19 @@ export const LocationsPage = lazyPage(
     },
 );
 
+export const UsersPage = lazyPage(
+  () => Promise.all([catalogModule(), import('@/features/users/resource')]),
+  ([{ CatalogPage }, { usersResource }]) =>
+    function UsersRoute() {
+      return <CatalogPage resource={usersResource} />;
+    },
+);
+
+export const CompanyPage = lazyPage(
+  () => import('@/features/company/CompanyPage'),
+  (m) => m.CompanyPage,
+);
+
 export const LotsPage = lazyPage(
   () => import('@/features/inventory/LotsPage'),
   (m) => m.LotsPage,
@@ -137,6 +150,8 @@ export const PRELOADERS: Record<string, LazyPage['preload']> = {
   '/fornecedores': SuppliersPage.preload,
   '/clientes': CustomersPage.preload,
   '/locais': LocationsPage.preload,
+  '/usuarios': UsersPage.preload,
+  '/empresa': CompanyPage.preload,
   '/lotes': LotsPage.preload,
   '/recebimento': ReceiptPage.preload,
   '/estoque': StockPage.preload,

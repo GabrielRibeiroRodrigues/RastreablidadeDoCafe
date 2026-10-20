@@ -156,6 +156,65 @@ describe('Recall, quality and audit (e2e)', () => {
       expect((await recall(lots['g']!)).status).toBe(201);
     });
 
+    it('closing with releaseLots gives every lot back its previous status', async () => {
+      // Lote derivado em quarentena antes do recall: volta para quarentena, não para disponível.
+      await s.http
+        .patch(`/v1/lots/${lots['r']}/status`, { status: 'QUARANTINE', reason: 'Análise' })
+        .expect(200);
+      const created = (await recall(lots['g']!).expect(201)).body as RecallBody;
+
+      await s.http
+        .post(`/v1/recalls/${created.id}/close`, {
+          notes: 'Laudo de contraprova negativo',
+          releaseLots: true,
+        })
+        .expect(200);
+
+      expect((await s.lot(lots['g']!)).status).toBe('AVAILABLE');
+      expect((await s.lot(lots['r']!)).status).toBe('QUARANTINE');
+      const audit = await testApp.prisma.auditLog.findMany({
+        where: {
+          action: 'lot.status_changed',
+          after: { path: ['reason'], string_contains: 'Encerramento' },
+        },
+      });
+      expect(audit).toHaveLength(2);
+    });
+
+    it('closing without releaseLots keeps the lots blocked', async () => {
+      const created = (await recall(lots['g']!).expect(201)).body as RecallBody;
+      await s.http
+        .post(`/v1/recalls/${created.id}/close`, { notes: 'Estoque destruído' })
+        .expect(200);
+      expect((await s.lot(lots['g']!)).status).toBe('BLOCKED');
+    });
+
+    it('warns consumers on the public page while the recalled lot stays blocked', async () => {
+      const TOKEN = 'recallNoticeToken_0001';
+      await testApp.prisma.lot.update({ where: { id: lots['r'] }, data: { publicToken: TOKEN } });
+      const page = async () =>
+        (await testApp.http().get(`/v1/public/trace/${TOKEN}`).expect(200)).body as {
+          recall: { severity: string; since: string } | null;
+        };
+
+      expect((await page()).recall).toBeNull();
+
+      const created = (await recall(lots['g']!).expect(201)).body as RecallBody;
+      const notice = (await page()).recall;
+      expect(notice).toMatchObject({ severity: 'HIGH' });
+      expect(JSON.stringify(notice)).not.toContain('Ocratoxina'); // motivo interno não vaza
+
+      await s.http
+        .post(`/v1/recalls/${created.id}/close`, { notes: 'Análise concluída: sem risco' })
+        .expect(200);
+      expect((await page()).recall).not.toBeNull(); // encerrado, mas o lote segue bloqueado
+
+      await s.http
+        .patch(`/v1/lots/${lots['r']}/status`, { status: 'AVAILABLE', reason: 'Laudo negativo' })
+        .expect(200);
+      expect((await page()).recall).toBeNull();
+    });
+
     it('only admins create, retry or close recalls', async () => {
       expect(
         (

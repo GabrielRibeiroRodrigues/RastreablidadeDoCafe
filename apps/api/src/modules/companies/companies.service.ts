@@ -9,6 +9,9 @@ const COMPANY_FIELDS = {
   name: true,
   taxId: true,
   lotPrefix: true,
+  brandColor: true,
+  tagline: true,
+  website: true,
   createdAt: true,
 } as const;
 
@@ -30,10 +33,20 @@ export class CompaniesService {
   updateCurrent(dto: UpdateCompanyDto): Promise<CompanyResponse> {
     const id = this.tenant.requireCompanyId();
     return this.db.transaction(async (tx) => {
-      const before = await tx.company.findUniqueOrThrow({ where: { id }, select: { name: true } });
+      const before = await tx.company.findUniqueOrThrow({
+        where: { id },
+        select: { name: true, brandColor: true, tagline: true, website: true },
+      });
       const updated = await tx.company.update({
         where: { id },
-        data: { name: dto.name },
+        data: {
+          ...(dto.name !== undefined && { name: dto.name }),
+          ...(dto.brandColor !== undefined && {
+            brandColor: dto.brandColor?.toLowerCase() ?? null,
+          }),
+          ...(dto.tagline !== undefined && { tagline: dto.tagline }),
+          ...(dto.website !== undefined && { website: dto.website }),
+        },
         select: COMPANY_FIELDS,
       });
       await this.audit.record(
@@ -42,7 +55,12 @@ export class CompaniesService {
           entityType: 'company',
           entityId: id,
           before,
-          after: { name: updated.name },
+          after: {
+            name: updated.name,
+            brandColor: updated.brandColor,
+            tagline: updated.tagline,
+            website: updated.website,
+          },
         },
         tx,
       );

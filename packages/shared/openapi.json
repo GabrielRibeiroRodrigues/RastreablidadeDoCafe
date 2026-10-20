@@ -147,6 +147,285 @@
         "tags": ["companies"]
       }
     },
+    "/v1/users": {
+      "get": {
+        "operationId": "UsersController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "active",
+              "type": "string",
+              "enum": ["active", "inactive", "all"]
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "name",
+              "type": "string",
+              "enum": ["name", "-name", "createdAt", "-createdAt"]
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca por nome ou e-mail",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/AppRole"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UserResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      },
+      "post": {
+        "operationId": "UsersController_invite",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "E-mail já cadastrado"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      }
+    },
+    "/v1/users/{id}": {
+      "get": {
+        "operationId": "UsersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      },
+      "patch": {
+        "operationId": "UsersController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Mudaria o próprio perfil ou deixaria a empresa sem admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      }
+    },
+    "/v1/users/{id}/deactivate": {
+      "post": {
+        "operationId": "UsersController_deactivate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Própria conta ou último admin"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      }
+    },
+    "/v1/users/{id}/activate": {
+      "post": {
+        "operationId": "UsersController_activate",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["users"]
+      }
+    },
     "/v1/products": {
       "get": {
         "operationId": "ProductsController_list",
@@ -2178,6 +2457,55 @@
         "tags": ["shipments"]
       }
     },
+    "/v1/shipments/{id}/cancel": {
+      "post": {
+        "operationId": "ShipmentsController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Expedição já cancelada"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["shipments"]
+      }
+    },
     "/v1/lots/{lotId}/attachments": {
       "post": {
         "operationId": "AttachmentsController_requestUpload",
@@ -2304,6 +2632,56 @@
           },
           "409": {
             "description": "Arquivo ausente no bucket ou diferente do declarado"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["attachments"]
+      }
+    },
+    "/v1/lots/{lotId}/attachments/{id}/remove": {
+      "post": {
+        "operationId": "AttachmentsController_remove",
+        "parameters": [
+          {
+            "name": "lotId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveAttachmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "Lote ou anexo não encontrado na empresa"
           },
           "503": {
             "description": "Armazenamento não configurado (S3_BUCKET)"
@@ -2571,6 +2949,55 @@
         "tags": ["production"]
       }
     },
+    "/v1/production-orders/{id}/cancel": {
+      "post": {
+        "operationId": "ProductionController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelOperationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductionOrderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          },
+          "409": {
+            "description": "Ordem já cancelada ou lote gerado já usado/expedido (saldo insuficiente)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["production"]
+      }
+    },
     "/v1/lots/{id}/trace/backward": {
       "get": {
         "operationId": "TraceController_backward",
@@ -2682,6 +3109,46 @@
         "tags": ["labels"]
       }
     },
+    "/v1/labels/batch": {
+      "post": {
+        "operationId": "LabelBatchController_generateBatch",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelBatchDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LabelBatchResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Algum lote não foi encontrado na empresa"
+          },
+          "503": {
+            "description": "Armazenamento não configurado (S3_BUCKET)"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["labels"]
+      }
+    },
     "/v1/dashboard": {
       "get": {
         "operationId": "DashboardController_summary",
@@ -2704,6 +3171,125 @@
           }
         ],
         "tags": ["dashboard"]
+      }
+    },
+    "/v1/dashboard/performance": {
+      "get": {
+        "operationId": "DashboardController_performanceSummary",
+        "parameters": [
+          {
+            "name": "days",
+            "required": false,
+            "in": "query",
+            "description": "Janela em dias",
+            "schema": {
+              "default": 30,
+              "type": "number",
+              "enum": [30, 90, 180, 365]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["dashboard"]
+      }
+    },
+    "/v1/reports/lots.csv": {
+      "get": {
+        "operationId": "ReportsController_lots",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Busca por código do lote, produto (nome/SKU) ou fornecedor (nome/fazenda)",
+            "schema": {
+              "example": "bourbon",
+              "type": "string"
+            }
+          },
+          {
+            "name": "productId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "supplierId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/LotStatus"
+            }
+          },
+          {
+            "name": "expiresWithinDays",
+            "required": false,
+            "in": "query",
+            "description": "Só lotes que vencem nos próximos N dias (inclui vencidos)",
+            "schema": {
+              "minimum": 0,
+              "maximum": 3650,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "-receivedAt",
+              "type": "string",
+              "enum": ["-receivedAt", "receivedAt", "code", "-code", "expiresAt", "-expiresAt"]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV para Excel pt-BR (UTF-8 com BOM, separador \";\", decimal com vírgula). Máximo de 20000 linhas; se cortado, vem o header X-Report-Truncated: true.",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["reports"]
       }
     },
     "/v1/reports/stock.csv": {
@@ -3020,6 +3606,222 @@
           }
         ],
         "tags": ["imports"]
+      }
+    },
+    "/v1/notifications": {
+      "get": {
+        "operationId": "NotificationsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "pageSize",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "unread",
+            "required": false,
+            "in": "query",
+            "description": "Só os não lidos",
+            "schema": {
+              "default": false,
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/Object"
+                }
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["data", "meta"],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/NotificationResponse"
+                      }
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["notifications"]
+      }
+    },
+    "/v1/notifications/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_unreadCount",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnreadCountResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["notifications"]
+      }
+    },
+    "/v1/notifications/read-all": {
+      "post": {
+        "operationId": "NotificationsController_markAllRead",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "updated": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["notifications"]
+      }
+    },
+    "/v1/notifications/{id}/read": {
+      "post": {
+        "operationId": "NotificationsController_markRead",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["notifications"]
+      }
+    },
+    "/v1/notifications/preferences": {
+      "get": {
+        "operationId": "NotificationsController_preferences",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["notifications"]
+      },
+      "put": {
+        "operationId": "NotificationsController_setPreferences",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferencesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": ["notifications"]
       }
     },
     "/v1/audit-logs": {
@@ -3756,6 +4558,31 @@
         "tags": ["public"]
       }
     },
+    "/v1/client-errors": {
+      "post": {
+        "operationId": "ClientErrorsController_report",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientErrorDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "429": {
+            "description": ""
+          }
+        },
+        "tags": ["public"]
+      }
+    },
     "/v1/health": {
       "get": {
         "operationId": "HealthController_check",
@@ -3927,12 +4754,37 @@
             "description": "Prefixo dos códigos de lote",
             "example": "CAF"
           },
+          "brandColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#5b3a29",
+            "description": "Cor da marca"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cafés especiais da Mantiqueira"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://serraazul.com.br"
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
           }
         },
-        "required": ["id", "name", "taxId", "lotPrefix", "createdAt"]
+        "required": [
+          "id",
+          "name",
+          "taxId",
+          "lotPrefix",
+          "brandColor",
+          "tagline",
+          "website",
+          "createdAt"
+        ]
       },
       "UpdateCompanyDto": {
         "type": "object",
@@ -3940,9 +4792,23 @@
           "name": {
             "type": "string",
             "example": "Torrefação Serra Azul"
+          },
+          "brandColor": {
+            "type": "string",
+            "nullable": true,
+            "example": "#5b3a29"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cafés especiais da Mantiqueira"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://serraazul.com.br"
           }
-        },
-        "required": ["name"]
+        }
       },
       "PageMeta": {
         "type": "object",
@@ -3965,6 +4831,97 @@
           }
         },
         "required": ["page", "pageSize", "total", "totalPages"]
+      },
+      "AppRole": {
+        "type": "string",
+        "enum": ["admin", "operator", "auditor"]
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "example": "bruno@serraazul.com.br"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bruno Costa"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppRole"
+              }
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "isCurrentUser": {
+            "type": "boolean",
+            "description": "É o próprio usuário logado"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "name",
+          "role",
+          "isActive",
+          "isCurrentUser",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "InviteUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "bruno@serraazul.com.br"
+          },
+          "name": {
+            "type": "string",
+            "example": "Bruno Costa"
+          },
+          "role": {
+            "example": "operator",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppRole"
+              }
+            ]
+          }
+        },
+        "required": ["email", "name", "role"]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Bruno Costa"
+          },
+          "role": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppRole"
+              }
+            ]
+          }
+        }
       },
       "ProductType": {
         "type": "string",
@@ -5481,6 +6438,23 @@
         },
         "required": ["id", "name"]
       },
+      "CancellationResponse": {
+        "type": "object",
+        "properties": {
+          "cancelledAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "type": "string",
+            "example": "Ordem lançada com o lote errado"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserSummary"
+          }
+        },
+        "required": ["cancelledAt", "reason", "user"]
+      },
       "ShipmentResponse": {
         "type": "object",
         "properties": {
@@ -5508,11 +6482,35 @@
             "type": "number",
             "example": 2
           },
+          "reversedItemsCount": {
+            "type": "number",
+            "example": 0,
+            "description": "Itens cuja saída foi estornada; igual a itemsCount = expedição toda estornada"
+          },
           "user": {
             "$ref": "#/components/schemas/UserSummary"
+          },
+          "cancellation": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CancellationResponse"
+              }
+            ]
           }
         },
-        "required": ["id", "number", "customer", "orderRef", "shippedAt", "itemsCount", "user"]
+        "required": [
+          "id",
+          "number",
+          "customer",
+          "orderRef",
+          "shippedAt",
+          "itemsCount",
+          "reversedItemsCount",
+          "user",
+          "cancellation"
+        ]
       },
       "CustomerDetailSummary": {
         "type": "object",
@@ -5543,6 +6541,20 @@
         },
         "required": ["id", "name", "document", "city", "state"]
       },
+      "ShipmentItemReversal": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "occurredAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["id", "occurredAt"]
+      },
       "ShipmentItemResponse": {
         "type": "object",
         "properties": {
@@ -5571,9 +6583,19 @@
             "type": "string",
             "format": "uuid",
             "description": "Saída (ISSUE) no razão; estorne-a para corrigir"
+          },
+          "reversal": {
+            "nullable": true,
+            "description": "Estorno da saída (o café não chegou ao cliente); null se vale",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentItemReversal"
+              }
+            ]
           }
         },
-        "required": ["lot", "product", "location", "quantity", "unit", "movementId"]
+        "required": ["lot", "product", "location", "quantity", "unit", "movementId", "reversal"]
       },
       "ShipmentDetailResponse": {
         "type": "object",
@@ -5611,6 +6633,16 @@
           "user": {
             "$ref": "#/components/schemas/UserSummary"
           },
+          "cancellation": {
+            "nullable": true,
+            "description": "Cancelamento (todas as saídas estornadas); null se a expedição vale",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CancellationResponse"
+              }
+            ]
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -5625,6 +6657,7 @@
           "notes",
           "items",
           "user",
+          "cancellation",
           "createdAt"
         ]
       },
@@ -5680,6 +6713,16 @@
         },
         "required": ["customerId", "items"]
       },
+      "CancelOperationDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Ordem lançada com o lote errado"
+          }
+        },
+        "required": ["reason"]
+      },
       "CreateAttachmentDto": {
         "type": "object",
         "properties": {
@@ -5704,7 +6747,7 @@
       },
       "AttachmentStatus": {
         "type": "string",
-        "enum": ["PENDING", "UPLOADED"]
+        "enum": ["PENDING", "UPLOADED", "REMOVED"]
       },
       "AttachmentResponse": {
         "type": "object",
@@ -5794,6 +6837,16 @@
           }
         },
         "required": ["attachment", "upload"]
+      },
+      "RemoveAttachmentDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Laudo enviado no lote errado"
+          }
+        },
+        "required": ["reason"]
       },
       "DownloadUrlResponse": {
         "type": "object",
@@ -5912,6 +6965,16 @@
           "user": {
             "$ref": "#/components/schemas/UserSummary"
           },
+          "cancellation": {
+            "nullable": true,
+            "description": "Cancelamento (produção e consumos estornados); null se a ordem vale",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CancellationResponse"
+              }
+            ]
+          },
           "createdAt": {
             "format": "date-time",
             "type": "string"
@@ -5930,6 +6993,7 @@
           "lossKg",
           "notes",
           "user",
+          "cancellation",
           "createdAt"
         ]
       },
@@ -6209,9 +7273,13 @@
           "performedAt": {
             "format": "date-time",
             "type": "string"
+          },
+          "cancelled": {
+            "type": "boolean",
+            "description": "Ordem cancelada: os consumos e a produção foram estornados (ligação histórica)"
           }
         },
-        "required": ["id", "number", "stage", "performedAt"]
+        "required": ["id", "number", "stage", "performedAt", "cancelled"]
       },
       "TraceEdge": {
         "type": "object",
@@ -6330,6 +7398,10 @@
                 "$ref": "#/components/schemas/Unit"
               }
             ]
+          },
+          "reversed": {
+            "type": "boolean",
+            "description": "A saída do item foi estornada (devolução, cliente errado): o café não chegou ao cliente"
           }
         },
         "required": [
@@ -6341,7 +7413,8 @@
           "lotId",
           "lotCode",
           "quantity",
-          "unit"
+          "unit",
+          "reversed"
         ]
       },
       "ForwardTraceResponse": {
@@ -6369,14 +7442,14 @@
             "description": "true se o limite de profundidade cortou o grafo"
           },
           "shipments": {
-            "description": "Expedições do lote e de todos os derivados",
+            "description": "Expedições do lote e de todos os derivados, inclusive itens estornados",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TraceShipment"
             }
           },
           "customers": {
-            "description": "Clientes afetados (distintos)",
+            "description": "Clientes afetados (distintos), só por itens não estornados",
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/TraceCustomer"
@@ -6403,6 +7476,41 @@
           }
         },
         "required": ["url", "expiresAt", "publicUrl"]
+      },
+      "LabelBatchDto": {
+        "type": "object",
+        "properties": {
+          "lotIds": {
+            "minItems": 1,
+            "maxItems": 50,
+            "description": "Lotes a imprimir, na ordem das páginas (até 50)",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "required": ["lotIds"]
+      },
+      "LabelBatchResponse": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "URL pré-assinada (GET) do PDF com todas as etiquetas"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "count": {
+            "type": "number",
+            "example": 12,
+            "description": "Etiquetas no PDF (lotes repetidos contam uma vez)"
+          }
+        },
+        "required": ["url", "expiresAt", "count"]
       },
       "LotStatusCounts": {
         "type": "object",
@@ -6633,6 +7741,186 @@
           "recentMovements"
         ]
       },
+      "ProductionTotals": {
+        "type": "object",
+        "properties": {
+          "orders": {
+            "type": "number",
+            "example": 12
+          },
+          "inputKg": {
+            "type": "string",
+            "example": "1800.000",
+            "description": "Massa de entrada (kg)"
+          },
+          "outputKg": {
+            "type": "string",
+            "example": "1496.000",
+            "description": "Massa de saída (kg)"
+          },
+          "yieldPercent": {
+            "type": "number",
+            "nullable": true,
+            "example": 83.11
+          },
+          "lossKg": {
+            "type": "string",
+            "example": "304.000"
+          }
+        },
+        "required": ["orders", "inputKg", "outputKg", "yieldPercent", "lossKg"]
+      },
+      "ShipmentTotals": {
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "number",
+            "example": 9
+          },
+          "customers": {
+            "type": "number",
+            "example": 4
+          }
+        },
+        "required": ["count", "customers"]
+      },
+      "PeriodTotals": {
+        "type": "object",
+        "properties": {
+          "production": {
+            "$ref": "#/components/schemas/ProductionTotals"
+          },
+          "shipments": {
+            "$ref": "#/components/schemas/ShipmentTotals"
+          }
+        },
+        "required": ["production", "shipments"]
+      },
+      "YieldBucket": {
+        "type": "object",
+        "properties": {
+          "start": {
+            "type": "string",
+            "example": "2026-10-05",
+            "description": "Início da semana ou do mês"
+          },
+          "orders": {
+            "type": "number",
+            "example": 3
+          },
+          "outputKg": {
+            "type": "string",
+            "example": "420.000"
+          },
+          "yieldPercent": {
+            "type": "number",
+            "nullable": true,
+            "example": 82.5
+          }
+        },
+        "required": ["start", "orders", "outputKg", "yieldPercent"]
+      },
+      "ProductTurnover": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sku": {
+            "type": "string",
+            "example": "VRD-BOURBON-AM"
+          },
+          "name": {
+            "type": "string",
+            "example": "Café verde Bourbon Amarelo"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProductType"
+              }
+            ]
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Unit"
+              }
+            ]
+          },
+          "outflow": {
+            "type": "string",
+            "example": "120.000",
+            "description": "Saídas no período (expedição + consumo), líquidas de estornos"
+          },
+          "balance": {
+            "type": "string",
+            "example": "40.000",
+            "description": "Saldo atual"
+          },
+          "coverageDays": {
+            "type": "number",
+            "nullable": true,
+            "example": 10,
+            "description": "Dias de cobertura no ritmo do período (saldo ÷ saída diária média)"
+          }
+        },
+        "required": [
+          "productId",
+          "sku",
+          "name",
+          "type",
+          "unit",
+          "outflow",
+          "balance",
+          "coverageDays"
+        ]
+      },
+      "PerformanceResponse": {
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "number",
+            "enum": [30, 90, 180, 365]
+          },
+          "bucket": {
+            "type": "string",
+            "enum": ["week", "month"],
+            "description": "Agrupamento da série de rendimento"
+          },
+          "current": {
+            "description": "Últimos `days` dias",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodTotals"
+              }
+            ]
+          },
+          "previous": {
+            "description": "Os `days` dias anteriores, para comparação",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PeriodTotals"
+              }
+            ]
+          },
+          "yieldSeries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/YieldBucket"
+            }
+          },
+          "turnover": {
+            "description": "Até 8 produtos com maior saída",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProductTurnover"
+            }
+          }
+        },
+        "required": ["days", "bucket", "current", "previous", "yieldSeries", "turnover"]
+      },
       "ImportRowError": {
         "type": "object",
         "properties": {
@@ -6694,6 +7982,79 @@
           }
         },
         "required": ["entity", "dryRun", "total", "valid", "invalid", "created", "errors"]
+      },
+      "NotificationCategory": {
+        "type": "string",
+        "enum": ["recall", "expiry", "quality"]
+      },
+      "NotificationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "event": {
+            "type": "string",
+            "example": "recall.executed"
+          },
+          "category": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/NotificationCategory"
+              }
+            ]
+          },
+          "title": {
+            "type": "string",
+            "example": "Recall RC-2026-000001 (Alta) - 3 lotes bloqueados"
+          },
+          "body": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "nullable": true,
+            "example": "/recall/0190…"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": ["id", "event", "category", "title", "body", "link", "readAt", "createdAt"]
+      },
+      "Object": {
+        "type": "object",
+        "properties": {}
+      },
+      "UnreadCountResponse": {
+        "type": "object",
+        "properties": {
+          "unread": {
+            "type": "number",
+            "example": 3
+          }
+        },
+        "required": ["unread"]
+      },
+      "NotificationPreferencesDto": {
+        "type": "object",
+        "properties": {
+          "muted": {
+            "type": "array",
+            "description": "Categorias silenciadas na central de avisos",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCategory"
+            }
+          }
+        },
+        "required": ["muted"]
       },
       "AuditUser": {
         "type": "object",
@@ -7565,6 +8926,11 @@
           "notes": {
             "type": "string",
             "example": "Clientes contatados; estoque recolhido e destinado à destruição"
+          },
+          "releaseLots": {
+            "type": "boolean",
+            "default": false,
+            "description": "Libera os lotes ainda bloqueados por este recall (voltam ao status anterior ao bloqueio; sem saldo, ficam consumidos). Lotes em outro recall aberto continuam bloqueados."
           }
         },
         "required": ["notes"]
@@ -7608,6 +8974,27 @@
           }
         },
         "required": ["days", "referenceDate", "expiredCount", "data"]
+      },
+      "PublicBrandResponse": {
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": "string",
+            "nullable": true,
+            "example": "#5b3a29"
+          },
+          "tagline": {
+            "type": "string",
+            "nullable": true,
+            "example": "Cafés especiais da Mantiqueira"
+          },
+          "website": {
+            "type": "string",
+            "nullable": true,
+            "example": "https://serraazul.com.br"
+          }
+        },
+        "required": ["color", "tagline", "website"]
       },
       "PublicLotResponse": {
         "type": "object",
@@ -7786,12 +9173,31 @@
           "origin"
         ]
       },
+      "PublicRecallNotice": {
+        "type": "object",
+        "properties": {
+          "since": {
+            "format": "date-time",
+            "type": "string",
+            "description": "Quando o lote foi bloqueado pelo recall"
+          },
+          "severity": {
+            "type": "string",
+            "enum": ["LOW", "MEDIUM", "HIGH"],
+            "example": "HIGH"
+          }
+        },
+        "required": ["since", "severity"]
+      },
       "PublicTraceResponse": {
         "type": "object",
         "properties": {
           "companyName": {
             "type": "string",
             "example": "Torrefação Serra Azul"
+          },
+          "brand": {
+            "$ref": "#/components/schemas/PublicBrandResponse"
           },
           "lot": {
             "$ref": "#/components/schemas/PublicLotResponse"
@@ -7813,9 +9219,48 @@
           "truncated": {
             "type": "boolean",
             "description": "true se a cadeia foi cortada pelo limite de profundidade"
+          },
+          "recall": {
+            "nullable": true,
+            "description": "Aviso ao consumidor: lote recolhido (recall executado e lote ainda bloqueado). O motivo interno não é exposto.",
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PublicRecallNotice"
+              }
+            ]
           }
         },
-        "required": ["companyName", "lot", "origins", "chain", "truncated"]
+        "required": ["companyName", "brand", "lot", "origins", "chain", "truncated", "recall"]
+      },
+      "ClientErrorDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": ["render", "route", "unhandled", "rejection"],
+            "description": "Onde o erro foi capturado"
+          },
+          "message": {
+            "type": "string",
+            "example": "Cannot read properties of undefined (reading 'code')"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "example": "https://app.traceflow.dev/lotes/0190…"
+          },
+          "release": {
+            "type": "string",
+            "description": "Versão do front (hash do build)"
+          },
+          "userAgent": {
+            "type": "string"
+          }
+        },
+        "required": ["kind", "message"]
       },
       "HealthResponse": {
         "type": "object",

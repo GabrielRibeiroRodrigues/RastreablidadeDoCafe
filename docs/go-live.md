@@ -14,7 +14,7 @@ Roteiro detalhado (comandos): [deploy.md](deploy.md). Este documento é o checkl
 | 6   | Confirmar a inscrição do e-mail no SNS                                                                               | [deploy.md §5](deploy.md#5-confirmar-o-e-mail-do-sns)                      |
 | 7   | Rodar as migrations (Lambda `migrate`)                                                                               | [deploy.md §6](deploy.md#6-migrations)                                     |
 | 8   | GitHub: environment `production` com aprovação, secret `AWS_DEPLOY_ROLE_ARN`, variável `TF_VARS`                     | [deploy.md §7](deploy.md#7-github-actions)                                 |
-| 9   | Criar os usuários no Cognito (grupos admin/operator/auditor) e rodar `tenant:bootstrap`                              | [deploy.md §8](deploy.md#8-primeiro-acesso-usuários-no-cognito-e-no-banco) |
+| 9   | Criar o primeiro admin no Cognito e rodar `tenant:bootstrap`; os demais são convidados na tela Usuários              | [deploy.md §8](deploy.md#8-primeiro-acesso-usuários-no-cognito-e-no-banco) |
 | 10  | Conferência pós-deploy                                                                                               | [deploy.md §9](deploy.md#9-conferência)                                    |
 
 ## Conferência funcional (15 minutos, no ambiente publicado)
@@ -44,4 +44,4 @@ Free tier: ~US$ 0–1/mês. Depois do free tier: ~US$ 18–20/mês (quase tudo R
 
 ## Rollback
 
-Ver [deploy.md — Rollback](deploy.md#rollback): reimplantar a tag anterior pelo workflow; migrations são só aditivas até aqui; snapshot do RDS antes de cada deploy com migration.
+Ver [deploy.md — Rollback](deploy.md#rollback) e o runbook [restauracao.md](restauracao.md) (faça o ensaio de restauração antes de abrir para clientes): reimplantar a tag anterior pelo workflow; migrations são só aditivas até aqui; snapshot do RDS antes de cada deploy com migration.

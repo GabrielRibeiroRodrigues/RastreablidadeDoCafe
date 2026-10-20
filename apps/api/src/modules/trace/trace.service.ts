@@ -64,6 +64,7 @@ export class TraceService {
       where: { lotId: { in: graph.nodes.map((node) => node.id) } },
       include: {
         lot: { select: { code: true, unit: true } },
+        movement: { select: { reversedBy: { select: { id: true } } } },
         shipment: {
           select: {
             id: true,
@@ -87,9 +88,11 @@ export class TraceService {
       lotCode: item.lot.code,
       quantity: formatQuantity(item.quantity),
       unit: item.lot.unit,
+      reversed: item.movement.reversedBy !== null,
     }));
+    // Item estornado continua listado (transparência), mas não torna o cliente "afetado".
     const customers: TraceCustomer[] = uniqueBy(
-      shipments.map((shipment) => shipment.customer),
+      shipments.filter((shipment) => !shipment.reversed).map((shipment) => shipment.customer),
       (customer) => customer.id,
     );
     return { ...graph, shipments, customers };
@@ -121,7 +124,7 @@ export class TraceService {
       }),
       this.db.client.productionOrder.findMany({
         where: { id: { in: [...new Set(edgeRows.map((row) => row.production_order_id))] } },
-        select: { id: true, number: true, stage: true, performedAt: true },
+        select: { id: true, number: true, stage: true, performedAt: true, cancelledAt: true },
       }),
     ]);
     const ordersById = new Map(orders.map((order) => [order.id, order]));
@@ -150,7 +153,13 @@ export class TraceService {
               parentLotId: row.parent_lot_id,
               childLotId: row.child_lot_id,
               quantity: formatQuantity(row.quantity),
-              productionOrder: order,
+              productionOrder: {
+                id: order.id,
+                number: order.number,
+                stage: order.stage,
+                performedAt: order.performedAt,
+                cancelled: order.cancelledAt !== null,
+              },
             },
           ]
         : [];

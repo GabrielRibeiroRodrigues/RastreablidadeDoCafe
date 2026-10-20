@@ -268,15 +268,17 @@ describe('Production, shipments and traceability (e2e)', () => {
       }
     });
 
-    it('hides why a lot is unavailable (e.g. a recall)', async () => {
+    it('hides why a lot is unavailable (manual block); only an executed recall warns', async () => {
       const lotId = await publish();
       await s.http
         .patch(`/v1/lots/${lotId}/status`, { status: 'BLOCKED', reason: 'Recall preventivo' })
         .expect(200);
 
       const res = await testApp.http().get(`/v1/public/trace/${TOKEN}`).expect(200);
-      expect((res.body as { lot: { available: boolean } }).lot.available).toBe(false);
-      expect(JSON.stringify(res.body)).not.toMatch(/BLOCKED|recall/i);
+      const body = res.body as { lot: { available: boolean }; recall: unknown };
+      expect(body.lot.available).toBe(false);
+      expect(body.recall).toBeNull();
+      expect(JSON.stringify(res.body)).not.toMatch(/BLOCKED|Recall preventivo/);
     });
 
     it('answers 404 for unknown or malformed tokens', async () => {

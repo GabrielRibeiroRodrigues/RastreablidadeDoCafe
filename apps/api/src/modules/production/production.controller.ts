@@ -3,6 +3,8 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -22,6 +24,7 @@ import {
 import type { Response } from 'express';
 import { Roles } from '../../auth/decorators.js';
 import { ApiPageResponse, type Page } from '../../common/http/pagination.js';
+import { CancelOperationDto } from '../inventory/cancellation.js';
 import { IDEMPOTENCY_HEADER, idempotencyFor } from '../inventory/idempotency.js';
 import { IDEMPOTENCY_HEADER_DOC } from '../inventory/receipts.controller.js';
 import {
@@ -65,5 +68,21 @@ export class ProductionController {
     const { order, replayed } = await this.production.create(dto, idempotencyFor(key, dto));
     if (replayed) res.setHeader('Idempotent-Replayed', 'true');
     return order;
+  }
+
+  /** Cancela a ordem: estorna a produção e os consumos (o lote gerado precisa ter todo o saldo). */
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin')
+  @ApiOkResponse({ type: ProductionOrderResponse })
+  @ApiNotFoundResponse()
+  @ApiConflictResponse({
+    description: 'Ordem já cancelada ou lote gerado já usado/expedido (saldo insuficiente)',
+  })
+  cancel(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CancelOperationDto,
+  ): Promise<ProductionOrderResponse> {
+    return this.production.cancel(id, dto);
   }
 }

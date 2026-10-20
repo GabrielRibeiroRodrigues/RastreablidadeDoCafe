@@ -122,6 +122,19 @@ export const inventoryApi = {
   generateLabel: (lotId: string) =>
     unwrap(getApiClient().POST('/v1/lots/{id}/label', { params: { path: { id: lotId } } })),
 
+  /** Um PDF com as etiquetas de vários lotes (uma por página, até 50). */
+  generateLabelsBatch: (lotIds: string[]) =>
+    unwrap(getApiClient().POST('/v1/labels/batch', { body: { lotIds } })),
+
+  /** Retira um anexo enviado por engano (admin; o registro fica na auditoria). */
+  removeAttachment: (lotId: string, id: string, reason: string) =>
+    unwrap(
+      getApiClient().POST('/v1/lots/{lotId}/attachments/{id}/remove', {
+        params: { path: { lotId, id } },
+        body: { reason },
+      }),
+    ),
+
   downloadAttachment: (lotId: string, id: string) =>
     unwrap(
       getApiClient().GET('/v1/lots/{lotId}/attachments/{id}/download', {

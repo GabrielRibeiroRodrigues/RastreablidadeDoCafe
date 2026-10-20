@@ -48,10 +48,19 @@ export class PublicTraceService {
       }),
       this.db.client.company.findUniqueOrThrow({
         where: { id: companyId },
-        select: { name: true },
+        select: { name: true, brandColor: true, tagline: true, website: true },
       }),
       this.trace.backward(lotId),
     ]);
+    // Liberado depois da investigação (status voltou a Disponível) = sem aviso.
+    const recalled =
+      lot.status === LotStatus.BLOCKED
+        ? await this.db.client.recallLot.findFirst({
+            where: { lotId, blockedAt: { not: null } },
+            select: { blockedAt: true, recall: { select: { severity: true } } },
+            orderBy: { blockedAt: 'desc' },
+          })
+        : null;
 
     const codeById = new Map(backward.nodes.map((node) => [node.id, node.code]));
     const chain: PublicTraceStep[] = backward.nodes
@@ -75,6 +84,7 @@ export class PublicTraceService {
 
     return {
       companyName: company.name,
+      brand: { color: company.brandColor, tagline: company.tagline, website: company.website },
       lot: {
         code: lot.code,
         productName: lot.product.name,
@@ -90,6 +100,9 @@ export class PublicTraceService {
       origins: uniqueOrigins(backward.origins.map(toPublicOrigin)),
       chain,
       truncated: backward.truncated,
+      recall: recalled?.blockedAt
+        ? { since: recalled.blockedAt, severity: recalled.recall.severity }
+        : null,
     };
   }
 }

@@ -3,6 +3,8 @@ import {
   Controller,
   Get,
   Headers,
+  HttpCode,
+  HttpStatus,
   Param,
   ParseUUIDPipe,
   Post,
@@ -23,6 +25,7 @@ import {
 import type { Response } from 'express';
 import { Roles } from '../../auth/decorators.js';
 import { ApiPageResponse, type Page } from '../../common/http/pagination.js';
+import { CancelOperationDto } from '../inventory/cancellation.js';
 import { IDEMPOTENCY_HEADER, idempotencyFor } from '../inventory/idempotency.js';
 import { IDEMPOTENCY_HEADER_DOC } from '../inventory/receipts.controller.js';
 import {
@@ -72,5 +75,19 @@ export class ShipmentsController {
     const { shipment, replayed } = await this.shipments.create(dto, idempotencyFor(key, dto));
     if (replayed) res.setHeader('Idempotent-Replayed', 'true');
     return shipment;
+  }
+
+  /** Cancela a expedição: estorna a saída de cada item (o café volta ao local de origem). */
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
+  @Roles('admin')
+  @ApiOkResponse({ type: ShipmentDetailResponse })
+  @ApiNotFoundResponse()
+  @ApiConflictResponse({ description: 'Expedição já cancelada' })
+  cancel(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CancelOperationDto,
+  ): Promise<ShipmentDetailResponse> {
+    return this.shipments.cancel(id, dto);
   }
 }

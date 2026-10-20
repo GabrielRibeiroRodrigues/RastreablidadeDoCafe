@@ -17,7 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { ExpiryBell } from '@/features/alerts/ExpiryBell';
+import { NotificationCenter } from '@/features/notifications/NotificationCenter';
 import { getErrorMessage } from '@/lib/api';
 import { ThemeToggle } from '@/theme/ThemeToggle';
 import { MobileNav } from './MobileNav';
@@ -70,7 +70,7 @@ export function AppHeader() {
       {mode === 'mock' && <DevEnvironmentBadge />}
 
       <div className="ml-auto flex items-center gap-1">
-        {user && <ExpiryBell />}
+        {user && <NotificationCenter />}
         <ThemeToggle />
         {user && (
           <DropdownMenu>

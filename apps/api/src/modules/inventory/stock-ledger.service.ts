@@ -36,6 +36,7 @@ interface LockedLot {
   id: string;
   code: string;
   status: LotStatus;
+  received_at: Date;
 }
 
 /** Quais lados (origem/destino) cada tipo de movimentação usa. */
@@ -67,7 +68,7 @@ export class StockLedgerService {
   async lockLot(tx: TenantTransaction, lotId: string): Promise<LockedLot> {
     const rows = await tx.sql<LockedLot[]>(
       (companyId) => Prisma.sql`
-        SELECT id, code, status FROM lots
+        SELECT id, code, status, received_at FROM lots
         WHERE company_id = ${companyId}::uuid AND id = ${lotId}::uuid
         FOR UPDATE`,
     );
@@ -101,6 +102,15 @@ export class StockLedgerService {
   async record(tx: TenantTransaction, input: RecordMovementInput): Promise<StockMovement> {
     assertDirection(input);
     const lot = await this.lockLot(tx, input.lotId);
+    if (input.occurredAt && input.occurredAt < lot.received_at) {
+      // Saída "antes" do recebimento deixaria o histórico por data com saldo negativo.
+      throw new DomainProblemException(
+        '/problems/invalid-movement',
+        `Movement date is before lot ${lot.code} was received or produced.`,
+        HttpStatus.BAD_REQUEST,
+        { lot: lot.code, receivedAt: lot.received_at.toISOString() },
+      );
+    }
     const locations = await this.loadLocations(tx, input);
 
     if (input.fromLocationId && input.type !== MovementType.REVERSAL && !input.allowRestrictedLot) {
@@ -139,6 +149,23 @@ export class StockLedgerService {
 
     await this.syncConsumedStatus(tx, lot, before, input);
     return movement;
+  }
+
+  /**
+   * Estorno: nova linha com origem e destino trocados; a original continua intacta. O banco
+   * garante um estorno por movimentação (`reversal_of_id` único).
+   */
+  reverse(tx: TenantTransaction, original: StockMovement, reason: string): Promise<StockMovement> {
+    return this.record(tx, {
+      type: MovementType.REVERSAL,
+      lotId: original.lotId,
+      fromLocationId: original.toLocationId,
+      toLocationId: original.fromLocationId,
+      quantity: original.quantity,
+      documentRef: original.documentRef,
+      reason,
+      reversalOfId: original.id,
+    });
   }
 
   /** CONSUMED quando o saldo total zera; volta a AVAILABLE se um estorno repõe saldo. */

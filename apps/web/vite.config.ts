@@ -36,5 +36,8 @@ export default defineConfig({
     restoreMocks: true,
     unstubEnvs: true,
     unstubGlobals: true,
+    // Telas inteiras com React Router e TanStack Query: no primeiro arranque (cache frio, CI) uma
+    // tela passa dos 5 s padrão do Vitest sem estar travada.
+    testTimeout: 15_000,
   },
 });

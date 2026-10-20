@@ -49,6 +49,7 @@ export function ReasonDialog({
   fieldLabel = 'Motivo',
   minLength = MIN_REASON,
   maxLength = 500,
+  dismissLabel = 'Cancelar',
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -64,6 +65,8 @@ export function ReasonDialog({
   fieldLabel?: string;
   minLength?: number;
   maxLength?: number;
+  /** Botão que fecha sem fazer nada (ex.: "Voltar" quando a ação já é um cancelamento). */
+  dismissLabel?: string;
 }) {
   const formId = useId();
   const reasonId = useId();
@@ -120,7 +123,7 @@ export function ReasonDialog({
         </form>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            Cancelar
+            {dismissLabel}
           </Button>
           <Button
             type="submit"

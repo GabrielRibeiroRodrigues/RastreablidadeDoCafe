@@ -101,9 +101,15 @@ variable "web_certificate_arn" {
 }
 
 variable "web_content_security_policy" {
-  description = "Content-Security-Policy for the SPA (empty = not sent)."
+  description = "Content-Security-Policy for the SPA: empty = the default policy (API, Cognito and files bucket); \"off\" = not sent; anything else replaces it."
   type        = string
   default     = ""
+}
+
+variable "web_csp_extra_connect" {
+  description = "Extra connect-src origins for the default CSP (e.g. a custom API domain)."
+  type        = list(string)
+  default     = []
 }
 
 variable "extra_callback_urls" {

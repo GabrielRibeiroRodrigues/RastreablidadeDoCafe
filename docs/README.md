@@ -21,4 +21,7 @@
 | [adr/](adr/README.md)                                          | Registro das decisões de arquitetura                            |
 | [progresso.md](progresso.md)                                   | O que foi feito em cada etapa e o que falta                     |
 | [recall-qualidade-auditoria.md](recall-qualidade-auditoria.md) | Recall orquestrado, não conformidade, alertas e auditoria       |
+| [restauracao.md](restauracao.md)                               | Restauração do banco (PITR/snapshot), recuperação e ensaio      |
 | [deploy.md](deploy.md)                                         | Deploy na AWS: arquitetura, roteiro, custos, rollback, segredos |
+| [manual_cliente.md](manual_cliente.md)                         | Manual de apresentação e uso para clientes, com telas reais     |
+| [guia_producao.md](guia_producao.md)                           | Diagnóstico, checklist e passo a passo até a produção           |

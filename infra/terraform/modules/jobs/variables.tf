@@ -72,3 +72,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "enable_audit_retention" {
+  description = "Create the monthly audit retention job (archives to S3, then deletes)."
+  type        = bool
+  default     = true
+}
+
+variable "audit_retention_schedule" {
+  description = "Schedule for the audit retention job (EventBridge Scheduler, America/Sao_Paulo)."
+  type        = string
+  default     = "cron(0 3 1 * ? *)"
+}

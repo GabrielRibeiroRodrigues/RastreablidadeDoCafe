@@ -5,9 +5,10 @@ import {
   ImageIcon,
   Loader2Icon,
   PaperclipIcon,
+  Trash2Icon,
   UploadIcon,
 } from 'lucide-react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,7 +21,8 @@ import {
 } from '@/components/ui/card';
 import { ApiError, getErrorMessage } from '@/lib/api';
 import { formatDateTime } from '@/lib/quantity';
-import { inventoryApi, type AttachmentContentType } from './api';
+import { inventoryApi, type Attachment, type AttachmentContentType } from './api';
+import { ReasonDialog } from './ReasonDialogs';
 
 const ACCEPTED: Record<string, AttachmentContentType> = {
   'application/pdf': 'application/pdf',
@@ -45,8 +47,18 @@ function attachmentError(error: unknown): string {
 }
 
 /** Laudos, notas fiscais e fotos do lote: upload direto para o bucket (formulário pré-assinado). */
-export function AttachmentsCard({ lotId, canUpload }: { lotId: string; canUpload: boolean }) {
+export function AttachmentsCard({
+  lotId,
+  canUpload,
+  canRemove = false,
+}: {
+  lotId: string;
+  canUpload: boolean;
+  /** Retirar anexo enviado por engano (admin). */
+  canRemove?: boolean;
+}) {
   const queryClient = useQueryClient();
+  const [removing, setRemoving] = useState<Attachment | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const queryKey = ['lots', 'attachments', lotId];
 
@@ -64,6 +76,18 @@ export function AttachmentsCard({ lotId, canUpload }: { lotId: string; canUpload
     },
     onError: (error) =>
       toast.error('Não foi possível enviar o anexo', { description: attachmentError(error) }),
+  });
+
+  const remove = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      inventoryApi.removeAttachment(lotId, id, reason),
+    onSuccess: async () => {
+      toast.success('Anexo removido', { description: removing?.fileName });
+      setRemoving(null);
+      await queryClient.invalidateQueries({ queryKey });
+    },
+    onError: (error) =>
+      toast.error('Não foi possível remover o anexo', { description: attachmentError(error) }),
   });
 
   const download = useMutation({
@@ -167,12 +191,44 @@ export function AttachmentsCard({ lotId, canUpload }: { lotId: string; canUpload
                   >
                     <DownloadIcon />
                   </Button>
+                  {canRemove && (
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-muted-foreground hover:text-destructive"
+                      aria-label={`Remover ${attachment.fileName}`}
+                      title="Remover"
+                      onClick={() => setRemoving(attachment)}
+                    >
+                      <Trash2Icon />
+                    </Button>
+                  )}
                 </li>
               );
             })}
           </ul>
         )}
       </CardContent>
+      {removing && (
+        <ReasonDialog
+          open
+          onOpenChange={(open) => !open && setRemoving(null)}
+          title="Remover anexo?"
+          description={
+            <>
+              <strong className="font-medium text-foreground">{removing.fileName}</strong> sai da
+              lista do lote. O registro (quem, quando e por quê) fica na auditoria.
+            </>
+          }
+          confirmLabel="Remover"
+          destructive
+          minLength={5}
+          pending={remove.isPending}
+          error={remove.error}
+          onSubmit={(reason) => remove.mutate({ id: removing.id, reason })}
+          reasonPlaceholder="Laudo enviado no lote errado"
+        />
+      )}
     </Card>
   );
 }

@@ -1,6 +1,14 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 import { PagingDto } from '../../common/http/pagination.js';
 import { trim } from '../../common/http/transforms.js';
 import {
@@ -46,6 +54,15 @@ export class CloseRecallDto {
   @MinLength(5)
   @MaxLength(2000)
   notes!: string;
+
+  @ApiPropertyOptional({
+    default: false,
+    description:
+      'Libera os lotes ainda bloqueados por este recall (voltam ao status anterior ao bloqueio; sem saldo, ficam consumidos). Lotes em outro recall aberto continuam bloqueados.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  releaseLots?: boolean;
 }
 
 export class ListRecallsQueryDto extends PagingDto {

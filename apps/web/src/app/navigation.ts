@@ -1,5 +1,6 @@
 import {
   ArrowLeftRightIcon,
+  Building2Icon,
   BoxesIcon,
   ClipboardCheckIcon,
   FactoryIcon,
@@ -14,6 +15,7 @@ import {
   SproutIcon,
   TruckIcon,
   UploadIcon,
+  UserCogIcon,
   UsersIcon,
   WarehouseIcon,
   type LucideIcon,
@@ -124,7 +126,17 @@ export const QUALITY_ITEMS: NavLinkItem[] = [
   },
 ];
 
-/** Relatórios e importação. */
+/** Usuários da empresa (só admin): é um cadastro, mas fica em Gestão. */
+export const USERS_ITEM: NavItem = {
+  path: '/usuarios',
+  label: 'Usuários',
+  newLabel: 'Convidar usuário',
+  description: 'Quem acessa o TraceFlow: convite, perfil e bloqueio de acesso.',
+  icon: UserCogIcon,
+  roles: ['admin'],
+};
+
+/** Relatórios, importação e usuários. */
 export const MANAGEMENT_ITEMS: NavLinkItem[] = [
   {
     path: '/relatorios',
@@ -137,6 +149,14 @@ export const MANAGEMENT_ITEMS: NavLinkItem[] = [
     label: 'Importação',
     description: 'Carga de cadastros por planilha CSV.',
     icon: UploadIcon,
+    roles: ['admin'],
+  },
+  USERS_ITEM,
+  {
+    path: '/empresa',
+    label: 'Empresa',
+    description: 'Nome e identidade visual da página pública e das etiquetas.',
+    icon: Building2Icon,
     roles: ['admin'],
   },
 ];

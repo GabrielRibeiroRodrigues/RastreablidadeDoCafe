@@ -1,13 +1,15 @@
 import { EntityCombobox } from '@/components/form/EntityCombobox';
 import { PRODUCT_TYPE_LABELS } from '@/features/products/labels';
 import type { ProductType } from '@/features/products/api';
-import { formatQuantity } from '@/lib/quantity';
+import { cn } from 'cn';
+import { daysUntil, formatDate, formatQuantity } from '@/lib/quantity';
 import { searchStock, stockOptionLabel, type StockOption } from './stock-options';
 
 /**
  * Escolha de um saldo (lote × local) de `/v1/stock`, só de lotes disponíveis. `productTypes`
  * restringe os tipos de produto aceitos; `exclude` esconde pares já escolhidos em outras linhas.
- * O filtro é feito no cliente (a API não filtra o estoque por tipo de produto).
+ * O filtro é feito no cliente (a API não filtra o estoque por tipo de produto). A lista vem em
+ * ordem FEFO (vence primeiro, no topo) e cada opção mostra a validade.
  */
 export function StockLotPicker({
   id,
@@ -50,6 +52,18 @@ export function StockLotPicker({
             <div className="truncate text-xs text-muted-foreground">
               {row.product.name} · {PRODUCT_TYPE_LABELS[row.product.type]}
             </div>
+            {row.expiresAt && (
+              <div
+                className={cn(
+                  'text-xs',
+                  daysUntil(row.expiresAt) <= 30
+                    ? 'font-medium text-amber-700 dark:text-amber-400'
+                    : 'text-muted-foreground',
+                )}
+              >
+                Vence {formatDate(row.expiresAt)}
+              </div>
+            )}
           </div>
           <div className="shrink-0 text-right text-xs">
             <div className="font-mono">{row.location.code}</div>

@@ -14,6 +14,7 @@ import {
 import { LotStatusBadge, Quantity } from '@/features/inventory/components';
 import { ProductTypeBadge } from '@/features/production/components';
 import { SUPPLIER_TYPE_LABELS } from '@/features/suppliers/api';
+import { countOf } from '@/lib/plural';
 import { formatDateTime, formatQuantity, toMilli } from '@/lib/quantity';
 import type { RecallSimulation } from './api';
 import { UnitQuantities } from './components';
@@ -52,7 +53,10 @@ export function ImpactView({
   simulatedAt: Date;
 }) {
   const { totals } = impact;
-  const shipmentsByNumber = new Map(impact.shipments.map((s) => [s.number, s]));
+  // Itens estornados não foram entregues: o detalhe dos clientes usa só o que saiu de fato.
+  const shipmentsByNumber = new Map(
+    impact.shipments.filter((s) => !s.reversed).map((s) => [s.number, s]),
+  );
 
   return (
     <div className="space-y-6">
@@ -84,7 +88,7 @@ export function ImpactView({
           icon={TruckIcon}
           label="Já expedido"
           value={<UnitQuantities items={totals.shipped} />}
-          hint={`${totals.shipments} expedição(ões)`}
+          hint={countOf(totals.shipments, 'expedição', 'expedições')}
         />
         <Stat
           icon={UsersIcon}

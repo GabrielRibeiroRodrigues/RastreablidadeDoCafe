@@ -45,7 +45,7 @@ Numa única transação: número `OP-AAAA-NNNNNN` → código do lote novo → `
 - **Rendimento** = massa de saída ÷ massa de entrada (kg; 1 saca = 60 kg). Embalagens e unidades ficam fora. Saída maior que a entrada → 400.
 - **Herança**: o lote gerado herda safra e variedade quando todos os insumos coincidem (um blend de origens diferentes fica sem variedade); grau de torra padrão vem do produto.
 - Saída em local de quarentena → lote nasce em quarentena.
-- Correção: estorno das movimentações (a genealogia é só de inclusão, como o razão).
+- Correção: **cancelamento da ordem** (`POST /v1/production-orders/:id/cancel` `{ "reason" }`, só admin): estorna a produção e os consumos numa transação, travando os lotes em ordem fixa; o lote gerado precisa ter todo o saldo (senão 409 `/problems/insufficient-stock` e nada muda). Estornar avulso a produção ou um consumo de uma ordem → 409 `/problems/use-cancellation`. A genealogia é só de inclusão: a ordem cancelada continua no rastreio com `productionOrder.cancelled = true` e sai do painel, do desempenho e do rendimento ([ADR 0013](adr/0013-cancelamento-de-operacoes.md)).
 
 Listagem `GET /v1/production-orders` (filtros `stage`, `q`, `from`, `to`) e detalhe com insumos, lote gerado, massas, rendimento e perda.
 

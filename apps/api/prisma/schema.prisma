@@ -70,14 +70,18 @@ enum LocationType {
 }
 
 model Company {
-  id        String   @id @default(uuid(7)) @db.Uuid
-  name      String
+  id         String   @id @default(uuid(7)) @db.Uuid
+  name       String
   /// CNPJ (somente dígitos)
-  taxId     String   @unique @map("tax_id") @db.VarChar(14)
+  taxId      String   @unique @map("tax_id") @db.VarChar(14)
   /// Prefixo dos códigos de lote, ex.: CAF -> CAF-2026-000123
-  lotPrefix String   @map("lot_prefix") @db.VarChar(5)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  lotPrefix  String   @map("lot_prefix") @db.VarChar(5)
+  /// Identidade na página pública e na etiqueta: cor da marca (#RRGGBB), frase curta e site.
+  brandColor String?  @map("brand_color") @db.VarChar(7)
+  tagline    String?  @db.VarChar(140)
+  website    String?  @db.VarChar(200)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   users            User[]
   products         Product[]
@@ -94,6 +98,7 @@ model Company {
   sequences        DocumentSequence[]
   attachments      Attachment[]
   auditLogs        AuditLog[]
+  notifications    Notification[]
   nonConformities  NonConformity[]
   recalls          Recall[]
   recallSteps      RecallStep[]
@@ -106,27 +111,33 @@ model Company {
 /// Usuário pertence a uma única empresa. A autorização usa os grupos do token (Cognito);
 /// `role` é o perfil provisionado, usado pelo emissor simulado e para sincronizar grupos.
 model User {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  companyId  String   @map("company_id") @db.Uuid
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  companyId          String   @map("company_id") @db.Uuid
   /// `sub` do Cognito (ou do emissor simulado)
-  cognitoSub String   @unique @map("cognito_sub")
-  email      String   @unique
-  name       String
-  role       Role
-  isActive   Boolean  @default(true) @map("is_active")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  cognitoSub         String   @unique @map("cognito_sub")
+  email              String   @unique
+  name               String
+  role               Role
+  isActive           Boolean  @default(true) @map("is_active")
+  /// Categorias de aviso que o usuário silenciou na central (ex.: expiry, quality).
+  mutedNotifications String[] @default([]) @map("muted_notifications")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  company          Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  movements        StockMovement[]
-  attachments      Attachment[]
-  productionOrders ProductionOrder[]
-  shipments        Shipment[]
-  auditLogs        AuditLog[]
-  openedNcs        NonConformity[]   @relation("NcOpenedBy")
-  resolvedNcs      NonConformity[]   @relation("NcResolvedBy")
-  createdRecalls   Recall[]          @relation("RecallCreatedBy")
-  closedRecalls    Recall[]          @relation("RecallClosedBy")
+  company            Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  notifications      Notification[]
+  movements          StockMovement[]
+  attachments        Attachment[]      @relation("AttachmentUploadedBy")
+  removedAttachments Attachment[]      @relation("AttachmentRemovedBy")
+  productionOrders   ProductionOrder[] @relation("ProductionOrderUser")
+  cancelledOrders    ProductionOrder[] @relation("ProductionOrderCancelledBy")
+  shipments          Shipment[]        @relation("ShipmentUser")
+  cancelledShipments Shipment[]        @relation("ShipmentCancelledBy")
+  auditLogs          AuditLog[]
+  openedNcs          NonConformity[]   @relation("NcOpenedBy")
+  resolvedNcs        NonConformity[]   @relation("NcResolvedBy")
+  createdRecalls     Recall[]          @relation("RecallCreatedBy")
+  closedRecalls      Recall[]          @relation("RecallClosedBy")
 
   /// Alvo de FKs compostas: garante no banco que referências são da mesma empresa.
   @@unique([companyId, id])
@@ -258,6 +269,7 @@ enum MovementType {
 enum AttachmentStatus {
   PENDING // URL de upload emitida, arquivo ainda não confirmado
   UPLOADED
+  REMOVED // retirado da lista (enviado por engano); o registro e o arquivo versionado ficam
 
   @@map("attachment_status")
 }
@@ -312,6 +324,8 @@ model Lot {
   @@index([companyId, status])
   @@index([companyId, productId])
   @@index([companyId, expiresAt])
+  /// Ordem padrão da tela Lotes (mais recentes primeiro).
+  @@index([companyId, receivedAt])
   @@map("lots")
 }
 
@@ -380,10 +394,14 @@ model Attachment {
   uploadedById String           @map("uploaded_by_id") @db.Uuid
   createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   uploadedAt   DateTime?        @map("uploaded_at") @db.Timestamptz(3)
+  removedAt    DateTime?        @map("removed_at") @db.Timestamptz(3)
+  removedById  String?          @map("removed_by_id") @db.Uuid
+  removeReason String?          @map("remove_reason")
 
   company    Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
   lot        Lot     @relation(fields: [companyId, lotId], references: [companyId, id], onDelete: Restrict)
-  uploadedBy User    @relation(fields: [companyId, uploadedById], references: [companyId, id], onDelete: Restrict)
+  uploadedBy User    @relation("AttachmentUploadedBy", fields: [companyId, uploadedById], references: [companyId, id], onDelete: Restrict)
+  removedBy  User?   @relation("AttachmentRemovedBy", fields: [companyId, removedById], references: [companyId, id], onDelete: Restrict)
 
   @@index([companyId, lotId])
   @@map("attachments")
@@ -436,12 +454,17 @@ model ProductionOrder {
   performedAt    DateTime        @default(now()) @map("performed_at") @db.Timestamptz(3)
   idempotencyKey String?         @map("idempotency_key") @db.VarChar(100)
   requestHash    String?         @map("request_hash") @db.VarChar(64)
+  /// Cancelamento: todas as movimentações da operação foram estornadas numa transação.
+  cancelledAt    DateTime?       @map("cancelled_at") @db.Timestamptz(3)
+  cancelReason   String?         @map("cancel_reason")
+  cancelledById  String?         @map("cancelled_by_id") @db.Uuid
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  company   Company     @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  outputLot Lot         @relation(fields: [companyId, outputLotId], references: [companyId, id], onDelete: Restrict)
-  user      User        @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
-  origins   LotOrigin[]
+  company     Company     @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  outputLot   Lot         @relation(fields: [companyId, outputLotId], references: [companyId, id], onDelete: Restrict)
+  user        User        @relation("ProductionOrderUser", fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+  cancelledBy User?       @relation("ProductionOrderCancelledBy", fields: [companyId, cancelledById], references: [companyId, id], onDelete: Restrict)
+  origins     LotOrigin[]
 
   @@unique([companyId, id])
   @@unique([companyId, outputLotId])
@@ -476,24 +499,29 @@ model LotOrigin {
 
 /// Expedição para um cliente: cada item é uma saída (ISSUE) do razão.
 model Shipment {
-  id             String   @id @default(uuid(7)) @db.Uuid
-  companyId      String   @map("company_id") @db.Uuid
+  id             String    @id @default(uuid(7)) @db.Uuid
+  companyId      String    @map("company_id") @db.Uuid
   /// Ex.: EXP-2026-000001
-  number         String   @db.VarChar(30)
-  customerId     String   @map("customer_id") @db.Uuid
+  number         String    @db.VarChar(30)
+  customerId     String    @map("customer_id") @db.Uuid
   /// Pedido do cliente / NF de saída
-  orderRef       String?  @map("order_ref") @db.VarChar(60)
-  shippedAt      DateTime @default(now()) @map("shipped_at") @db.Timestamptz(3)
+  orderRef       String?   @map("order_ref") @db.VarChar(60)
+  shippedAt      DateTime  @default(now()) @map("shipped_at") @db.Timestamptz(3)
   notes          String?
-  userId         String   @map("user_id") @db.Uuid
-  idempotencyKey String?  @map("idempotency_key") @db.VarChar(100)
-  requestHash    String?  @map("request_hash") @db.VarChar(64)
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  userId         String    @map("user_id") @db.Uuid
+  idempotencyKey String?   @map("idempotency_key") @db.VarChar(100)
+  requestHash    String?   @map("request_hash") @db.VarChar(64)
+  /// Cancelamento: todas as movimentações da operação foram estornadas numa transação.
+  cancelledAt    DateTime? @map("cancelled_at") @db.Timestamptz(3)
+  cancelReason   String?   @map("cancel_reason")
+  cancelledById  String?   @map("cancelled_by_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
 
-  company  Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
-  customer Customer       @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
-  user     User           @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
-  items    ShipmentItem[]
+  company     Company        @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  customer    Customer       @relation(fields: [companyId, customerId], references: [companyId, id], onDelete: Restrict)
+  user        User           @relation("ShipmentUser", fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+  cancelledBy User?          @relation("ShipmentCancelledBy", fields: [companyId, cancelledById], references: [companyId, id], onDelete: Restrict)
+  items       ShipmentItem[]
 
   @@unique([companyId, id])
   @@unique([companyId, number])
@@ -743,4 +771,37 @@ model RecallCustomer {
 
   @@unique([recallId, customerId])
   @@map("recall_customers")
+}
+
+/// Contadores do rate limit (janela fixa) compartilhados entre instâncias da API (Lambda).
+/// Não é dado de negócio nem de empresa: a chave é derivada do IP pelo ThrottlerGuard.
+model RateLimit {
+  key       String   @id @db.VarChar(200)
+  hits      Int
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@index([expiresAt])
+  @@map("rate_limits")
+}
+
+/// Aviso na central do app (um registro por destinatário). Os mesmos eventos também saem pelo SNS.
+model Notification {
+  id        String    @id @default(uuid(7)) @db.Uuid
+  companyId String    @map("company_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  /// Ex.: recall.executed, recall.failed, lots.expiring, non_conformity.opened
+  event     String    @db.VarChar(60)
+  title     String    @db.VarChar(200)
+  body      String    @db.VarChar(2000)
+  /// Rota do front para abrir o assunto (ex.: /recall/{id}).
+  link      String?   @db.VarChar(300)
+  readAt    DateTime? @map("read_at") @db.Timestamptz(3)
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  user    User    @relation(fields: [companyId, userId], references: [companyId, id], onDelete: Restrict)
+
+  @@index([companyId, userId, createdAt])
+  @@index([companyId, userId, readAt])
+  @@map("notifications")
 }

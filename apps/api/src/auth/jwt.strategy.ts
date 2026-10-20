@@ -7,7 +7,7 @@ import type { Env } from '../config/env.js';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { TenantContext } from '../tenancy/tenant-context.js';
 import { parseAccessTokenClaims } from './access-token-claims.js';
-import type { AuthUser } from './auth-user.js';
+import { toAppRole, type AuthUser } from './auth-user.js';
 import { MOCK_ISSUER, MockKeyStore } from './mock-key-store.js';
 
 /**
@@ -47,7 +47,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: unknown): Promise<AuthUser> {
-    const { sub, roles } = parseAccessTokenClaims(payload, this.clientId);
+    const { sub } = parseAccessTokenClaims(payload, this.clientId);
 
     const user = await this.prisma.user.findUnique({
       where: { cognitoSub: sub },
@@ -66,7 +66,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       companyName: user.company.name,
       email: user.email,
       name: user.name,
-      roles,
+      // Perfil do banco, não do token (ADR 0012): rebaixar ou desativar vale na hora, sem esperar
+      // o access token (1 h) expirar. Os grupos do Cognito são mantidos iguais pela gestão de usuários.
+      roles: [toAppRole(user.role)],
     };
   }
 }

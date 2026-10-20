@@ -35,6 +35,12 @@ variable "db_connections_threshold" {
   default     = 60
 }
 
+variable "db_free_storage_threshold_gb" {
+  description = "Alarm when the RDS free storage drops below this many GB."
+  type        = number
+  default     = 2
+}
+
 variable "dlq_name" {
   description = "Jobs dead-letter queue name."
   type        = string

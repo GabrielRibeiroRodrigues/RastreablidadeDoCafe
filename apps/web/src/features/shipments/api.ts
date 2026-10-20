@@ -27,6 +27,15 @@ export const shipmentsApi = {
         body,
       }),
     ),
+
+  /** Cancela a expedição (admin): estorna a saída de cada item. */
+  cancel: (id: string, reason: string) =>
+    unwrap(
+      getApiClient().POST('/v1/shipments/{id}/cancel', {
+        params: { path: { id } },
+        body: { reason },
+      }),
+    ),
 };
 
 /** Clientes ativos para o combobox (busca por nome, documento ou e-mail). */

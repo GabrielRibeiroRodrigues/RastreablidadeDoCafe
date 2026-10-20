@@ -71,8 +71,25 @@ export class PublicTraceStep {
   origin!: PublicOriginResponse | null;
 }
 
+/** Identidade da empresa na página pública (tudo opcional). */
+export class PublicBrandResponse {
+  @ApiProperty({ type: String, nullable: true, example: '#5b3a29' }) color!: string | null;
+  @ApiProperty({ type: String, nullable: true, example: 'Cafés especiais da Mantiqueira' })
+  tagline!: string | null;
+  @ApiProperty({ type: String, nullable: true, example: 'https://serraazul.com.br' })
+  website!: string | null;
+}
+
+/** Recolhimento em vigor: o lote está num recall executado e continua bloqueado. */
+export class PublicRecallNotice {
+  @ApiProperty({ description: 'Quando o lote foi bloqueado pelo recall' }) since!: Date;
+  @ApiProperty({ enum: ['LOW', 'MEDIUM', 'HIGH'], example: 'HIGH' }) severity!:
+    'LOW' | 'MEDIUM' | 'HIGH';
+}
+
 export class PublicTraceResponse {
   @ApiProperty({ example: 'Torrefação Serra Azul' }) companyName!: string;
+  @ApiProperty({ type: PublicBrandResponse }) brand!: PublicBrandResponse;
   @ApiProperty({ type: PublicLotResponse }) lot!: PublicLotResponse;
   @ApiProperty({ type: [PublicOriginResponse], description: 'Fazendas/regiões de origem' })
   origins!: PublicOriginResponse[];
@@ -83,4 +100,11 @@ export class PublicTraceResponse {
   chain!: PublicTraceStep[];
   @ApiProperty({ description: 'true se a cadeia foi cortada pelo limite de profundidade' })
   truncated!: boolean;
+  @ApiProperty({
+    type: PublicRecallNotice,
+    nullable: true,
+    description:
+      'Aviso ao consumidor: lote recolhido (recall executado e lote ainda bloqueado). O motivo interno não é exposto.',
+  })
+  recall!: PublicRecallNotice | null;
 }

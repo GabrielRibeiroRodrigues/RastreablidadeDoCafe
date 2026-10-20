@@ -50,7 +50,9 @@ flowchart LR
 - **Lote em quarentena ou bloqueado** não sai nem é transferido → `409 /problems/lot-not-movable` (exceção: lote em quarentena indo para um local do tipo quarentena).
 - Recebimento num local de quarentena cria o lote já em `QUARANTINE`.
 - Saldo total zerado → `CONSUMED`; estorno que repõe saldo → `AVAILABLE`.
-- Estorno: uma vez por movimentação; estorno de estorno é proibido; precisa haver saldo no local de onde sai.
+- Estorno: uma vez por movimentação; estorno de estorno é proibido; precisa haver saldo no local de onde sai. Produção e consumo de uma ordem só se desfazem cancelando a ordem (409 `/problems/use-cancellation`).
+- **Datas**: `receivedAt`/`occurredAt`/`performedAt`/`shippedAt` não podem estar no futuro (5 min de folga; 400 no campo) e nenhuma movimentação pode ser anterior ao recebimento ou à produção do lote (400 `/problems/invalid-movement`, extensão `lot`). Recebimento retroativo (carga de histórico) continua aceito.
+- **Códigos** (`CAF-2026-…`, `OP-`, `EXP-`…): o ano é o do calendário de São Paulo, não o de UTC.
 - **Idempotência**: repetir com a mesma `Idempotency-Key` devolve o resultado original e o header `Idempotent-Replayed: true`; mesma chave com outro corpo → `422 /problems/idempotency-key-reused`.
 - Produto ou destino inativo → 409. Lote, local ou fornecedor de outra empresa → 404.
 

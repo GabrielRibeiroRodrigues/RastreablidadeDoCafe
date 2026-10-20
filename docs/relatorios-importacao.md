@@ -53,6 +53,20 @@ Todos os perfis. Quatro consultas em paralelo (contadores num único `SELECT`, v
 
 Quantidades são strings com 3 casas, como no resto da API. O fuso `America/Sao_Paulo` é fixo enquanto a empresa não tiver fuso próprio.
 
+## Lotes — `GET /v1/reports/lots.csv`
+
+Mesmos filtros e ordem da tela **Lotes** (`status`, `productId`, `supplierId`, `q`, `expiresWithinDays`, `sort`): código, produto, situação, fornecedor e fazenda, saldo, quantidade inicial, unidade, recebimento, validade, safra, variedade e pontuação. O botão **Exportar CSV** da tela baixa exatamente o que está filtrado.
+
+Na mesma tela, **Salvar filtros** guarda a combinação atual com um nome (no navegador, por usuário, até 8); a visão aparece como um chip ao lado de "Vencendo". A ordem padrão (mais recentes primeiro) tem índice próprio (`company_id, received_at`), e a paginação continua por página com total.
+
+## Desempenho por período — `GET /v1/dashboard/performance?days=30|90|180|365`
+
+Seção **Desempenho** do painel, com seletor de período (guardado na URL, `?periodo=90`):
+
+- **Comparação**: ordens de produção, rendimento médio ponderado pela massa (Σ saída ÷ Σ entrada), perda e expedições, contra os `days` dias anteriores. A variação aparece com seta e sinal (pontos percentuais para o rendimento), sem cor de "bom/ruim".
+- **Série de rendimento**: por semana até 90 dias e por mês acima disso, no fuso de São Paulo. O gráfico de barras começa no zero, a massa produzida fica no tooltip (não há segundo eixo) e há uma tabela equivalente para leitores de tela.
+- **Giro de estoque**: até 8 produtos com maior saída no período (expedições `ISSUE` e consumo na produção `CONSUMPTION`, descontados os estornos dessas saídas), saldo atual e **dias de cobertura** (saldo ÷ saída diária média).
+
 ## Relatórios CSV — `GET /v1/reports/*.csv`
 
 Todos os perfis. Formato pensado para o **Excel em português** abrir com duplo clique:

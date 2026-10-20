@@ -7,6 +7,7 @@ import { AttachmentStatus, type Attachment, type Prisma } from '../../generated/
 import { StorageService } from '../../storage/storage.service.js';
 import { TenantContext } from '../../tenancy/tenant-context.js';
 import { TenantPrismaService } from '../../tenancy/tenant-prisma.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import type {
   AttachmentResponse,
   CreateAttachmentDto,
@@ -27,6 +28,7 @@ export class AttachmentsService {
     private readonly db: TenantPrismaService,
     private readonly tenant: TenantContext,
     private readonly storage: StorageService,
+    private readonly audit: AuditService,
     config: ConfigService<Env, true>,
   ) {
     this.maxBytes = config.get('ATTACHMENT_MAX_BYTES', { infer: true });
@@ -91,7 +93,7 @@ export class AttachmentsService {
   }
 
   async list(lotId: string): Promise<AttachmentResponse[]> {
-    this.storage.assertConfigured();
+    // Listar é só banco: sem bucket, a página do lote continua sem erro (upload e download dão 503).
     await this.assertLot(lotId);
     const attachments = await this.db.client.attachment.findMany({
       where: { lotId, status: AttachmentStatus.UPLOADED },
@@ -107,6 +109,38 @@ export class AttachmentsService {
       throw new NotFoundException('Resource not found.');
     }
     return this.storage.createDownloadUrl(attachment.storageKey, attachment.fileName);
+  }
+
+  /**
+   * Retira da lista um anexo enviado por engano (admin, com motivo). O registro fica — quem, quando
+   * e por quê — e o arquivo continua no bucket versionado: nada de evidência apagada sem rastro.
+   */
+  async remove(lotId: string, id: string, reason: string): Promise<void> {
+    await this.db.transaction(async (tx) => {
+      const attachment = await tx.attachment.findFirst({
+        where: { id, lotId, status: { not: AttachmentStatus.REMOVED } },
+      });
+      if (!attachment) throw new NotFoundException('Resource not found.');
+      await tx.attachment.update({
+        where: { id },
+        data: {
+          status: AttachmentStatus.REMOVED,
+          removedAt: new Date(),
+          removedById: this.requireUserId(),
+          removeReason: reason,
+        },
+      });
+      await this.audit.record(
+        {
+          action: 'attachment.removed',
+          entityType: 'lot',
+          entityId: lotId,
+          before: { attachment: attachment.fileName, status: attachment.status },
+          after: { attachment: attachment.fileName, status: AttachmentStatus.REMOVED, reason },
+        },
+        tx,
+      );
+    });
   }
 
   /** Lote de outra empresa não é encontrado (extensão de tenant) → 404. */
@@ -129,6 +163,13 @@ export class AttachmentsService {
 
 /** Empresa e chave no bucket são detalhes internos: nunca saem na resposta. */
 function toResponse(attachment: Attachment): AttachmentResponse {
-  const { companyId: _companyId, storageKey: _storageKey, ...rest } = attachment;
+  const {
+    companyId: _companyId,
+    storageKey: _storageKey,
+    removedAt: _removedAt,
+    removedById: _removedById,
+    removeReason: _removeReason,
+    ...rest
+  } = attachment;
   return rest;
 }

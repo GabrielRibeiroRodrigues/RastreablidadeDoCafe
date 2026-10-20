@@ -44,13 +44,6 @@ export function formatQuantity(value: string, unit?: UnitCode): string {
   return unit ? `${text} ${UNIT_SHORT[unit]}` : text;
 }
 
-/** Mantém as casas que a API enviou: `"40.000"` → `"40,000"`, `"1250.5"` → `"1.250,5"`. */
-export function formatQuantityRaw(value: string): string {
-  const [int = '0', frac] = value.split('.');
-  const grouped = int.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-  return frac === undefined ? grouped : `${grouped},${frac}`;
-}
-
 // ---------------------------------------------------------------------------------------------
 // Datas
 // ---------------------------------------------------------------------------------------------

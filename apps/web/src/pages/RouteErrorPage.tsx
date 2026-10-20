@@ -1,10 +1,12 @@
 import { LayoutDashboardIcon, RefreshCwIcon, TriangleAlertIcon } from 'lucide-react';
+import { useEffect } from 'react';
 import { isRouteErrorResponse, Link, useNavigate, useRouteError } from 'react-router';
 import { cn } from 'cn';
 import { BrandMark } from '@/components/BrandMark';
 import { useDocumentTitle } from '@/components/layout/use-document-title';
 import { Button } from '@/components/ui/button';
 import { ApiError, getErrorMessage } from '@/lib/api';
+import { reportClientError } from '@/lib/error-reporting';
 import { NotFoundPage } from './NotFoundPage';
 
 /** Chunk de uma página que sumiu do servidor (deploy novo com a aba aberta) ou falha de rede. */
@@ -25,6 +27,12 @@ export function RouteErrorPage({ fullPage = false }: { fullPage?: boolean }) {
   const error = useRouteError();
   const navigate = useNavigate();
   useDocumentTitle('Erro');
+
+  useEffect(() => {
+    // 404 e erros de negócio da API já são conhecidos (e a API registra os 5xx): só o inesperado.
+    if (isRouteErrorResponse(error) || error instanceof ApiError) return;
+    reportClientError('route', error);
+  }, [error]);
 
   if (isRouteErrorResponse(error) && error.status === 404) {
     return <NotFoundPage fullPage={fullPage} />;

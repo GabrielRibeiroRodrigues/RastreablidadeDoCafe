@@ -2,6 +2,7 @@ import { Controller, Get, Header, Query, Res, StreamableFile } from '@nestjs/com
 import { ApiBearerAuth, ApiOkResponse, ApiProduces, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
 import {
+  LotsReportQueryDto,
   MovementsReportQueryDto,
   ProductionReportQueryDto,
   ShipmentsReportQueryDto,
@@ -27,6 +28,17 @@ export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 
   /** Posição de estoque (mesmos filtros de `GET /stock`). */
+  /** Lotes com os mesmos filtros da tela Lotes (saldo, situação, validade, qualidade). */
+  @Get('lots.csv')
+  @Header('Cache-Control', 'no-store')
+  @ApiOkResponse(CSV_RESPONSE)
+  async lots(
+    @Query() query: LotsReportQueryDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<StreamableFile> {
+    return send(res, await this.reports.lotsReport(query));
+  }
+
   @Get('stock.csv')
   @Header('Cache-Control', 'no-store')
   @ApiOkResponse(CSV_RESPONSE)
